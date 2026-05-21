@@ -462,7 +462,7 @@ Object.assign(GameEngine.prototype, {
         }
 
         this.score += scoreGain;
-        this.bombCharge = Math.min(100, this.bombCharge + m.size * 0.15);
+        this.bombCharge = Math.min(100, this.bombCharge + m.size * 0.08); // 满电 ~30 颗陨石，让 EOM 更稀缺
         this.addFloatText(m.x, m.y, `+${scoreGain}`, textColor, fontSize);
 
         const scrapDropCount = Math.floor(Math.random() * 2) + 1;
