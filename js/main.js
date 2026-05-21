@@ -271,6 +271,8 @@ window.onload = function() {
                     const shieldPercent = msg.shieldTime > 0 ? (msg.shieldTime / 8000) * 100 : 0;
                     document.getElementById('shieldBar').style.width = `${shieldPercent}%`;
                     document.getElementById('bombChargeBar').style.width = `${msg.bombCharge}%`;
+                    const warpBarEl = document.getElementById('warpBar');
+                    if (warpBarEl) warpBarEl.style.width = `${msg.warpCharge || 0}%`;
                     
                     // 同步废料字段
                     mainScrap = msg.scrap;

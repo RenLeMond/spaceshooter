@@ -149,6 +149,7 @@ class GameEngineWorker extends GameEngine {
         // shieldTime/bombCharge 量化到 100ms / 1% — 避免每帧浮点抖动触发消息
         if ((last.shieldTime / 100 | 0) !== (payload.shieldTime / 100 | 0)) return true;
         if ((last.bombCharge | 0) !== (payload.bombCharge | 0)) return true;
+        if ((last.warpCharge | 0) !== (payload.warpCharge | 0)) return true;
         if (last.slot1 !== payload.slot1) return true;
         if (last.slot2 !== payload.slot2) return true;
         if (last.synergyName !== payload.synergyName) return true;
@@ -205,6 +206,7 @@ class GameEngineWorker extends GameEngine {
             playerMaxHp: this.player ? this.player.maxHp : 0,
             shieldTime: this.shieldTime,
             bombCharge: this.bombCharge,
+            warpCharge: this.warpCharge,
             slot1: this.player && this.player.elementSlots ? this.player.elementSlots[0] : null,
             slot2: this.player && this.player.elementSlots ? this.player.elementSlots[1] : null,
             synergyName: this.player ? this.player.synergyName : '',
