@@ -459,7 +459,7 @@ class GameEngine {
         }
 
         if (this.warpCharge < 100) {
-            this.warpCharge += 3.5 * dtClamped; // ~28 frames to fully charge? No, let's make it slower: 100 / (1 * 60) = 1.6 per frame for 1 sec.
+            this.warpCharge += 0.333 * dtClamped; // 5 秒充满: 100 / (5 * 60fps) ≈ 0.333/帧
             if (this.warpCharge > 100) this.warpCharge = 100;
         }
 
