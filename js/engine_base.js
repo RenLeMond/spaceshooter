@@ -124,6 +124,17 @@ class GameEngine {
         this.waveTransitionTimer = 0;
         this.keys = {};
 
+        // 机舱节奏：阶梯阈值表 + 最小冷却 45 秒
+        // 第 n 项 = 升到 wave n+1 所需累积分数。曲线 1500 * 1.4^(w-1) 段差
+        this.hangarMinInterval = 45000;
+        this.lastHangarTime = -Infinity; // 允许首次开
+        this.waveScoreThresholds = [0];
+        let _cum = 0;
+        for (let w = 1; w <= 30; w++) {
+            _cum += 1500 * Math.pow(1.4, w - 1);
+            this.waveScoreThresholds[w] = Math.floor(_cum);
+        }
+
         // --- 性能跑分 (Benchmark) 核心指标及状态 ---
         this.isBenchmarking = false;
         this.benchmarkTimer = 0;
@@ -736,6 +747,7 @@ class GameEngine {
         this.shieldTime = 0;
         this.bombCharge = 100;
         this.warpCharge = 100;
+        this.lastHangarTime = -Infinity; // 局内复位，下局首次过 wave 即可开机舱
         for (let i = 0; i < this.maxBullets; i++) this.bullets[i].active = false;
         for (let i = 0; i < this.maxMeteors; i++) this.meteors[i].active = false;
         this.particleBuffer.fill(0);

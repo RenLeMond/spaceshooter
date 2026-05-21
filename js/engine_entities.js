@@ -321,12 +321,17 @@ Object.assign(GameEngine.prototype, {
             this.spawnBoss();
         }
 
-        const targetWave = Math.floor(this.score / 1500) + 1;
-        if (targetWave > this.wave && !this.boss) {
-            this.wave = targetWave;
+        // 机舱节奏：阶梯阈值（1500 × 1.4^(w-1) 段差）+ 最小 45s 间隔
+        const threshold = this.waveScoreThresholds[this.wave] || Infinity;
+        if (!this.boss && this.score >= threshold) {
+            this.wave++;
             this.addFloatText(this.logicalWidth / 2, this.logicalHeight / 2 - 50, `WAVE ${this.wave} COMPLETED!`, '#10b981', 22);
             sfx.playPowerup();
-            this.openHangar();
+            const now = performance.now();
+            if (now - this.lastHangarTime >= this.hangarMinInterval) {
+                this.lastHangarTime = now;
+                this.openHangar();
+            }
         }
 
         if (this.boss && this.boss.active) return;
