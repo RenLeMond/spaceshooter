@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>《星海猎手》超时空编年史数据库 (V1-V6)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Noto+Sans+SC:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #020306;
+            color: #e2e8f0;
+            font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* 极度酷炫的量子时空极光背景 */
+        .chrono-space-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: 
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 20% 80%, rgba(6, 182, 212, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.03) 0%, transparent 50%),
+                #020205;
+            z-index: -2;
+        }
+
+        /* 太空星光粒子尘埃微粒漂移 */
+        .chrono-dust {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 200%;
+            background-image: 
+                radial-gradient(1px 1px at 40px 60px, #ffffff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 180px 200px, rgba(192, 132, 252, 0.5), rgba(0,0,0,0)),
+                radial-gradient(1.5px 1.5px at 300px 380px, rgba(6, 182, 212, 0.4), rgba(0,0,0,0)),
+                radial-gradient(2.5px 2.5px at 500px 100px, rgba(236, 72, 153, 0.5), rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 600px 600px;
+            animation: panDust 120s linear infinite;
+            opacity: 0.4;
+            z-index: -1;
+        }
+
+        @keyframes panDust {
+            from { transform: translate(0, 0); }
+            to { transform: translate(-300px, -300px); }
+        }
+
+        /* 高级霓虹玻璃卡片 */
+        .chrono-glass-card {
+            background: rgba(8, 12, 24, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.5);
+            transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .chrono-glass-card:hover {
+            border-color: rgba(6, 182, 212, 0.3);
+            box-shadow: 0 15px 50px 0 rgba(6, 182, 212, 0.1);
+            transform: translateY(-4px);
+        }
+
+        .neon-border-fuchsia {
+            border-color: rgba(217, 70, 239, 0.4);
+            box-shadow: 0 0 25px rgba(217, 70, 239, 0.15);
+        }
+
+        .neon-text-cyan {
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.6), 0 0 25px rgba(6, 182, 212, 0.2);
+        }
+
+        .neon-text-purple {
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.6), 0 0 25px rgba(168, 85, 247, 0.2);
+        }
+
+        .neon-text-amber {
+            text-shadow: 0 0 10px rgba(245, 158, 11, 0.6), 0 0 25px rgba(245, 158, 11, 0.2);
+        }
+
+        /* 时间线连线 */
+        .timeline-line {
+            background: linear-gradient(to bottom, #a855f7 0%, #06b6d4 50%, #f59e0b 100%);
+        }
+
+        /* 旋转的雷达圆环 */
+        .tech-ring {
+            animation: spinRing 25s linear infinite;
+        }
+
+        @keyframes spinRing {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* 时空扫描仪动效 */
+        .scanner-line {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scanner-line::after {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to bottom, transparent, #22d3ee, transparent);
+            animation: scanChrono 3.5s infinite linear;
+            opacity: 0.65;
+        }
+
+        @keyframes scanChrono {
+            0% { top: -10%; }
+            50% { top: 110%; }
+            100% { top: -10%; }
+        }
+
+        /* 标签激活状态 */
+        .ver-tab-active {
+            background: rgba(6, 182, 212, 0.15) !important;
+            border-color: rgba(6, 182, 212, 0.6) !important;
+            color: #22d3ee !important;
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.15);
+        }
+    </style>
+</head>
+<body class="min-h-screen relative pb-24">
+
+    <!-- 背景尘埃与时空极光 -->
+    <div class="chrono-space-bg"></div>
+    <div class="chrono-dust"></div>
+
+    <!-- 顶部极客导航 -->
+    <nav class="sticky top-0 w-full z-50 chrono-glass-card border-t-0 border-x-0 bg-gray-950/70 backdrop-blur-md px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-fuchsia-600 via-purple-600 to-cyan-500 flex items-center justify-center text-white text-lg font-black shadow-lg shadow-fuchsia-500/25">
+                <i class="fa-solid fa-clock-rotate-left animate-pulse"></i>
+            </div>
+            <div>
+                <span class="text-base font-black tracking-wider text-white neon-text-cyan">星海猎手编年史</span>
+                <span class="text-[9px] text-fuchsia-400 font-bold block uppercase tracking-widest -mt-1">Quantum Chrono-Log</span>
+            </div>
+        </div>
+        <div class="hidden lg:flex items-center gap-6 text-xs font-black tracking-widest uppercase text-gray-400">
+            <a href="space_shooter.html" class="hover:text-cyan-400 transition flex items-center gap-1"><i class="fa-solid fa-gamepad"></i> 战斗终端</a>
+            <a href="game_manual.html" class="hover:text-cyan-400 transition flex items-center gap-1"><i class="fa-solid fa-book"></i> 战略说明书</a>
+            <a href="v5_roadmap.html" class="hover:text-cyan-400 transition flex items-center gap-1"><i class="fa-solid fa-circle-nodes"></i> V5概念设计</a>
+            <a href="v6_hangar.html" class="hover:text-cyan-400 transition flex items-center gap-1"><i class="fa-solid fa-screwdriver-wrench"></i> 先遣演练</a>
+            <a href="v6_roadmap.html" class="hover:text-fuchsia-400 transition flex items-center gap-1"><i class="fa-solid fa-wand-magic-sparkles animate-pulse text-fuchsia-400"></i> V6星能折跃指南</a>
+        </div>
+        <a href="space_shooter.html" class="px-4 py-2 bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-500 hover:from-fuchsia-500 hover:to-cyan-400 transition text-white text-xs font-black rounded-xl tracking-widest uppercase active:scale-95 shadow-md shadow-fuchsia-600/10">
+            启动折跃终端 <i class="fa-solid fa-play ml-1.5 animate-pulse"></i>
+        </a>
+    </nav>
+
+    <!-- 主架构容器 -->
+    <main class="max-w-6xl mx-auto px-4 mt-16 relative">
+        
+        <!-- 装饰背景罗盘 -->
+        <div class="absolute -left-28 top-12 w-[450px] h-[450px] border border-white/5 rounded-full pointer-events-none flex items-center justify-center opacity-20">
+            <div class="w-80 h-80 border border-dashed border-purple-500/10 rounded-full tech-ring flex items-center justify-center">
+                <div class="w-2 h-2 rounded-full bg-cyan-400"></div>
+                <div class="w-72 h-px bg-gradient-to-r from-purple-500/30 via-transparent to-purple-500/30"></div>
+            </div>
+        </div>
+
+        <!-- 1. 巨幕超时空数据库 Banner -->
+        <section class="text-center space-y-6 max-w-3xl mx-auto relative z-10">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-fuchsia-500/10 border border-fuchsia-500/30 rounded-full text-[10px] font-black text-fuchsia-400 uppercase tracking-widest">
+                <i class="fa-solid fa-database"></i> STARSEA CHRONICLES HOLOGRAPHIC SCAN
+            </div>
+            
+            <h1 class="text-4xl md:text-6xl font-black tracking-tight leading-none text-white">
+                超时空时轴记录仪 <br>
+                <span class="text-2xl md:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-purple-400 to-cyan-400 font-extrabold block mt-3">
+                    星海猎手进化编年史数据库
+                </span>
+            </h1>
+            
+            <p class="text-xs md:text-sm text-gray-400 leading-relaxed max-w-xl mx-auto">
+                欢迎接入“时空跃迁日志”。本模块归档了《星海猎手》从最初的 **V1重金属纪元**，历经引力重塑、协同共鸣、0-GC超频重构，直至最新的 **V6星能跃迁与超维涂装** 的全部物理演化与系统日志。
+            </p>
+        </section>
+
+        <!-- 2. 时空跳跃控制台 (Interactive Switcher Widget) -->
+        <section class="mt-16 relative z-10">
+            <div class="chrono-glass-card rounded-3xl p-6 md:p-8 border border-white/5 scanner-line">
+                <div class="flex flex-col gap-6">
+                    <div class="flex justify-between items-center border-b border-white/5 pb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                            <span class="text-[10px] font-black text-cyan-400 uppercase tracking-wider">交互时空视窗 (Holographic Console)</span>
+                        </div>
+                        <span class="text-[9px] font-mono text-gray-500 font-bold" id="dbStatus">ONLINE | SYSTEM SECURED</span>
+                    </div>
+
+                    <!-- 快捷标签组 -->
+                    <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                        <button onclick="selectVersion(1)" id="tab-v1" class="py-2.5 px-2 bg-white/5 border border-white/5 text-[11px] font-black tracking-widest text-gray-400 rounded-xl hover:bg-white/10 hover:text-white transition uppercase text-center">V1 初始版</button>
+                        <button onclick="selectVersion(2)" id="tab-v2" class="py-2.5 px-2 bg-white/5 border border-white/5 text-[11px] font-black tracking-widest text-gray-400 rounded-xl hover:bg-white/10 hover:text-white transition uppercase text-center">V2 引力坍缩</button>
+                        <button onclick="selectVersion(3)" id="tab-v3" class="py-2.5 px-2 bg-white/5 border border-white/5 text-[11px] font-black tracking-widest text-gray-400 rounded-xl hover:bg-white/10 hover:text-white transition uppercase text-center">V3 晶核聚变</button>
+                        <button onclick="selectVersion(4)" id="tab-v4" class="py-2.5 px-2 bg-white/5 border border-white/5 text-[11px] font-black tracking-widest text-gray-400 rounded-xl hover:bg-white/10 hover:text-white transition uppercase text-center">V4 僚机觉醒</button>
+                        <button onclick="selectVersion(5)" id="tab-v5" class="py-2.5 px-2 bg-white/5 border border-white/5 text-[11px] font-black tracking-widest text-gray-400 rounded-xl hover:bg-white/10 hover:text-white transition uppercase text-center">V5 超频跑分</button>
+                        <button onclick="selectVersion(6)" id="tab-v6" class="py-2.5 px-2 bg-white/5 border border-white/5 text-[11px] font-black tracking-widest text-gray-400 rounded-xl hover:bg-white/10 hover:text-white transition uppercase text-center ver-tab-active">V6 星能跃迁</button>
+                    </div>
+
+                    <!-- 动态详情区 -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-black/45 p-6 rounded-2xl border border-white/5 min-h-[300px]">
+                        <!-- 左：全息投影图 -->
+                        <div class="lg:col-span-4 flex flex-col justify-center items-center relative py-4">
+                            <!-- 全息图特效 -->
+                            <div class="w-32 h-32 rounded-full border border-cyan-500/20 flex items-center justify-center relative animate-pulse shadow-2xl shadow-cyan-500/5">
+                                <div class="absolute inset-0 rounded-full border border-dashed border-cyan-500/10 tech-ring"></div>
+                                <div id="holoIcon" class="text-5xl text-cyan-400 filter drop-shadow-[0_0_12px_rgba(34,211,238,0.6)]">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                </div>
+                            </div>
+                            <span class="text-[9px] font-black text-cyan-400 uppercase tracking-widest mt-6 animate-pulse" id="holoLabel">🌌 Starsea Ship Skin Loaded</span>
+                            <span class="text-[8px] text-gray-600 font-mono mt-1" id="holoAddress">TRANS-ADDR: 0x8F9C4B</span>
+                        </div>
+
+                        <!-- 右：文字描述 -->
+                        <div class="lg:col-span-8 space-y-4">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span id="verBadge" class="px-2 py-0.5 bg-fuchsia-500/10 border border-fuchsia-500/30 rounded text-[9px] font-black text-fuchsia-400 uppercase tracking-widest">V6 ACTIVE BATTLE</span>
+                                <h3 id="verTitle" class="text-xl font-black text-white tracking-wide">星海猎手 V6：星能跃迁与超维涂装</h3>
+                            </div>
+                            
+                            <p id="verDesc" class="text-xs text-gray-400 leading-relaxed">
+                                V6 版本对深空战场赋予了前所未有的战术高纬度机动。实装“战术超空间折跃”能力，支持指尖双击画布或按 `Shift` 键，在起点引发维度破裂引力坍缩、终点引发量子轰鸣斥力涟漪；新加入多关节阻尼插值链条游走与断裂裂变的分裂式星体吞噬巨虫 Boss；并在车间内推出三款发光矢量微型涂装（星渊幻影、超维雷霆、帝皇余晖），附带定制尾迹与专属能盾。
+                            </p>
+
+                            <!-- 技术特性卡片 -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-gray-950/70 p-4 rounded-xl border border-white/5">
+                                <div>
+                                    <span class="text-[9px] text-gray-500 font-black block uppercase">核心革新技术 (Core Engineering)</span>
+                                    <span id="verTech" class="text-xs font-bold text-cyan-300">Inverse-Kinematics Chain LERP & FM Warping Wave</span>
+                                </div>
+                                <div>
+                                    <span class="text-[9px] text-gray-500 font-black block uppercase">优化与内存控制 (0-GC Performance)</span>
+                                    <span id="verGC" class="text-xs font-bold text-emerald-400">All-Pre-allocated Particle Pools & CORS-Free Ready</span>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-3 pt-2">
+                                <a id="launchBtn" href="space_shooter.html" class="flex-1 py-3 bg-gradient-to-r from-fuchsia-600 to-cyan-500 hover:from-fuchsia-500 hover:to-cyan-400 active:scale-95 transition text-white text-xs font-black rounded-xl tracking-widest uppercase text-center shadow-lg shadow-fuchsia-600/10">
+                                    进入当前版本战场 <i class="fa-solid fa-rocket ml-1"></i>
+                                </a>
+                                <a id="manualBtn" href="game_manual.html" class="px-5 py-3 border border-white/10 hover:border-cyan-500/30 text-gray-300 hover:text-cyan-400 text-xs font-black rounded-xl tracking-wider uppercase active:scale-95 text-center transition flex items-center justify-center gap-1.5 bg-white/5">
+                                    <i class="fa-solid fa-book"></i> 战略说明
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. 时间线宏大展示 (Visual Timeline Timeline) -->
+        <section class="mt-24 space-y-12">
+            <div class="text-center max-w-xl mx-auto">
+                <h2 class="text-xs font-black text-fuchsia-500 uppercase tracking-widest mb-2">TIMELINE</h2>
+                <h3 class="text-2xl font-black text-white uppercase tracking-wider">星海战纪•宇宙物理演变进程</h3>
+                <p class="text-[11px] text-gray-400 mt-2 leading-relaxed">
+                    纵览《星海猎手》在不断迭代中进化的重大版本树。每一次跃迁，皆标志着游戏底层代码、性能架构及核心玩法的全面颠覆。
+                </p>
+            </div>
+
+            <!-- 时间轴容器 -->
+            <div class="relative max-w-4xl mx-auto px-4">
+                
+                <!-- 贯穿线 -->
+                <div class="absolute left-8 md:left-1/2 md:-translate-x-1/2 top-4 bottom-4 w-1 timeline-line rounded-full opacity-60"></div>
+
+                <!-- Timeline Item 1 (V1) -->
+                <div class="relative flex flex-col md:flex-row md:justify-between items-start md:items-center mb-12">
+                    <div class="absolute left-6 md:left-1/2 md:-translate-x-1/2 w-5 h-5 rounded-full bg-purple-600 border-4 border-gray-950 z-10 flex items-center justify-center shadow-md shadow-purple-600/40"></div>
+                    
+                    <div class="w-full md:w-[45%] pl-16 md:pl-0 md:text-right md:pr-10">
+                        <div class="chrono-glass-card rounded-2xl p-5 border border-white/5">
+                            <span class="text-[9px] font-black text-purple-400 uppercase tracking-widest">V1 • 初始纪元</span>
+                            <h4 class="text-sm font-black text-white mt-1">《重金属街机时代》</h4>
+                            <p class="text-[10px] text-gray-400 mt-2 leading-relaxed">
+                                奠定流畅流畅的2D物理飞行沙盒，提供高频基础激光打击，支持太空陨石击破、霓虹火花爆碎以及收集废料的基本车间升级循环。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="hidden md:block w-[45%]"></div>
+                </div>
+
+                <!-- Timeline Item 2 (V2) -->
+                <div class="relative flex flex-col md:flex-row md:justify-between items-start md:items-center mb-12">
+                    <div class="absolute left-6 md:left-1/2 md:-translate-x-1/2 w-5 h-5 rounded-full bg-cyan-600 border-4 border-gray-950 z-10 flex items-center justify-center shadow-md shadow-cyan-600/40"></div>
+                    
+                    <div class="hidden md:block w-[45%]"></div>
+                    <div class="w-full md:w-[45%] pl-16 md:pl-10">
+                        <div class="chrono-glass-card rounded-2xl p-5 border border-white/5">
+                            <span class="text-[9px] font-black text-cyan-400 uppercase tracking-widest">V2 • 引力坍缩</span>
+                            <h4 class="text-sm font-black text-white mt-1">《黑洞视界与陨石分裂》</h4>
+                            <p class="text-[10px] text-gray-400 mt-2 leading-relaxed">
+                                引力计算接入！局内随机生成时空黑洞吸收一切子弹和陨石。增加高速流星及“分裂型”重型陨石，视觉重构引入高发光霓虹边缘。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Item 3 (V3) -->
+                <div class="relative flex flex-col md:flex-row md:justify-between items-start md:items-center mb-12">
+                    <div class="absolute left-6 md:left-1/2 md:-translate-x-1/2 w-5 h-5 rounded-full bg-blue-600 border-4 border-gray-950 z-10 flex items-center justify-center shadow-md shadow-blue-600/40"></div>
+                    
+                    <div class="w-full md:w-[45%] pl-16 md:pl-0 md:text-right md:pr-10">
+                        <div class="chrono-glass-card rounded-2xl p-5 border border-white/5">
+                            <span class="text-[9px] font-black text-blue-400 uppercase tracking-widest">V3 • 晶核聚变</span>
+                            <h4 class="text-sm font-black text-white mt-1">《元素共鸣与融合主炮》</h4>
+                            <p class="text-[10px] text-gray-400 mt-2 leading-relaxed">
+                                4 大局内可拾取晶核（电磁 EM、冰结 Frost、熔岩 Fire、辐射 Rad）以及双卡槽，融合成 10 大毁天灭地的高级攻击链条，包含极具视觉冲击力的链式雷暴及冰风暴。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="hidden md:block w-[45%]"></div>
+                </div>
+
+                <!-- Timeline Item 4 (V4) -->
+                <div class="relative flex flex-col md:flex-row md:justify-between items-start md:items-center mb-12">
+                    <div class="absolute left-6 md:left-1/2 md:-translate-x-1/2 w-5 h-5 rounded-full bg-violet-600 border-4 border-gray-950 z-10 flex items-center justify-center shadow-md shadow-violet-600/40"></div>
+                    
+                    <div class="hidden md:block w-[45%]"></div>
+                    <div class="w-full md:w-[45%] pl-16 md:pl-10">
+                        <div class="chrono-glass-card rounded-2xl p-5 border border-white/5">
+                            <span class="text-[9px] font-black text-violet-400 uppercase tracking-widest">V4 • 僚机协同</span>
+                            <h4 class="text-sm font-black text-white mt-1">《无尽裂变与星云巨神兵》</h4>
+                            <p class="text-[10px] text-gray-400 mt-2 leading-relaxed">
+                                智能伴飞僚机在车间开放解锁，共享主机元素，支持多部位破坏的 Nebula Titan 巨舰 Boss 战，玩家甚至能驾驶战机擦边白洞斥力实现引力弹弓极限加速。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Item 5 (V5) -->
+                <div class="relative flex flex-col md:flex-row md:justify-between items-start md:items-center mb-12">
+                    <div class="absolute left-6 md:left-1/2 md:-translate-x-1/2 w-5 h-5 rounded-full bg-amber-600 border-4 border-gray-950 z-10 flex items-center justify-center shadow-md shadow-amber-600/40"></div>
+                    
+                    <div class="w-full md:w-[45%] pl-16 md:pl-0 md:text-right md:pr-10">
+                        <div class="chrono-glass-card rounded-2xl p-5 border border-white/5">
+                            <span class="text-[9px] font-black text-amber-400 uppercase tracking-widest">V5 • 极致超频</span>
+                            <h4 class="text-sm font-black text-white mt-1">《0-GC性能重构与跑分压力测试》</h4>
+                            <p class="text-[10px] text-gray-400 mt-2 leading-relaxed">
+                                全面拆分解耦 2700 行巨无霸代码为 6 大子系统，实装 Benchmark 超载压力跑分机制和 0-GC 极速 Overlay HUD，保障同屏上千发弹幕以 120Hz 极限物理吞吐不产生任何 GC 卡顿。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="hidden md:block w-[45%]"></div>
+                </div>
+
+                <!-- Timeline Item 6 (V6) -->
+                <div class="relative flex flex-col md:flex-row md:justify-between items-start md:items-center">
+                    <div class="absolute left-6 md:left-1/2 md:-translate-x-1/2 w-5 h-5 rounded-full bg-fuchsia-600 border-4 border-gray-950 z-10 flex items-center justify-center shadow-md shadow-fuchsia-600/40 timeline-pulse"></div>
+                    
+                    <div class="hidden md:block w-[45%]"></div>
+                    <div class="w-full md:w-[45%] pl-16 md:pl-10">
+                        <div class="chrono-glass-card rounded-2xl p-5 border border-fuchsia-500/30">
+                            <span class="text-[9px] font-black text-fuchsia-400 uppercase tracking-widest">V6 • 星能跃迁 (ACTIVE)</span>
+                            <h4 class="text-sm font-black text-white mt-1">《星能跃迁与超维涂装》</h4>
+                            <p class="text-[10px] text-gray-400 mt-2 leading-relaxed">
+                                超空间折跃极速双端物理结算，新增裂变吞噬的星体蠕虫 Boss，以及星渊幻影、超维雷霆、帝皇余晖三套发光矢量皮肤，支持本地 localStorage 零跨域完美运行。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- 4. 战区时空裂隙快速导航 -->
+        <section class="mt-24">
+            <div class="chrono-glass-card rounded-3xl p-8 border border-cyan-500/20 bg-gradient-to-br from-cyan-950/10 via-gray-950/40 to-purple-950/10">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                    <div class="md:col-span-2 space-y-3">
+                        <span class="px-2.5 py-1 bg-cyan-500/10 border border-cyan-500/30 rounded-full text-[9px] font-black text-cyan-400 uppercase tracking-widest inline-flex items-center gap-1.5"><i class="fa-solid fa-share-nodes animate-pulse"></i> Deep Space Node Router</span>
+                        <h3 class="text-2xl font-black text-white uppercase tracking-wider">量子星网：深空战备快速导航</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed">
+                            你可以随时接入我们设立在不同星系维度的子战术节点。直接前往机舱改装、审阅深空战役计划或浏览发布会概念设计。
+                        </p>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <a href="space_shooter.html" class="py-3 px-4 bg-gray-950 border border-cyan-500/30 hover:border-cyan-400 text-xs font-black rounded-xl text-cyan-400 active:scale-95 text-center transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-gamepad animate-pulse"></i> 开启 V6 飞行战斗终端
+                        </a>
+                        <div class="grid grid-cols-3 gap-2">
+                            <a href="v5_roadmap.html" class="py-3 px-1 bg-gray-950/50 border border-white/5 hover:border-purple-500/30 text-[9px] font-black rounded-xl text-gray-300 active:scale-95 text-center transition flex flex-col items-center justify-center gap-1">
+                                <i class="fa-solid fa-circle-nodes text-purple-400"></i> V5路线图
+                            </a>
+                            <a href="v6_hangar.html" class="py-3 px-1 bg-gray-950/50 border border-white/5 hover:border-amber-500/30 text-[9px] font-black rounded-xl text-gray-300 active:scale-95 text-center transition flex flex-col items-center justify-center gap-1">
+                                <i class="fa-solid fa-screwdriver-wrench text-amber-500 animate-pulse"></i> 先遣演练
+                            </a>
+                            <a href="v6_roadmap.html" class="py-3 px-1 bg-gray-950/50 border border-white/5 hover:border-fuchsia-500/30 text-[9px] font-black rounded-xl text-gray-300 active:scale-95 text-center transition flex flex-col items-center justify-center gap-1">
+                                <i class="fa-solid fa-wand-magic-sparkles text-fuchsia-400 animate-pulse"></i> V6星能折跃指南
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="w-full text-center border-t border-white/5 pt-12 mt-24 text-[10px] text-gray-500 tracking-wider">
+        <p>© 2246 STARSEA HUNTER QUANTUM CHRONICLE DATABASE. ALL RIGHTS RESERVED.</p>
+        <p class="mt-2 text-cyan-500/50 uppercase font-semibold">星际猎手超时空档案馆系统 v6.0.4</p>
+    </footer>
+
+    <!-- 交互时空数据库脚本 -->
+    <script>
+        const versions = {
+            1: {
+                badge: 'V1 CORE ARCADE',
+                badgeColor: 'bg-purple-500/10 border-purple-500/30 text-purple-400',
+                title: '星海猎手 V1：重金属空战起航纪元',
+                desc: '在原生 Canvas 物理底盘上构建的最初宇宙飞船街机作品。实装流畅的2D战机拖动惯性力场、基本陨石物理击碎破坏及霓虹发光火焰；并且在最初的整备改装车间里，玩家可以使用打碎陨石掉落的合金废料来改装战机引擎，获得了初代深空玩家的广泛热捧。',
+                tech: 'Native Canvas 2D Render & Linear Physics Sandbox',
+                gc: 'Basic Particle Pre-Allocation Index Pool',
+                icon: '<i class="fa-solid fa-rocket"></i>',
+                label: '🌌 Core Ship Engine Initialized',
+                address: 'TRANS-ADDR: 0x1A2B3C'
+            },
+            2: {
+                badge: 'V2 GRAVITY COLLAPSE',
+                badgeColor: 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400',
+                title: '星海猎手 V2：时空坍缩与分裂巨陨',
+                desc: '二代版本引入了深空首个高负荷物理引力力场！局内将随机刷出“引力黑洞”，强力吞噬拉扯陨石、子弹及玩家战机，并根据吃掉的陨石重量暴涨体积最终爆裂。加入体积庞大、爆裂后分裂成两个子实体的“分裂型陨石”，视觉上加入了首套发光矢量霓虹特效。',
+                tech: 'Gravitational Pull Fields & Splitting Physics Sandbox',
+                gc: 'Meteor & Bullet Recycled Array Management',
+                icon: '<i class="fa-solid fa-circle-notch animate-spin-slow"></i>',
+                label: '🌀 Gravitational Core Grid Online',
+                address: 'TRANS-ADDR: 0x4D5E6F'
+            },
+            3: {
+                badge: 'V3 FUSION SYNERGY',
+                badgeColor: 'bg-blue-500/10 border-blue-500/30 text-blue-400',
+                title: '星海猎手 V3：晶核聚变与融合十重主炮',
+                desc: '三代重磅实装了“晶核搭载系统”。战机拥有左/右双晶核卡槽，局内可以拾取电磁 EM、冰结 Frost、熔岩 Fire、辐射 Rad 四大晶核，装载后自动根据左+右触发 10 种组合级全屏共鸣大招（如雷霆聚变链式炮、坍缩黑洞星云爆、升华火山风暴等），将战斗爽感推上极致。',
+                tech: 'Prototype-Chain Element Weapons Synergy Injector',
+                gc: 'Zero dynamic closure creation on bullet tick',
+                icon: '<i class="fa-solid fa-flask-ripple"></i>',
+                label: '🧬 Core Synergy Reactor Active',
+                address: 'TRANS-ADDR: 0x7A8B9C'
+            },
+            4: {
+                badge: 'V4 WINGMAN AWAKENING',
+                badgeColor: 'bg-violet-500/10 border-violet-500/30 text-violet-400',
+                title: '星海猎手 V4：无尽裂变与星云巨神兵',
+                desc: '四代引入了“智能伴飞僚机”改装升级！在车间解锁后最多可以召唤 2 架僚机协同伴飞，完美复制主机搭载的晶核技能。在 Wave 3 中实装可分部位破坏的 Nebula Titan 巨神兵 Boss，并允许战机擦边白洞斥力实现引力弹弓弹射，开启了大招乱舞的无尽割草时代。',
+                tech: 'Dual-Drone Element Transmit & Giant Boss Destruct-State',
+                gc: 'Recycled Wingman Shot Buffers Pool',
+                icon: '<i class="fa-solid fa-users-gear animate-bounce"></i>',
+                label: '🛸 Drone Coordinator Uplink Est.',
+                address: 'TRANS-ADDR: 0xC1D2E3'
+            },
+            5: {
+                badge: 'V5 ENGINE REFACTOR',
+                badgeColor: 'bg-amber-500/10 border-amber-500/30 text-amber-400',
+                title: '星海猎手 V5：引擎极致解耦与超频跑分',
+                desc: '五代重构了庞大沉重的 engine.js，彻底解耦为 base、physics、entities、boss、renderer、hangar 6 大内聚模块，解决了 file:// 本地运行跨域痛点。内置 8 秒极客超频 Benchmark 跑分压力测试，以及防御 GC 碎屑抖动的 0-GC 极速 Overlay HUD 监测层，FPS 稳定冲上 120Hz！',
+                tech: 'Modular Prototype Injection & Benchmark Engine Engine',
+                gc: '100% 0-GC loop filter & Pre-Allocated Arrays Object Pools',
+                icon: '<i class="fa-solid fa-bolt text-yellow-400 animate-pulse"></i>',
+                label: '⚡ 0-GC Superclock Overdrive Active',
+                address: 'TRANS-ADDR: 0xE4F5A6'
+            },
+            6: {
+                badge: 'V6 WARP ACTIVE',
+                badgeColor: 'bg-fuchsia-500/10 border-fuchsia-500/30 text-fuchsia-400',
+                title: '星海猎手 V6：星能跃迁与超维涂装 (当前版本)',
+                desc: '最新的 V6 版本为玩家装备了空间折跃核心，双击 Canvas 或键盘 Shift 瞬移并造成两端维度破碎及量子轰鸣物理结算；加入吞星增长、断裂分裂的巨型星体吞噬蠕虫 Boss；实装星渊幻影、超维雷霆、帝皇余晖三套矢量超维发光涂装与定制盾，打造最吸睛炸裂的太空盛宴！',
+                tech: 'Inverse-Kinematics Chain LERP & FM Warping Wave Synth',
+                gc: 'Cosmic particle decay index recycling & localStorage archive',
+                icon: '<i class="fa-solid fa-wand-magic-sparkles text-fuchsia-400"></i>',
+                label: '🌌 Vector Cosmic Skins & Warp Cores Ready',
+                address: 'TRANS-ADDR: 0x8F9C4B'
+            }
+        };
+
+        let activeCtx = null;
+
+        function playSynthBeep(freq, type = 'sine', duration = 0.1, delay = 0) {
+            try {
+                if (!activeCtx) {
+                    activeCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (activeCtx.state === 'suspended') {
+                    activeCtx.resume();
+                }
+                const now = activeCtx.currentTime + delay;
+                const osc = activeCtx.createOscillator();
+                const gainNode = activeCtx.createGain();
+                
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, now);
+                
+                if (type === 'sawtooth' || type === 'square') {
+                    gainNode.gain.setValueAtTime(0.02, now);
+                } else {
+                    gainNode.gain.setValueAtTime(0.08, now);
+                }
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+                
+                osc.connect(gainNode);
+                gainNode.connect(activeCtx.destination);
+                
+                osc.start(now);
+                osc.stop(now + duration + 0.05);
+            } catch (e) {
+                console.log("Web Audio not allowed or failed to init", e);
+            }
+        }
+
+        function selectVersion(vNum) {
+            // Play futuristic chime
+            playSynthBeep(440 + vNum * 110, 'sine', 0.15);
+            playSynthBeep(880 + vNum * 50, 'triangle', 0.1, 0.05);
+
+            // Change active tab
+            for (let i = 1; i <= 6; i++) {
+                const btn = document.getElementById(`tab-v${i}`);
+                if (btn) {
+                    if (i === vNum) {
+                        btn.classList.add('ver-tab-active');
+                    } else {
+                        btn.classList.remove('ver-tab-active');
+                    }
+                }
+            }
+
+            const data = versions[vNum];
+            if (!data) return;
+
+            // Fade animation trigger
+            const verTitle = document.getElementById('verTitle');
+            const verDesc = document.getElementById('verDesc');
+            const verBadge = document.getElementById('verBadge');
+            const verTech = document.getElementById('verTech');
+            const verGC = document.getElementById('verGC');
+            const holoIcon = document.getElementById('holoIcon');
+            const holoLabel = document.getElementById('holoLabel');
+            const holoAddress = document.getElementById('holoAddress');
+
+            // Apply fading classes
+            const elementsToAnimate = [verTitle, verDesc, verBadge, verTech, verGC, holoIcon, holoLabel, holoAddress];
+            elementsToAnimate.forEach(el => {
+                if (el) {
+                    el.style.opacity = '0.3';
+                    el.style.transform = 'scale(0.98)';
+                    el.style.transition = 'all 0.15s ease-out';
+                }
+            });
+
+            setTimeout(() => {
+                verTitle.innerText = data.title;
+                verDesc.innerText = data.desc;
+                verBadge.innerText = data.badge;
+                verBadge.className = `px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest ${data.badgeColor}`;
+                verTech.innerText = data.tech;
+                verGC.innerText = data.gc;
+                holoIcon.innerHTML = data.icon;
+                holoLabel.innerText = data.label;
+                holoAddress.innerText = data.address;
+
+                elementsToAnimate.forEach(el => {
+                    if (el) {
+                        el.style.opacity = '1';
+                        el.style.transform = 'scale(1)';
+                    }
+                });
+            }, 150);
+        }
+
+        // Initialize with V6 on load
+        window.addEventListener('load', () => {
+            selectVersion(6);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>《星海猎手 V6：星能跃迁与超维涂装》官方指南</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Noto+Sans+SC:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #020205;
+            color: #e2e8f0;
+            font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* 极度酷炫的量子时空极光背景 */
+        .v6-space-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: 
+                radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 20% 80%, rgba(6, 182, 212, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.03) 0%, transparent 50%),
+                #020205;
+            z-index: -2;
+        }
+
+        /* 太空星空尘埃流动效果 */
+        .v6-dust {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 200%;
+            background-image: 
+                radial-gradient(1px 1px at 30px 40px, #ffffff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 150px 150px, rgba(168, 85, 247, 0.6), rgba(0,0,0,0)),
+                radial-gradient(1.5px 1.5px at 280px 320px, rgba(6, 182, 212, 0.5), rgba(0,0,0,0)),
+                radial-gradient(2.5px 2.5px at 450px 80px, rgba(236, 72, 153, 0.6), rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 600px 600px;
+            animation: panDust 100s linear infinite;
+            opacity: 0.35;
+            z-index: -1;
+        }
+
+        @keyframes panDust {
+            from { transform: translate(0, 0); }
+            to { transform: translate(-300px, -300px); }
+        }
+
+        /* 磨砂霓虹玻璃卡片 */
+        .v6-glass-card {
+            background: rgba(8, 10, 20, 0.65);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.5);
+            transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .v6-glass-card:hover {
+            border-color: rgba(168, 85, 247, 0.3);
+            box-shadow: 0 15px 50px 0 rgba(168, 85, 247, 0.1);
+            transform: translateY(-4px);
+        }
+
+        .neon-border-purple {
+            border-color: rgba(168, 85, 247, 0.45);
+            box-shadow: 0 0 25px rgba(168, 85, 247, 0.15);
+        }
+
+        .neon-text-purple {
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.6), 0 0 25px rgba(168, 85, 247, 0.2);
+        }
+
+        .neon-text-cyan {
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.6), 0 0 25px rgba(6, 182, 212, 0.2);
+        }
+
+        .neon-text-gold {
+            text-shadow: 0 0 10px rgba(245, 158, 11, 0.6), 0 0 25px rgba(245, 158, 11, 0.2);
+        }
+
+        /* 旋转的雷达星网 */
+        .tech-radar {
+            animation: spinRadar 35s linear infinite;
+        }
+
+        @keyframes spinRadar {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* 雷达扫描线 */
+        .scanner-line {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scanner-line::after {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to bottom, transparent, #a855f7, transparent);
+            animation: scanLine 4s infinite linear;
+            opacity: 0.5;
+        }
+
+        @keyframes scanLine {
+            0% { top: -10%; }
+            50% { top: 110%; }
+            100% { top: -10%; }
+        }
+
+        /* 先驱密钥编译扫光 */
+        .warp-scan {
+            position: relative;
+            overflow: hidden;
+        }
+        .warp-scan::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(to right, transparent, #e9d5ff, transparent);
+            animation: panWarpScan 3s infinite linear;
+        }
+        @keyframes panWarpScan {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        /* 闪烁圆点 */
+        .timeline-pulse {
+            animation: pulseCircle 2s infinite;
+        }
+
+        @keyframes pulseCircle {
+            0% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(168, 85, 247, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen relative pb-24">
+
+    <!-- 背景尘埃与时空极光 -->
+    <div class="v6-space-bg"></div>
+    <div class="v6-dust"></div>
+
+    <!-- 顶栏导航 -->
+    <nav class="sticky top-0 w-full z-50 v6-glass-card border-t-0 border-x-0 bg-gray-950/70 backdrop-blur-md px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-fuchsia-600 via-purple-600 to-cyan-500 flex items-center justify-center text-white text-lg font-black shadow-lg shadow-fuchsia-500/25">
+                <i class="fa-solid fa-wand-magic-sparkles animate-pulse"></i>
+            </div>
+            <div>
+                <span class="text-base font-black tracking-wider text-white neon-text-purple">星海猎手 V6</span>
+                <span class="text-[9px] text-fuchsia-400 font-bold block uppercase tracking-widest -mt-1">Warp Reveal</span>
+            </div>
+        </div>
+        <div class="hidden lg:flex items-center gap-6 text-xs font-black tracking-widest uppercase text-gray-400">
+            <a href="space_shooter.html" class="hover:text-fuchsia-400 transition flex items-center gap-1"><i class="fa-solid fa-gamepad"></i> 战斗终端</a>
+            <a href="game_manual.html" class="hover:text-fuchsia-400 transition flex items-center gap-1"><i class="fa-solid fa-book"></i> 战略说明</a>
+            <a href="version_history.html" class="hover:text-fuchsia-400 transition flex items-center gap-1"><i class="fa-solid fa-clock-rotate-left"></i> 超时空编年史</a>
+            <a href="v6_hangar.html" class="hover:text-fuchsia-400 transition flex items-center gap-1"><i class="fa-solid fa-screwdriver-wrench"></i> 先遣改装</a>
+            <a href="v5_roadmap.html" class="hover:text-fuchsia-400 transition flex items-center gap-1"><i class="fa-solid fa-circle-nodes"></i> V5概念发布</a>
+        </div>
+        <a href="space_shooter.html" class="px-4 py-2 bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-500 hover:from-fuchsia-500 hover:to-cyan-400 transition text-white text-xs font-black rounded-xl tracking-widest uppercase active:scale-95 shadow-md shadow-fuchsia-600/10">
+            启动折跃终端 <i class="fa-solid fa-play ml-1.5 animate-pulse"></i>
+        </a>
+    </nav>
+
+    <!-- 主容器 -->
+    <main class="max-w-6xl mx-auto px-4 mt-16 space-y-24 relative">
+
+        <!-- 装饰旋转星盘 -->
+        <div class="absolute -right-28 top-0 w-96 h-96 border border-white/5 rounded-full pointer-events-none flex items-center justify-center opacity-25">
+            <div class="w-80 h-80 border border-dashed border-purple-500/10 rounded-full tech-radar flex items-center justify-center">
+                <div class="w-1 h-36 bg-gradient-to-t from-fuchsia-500/30 to-transparent origin-bottom -mt-36"></div>
+            </div>
+        </div>
+
+        <!-- 1. 巨幕先导发布会 Banner -->
+        <section class="text-center space-y-6 max-w-3xl mx-auto relative z-10">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-fuchsia-500/10 border border-fuchsia-500/30 rounded-full text-[10px] font-black text-fuchsia-400 uppercase tracking-widest animate-bounce">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> NEXT-GEN COSMIC SHIFT
+            </div>
+            
+            <h1 class="text-5xl md:text-7xl font-black tracking-tight leading-none text-white">
+                星海猎手 V6 <br>
+                <span class="text-3xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-purple-400 to-cyan-400 font-extrabold block mt-3">
+                    星能跃迁 与 超维涂装
+                </span>
+            </h1>
+            
+            <p class="text-xs md:text-sm text-gray-400 leading-relaxed max-w-xl mx-auto">
+                《星海猎手 V6》全新版本正式登场。本次更新实装了革命性的<strong>「空间折跃引擎」</strong>、<strong>「动态矢量发光船体」</strong>以及<strong>「断裂裂变式星体蠕虫」</strong>，为玩家划定深空战术的终极版图。
+            </p>
+
+            <div class="flex flex-wrap justify-center gap-4 pt-4">
+                <a href="#compiler" class="px-6 py-3.5 bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-500 hover:from-fuchsia-500 hover:to-cyan-400 active:scale-95 transition text-white text-xs font-black rounded-2xl tracking-widest uppercase shadow-lg shadow-fuchsia-600/25">
+                    锁定 V6 折跃通行证 <i class="fa-solid fa-plane-arrival ml-1.5"></i>
+                </a>
+                <a href="#features" class="px-6 py-3.5 v6-glass-card hover:border-fuchsia-500/40 text-gray-300 text-xs font-black rounded-2xl tracking-widest uppercase active:scale-95">
+                    解密三大星能革新 <i class="fa-solid fa-circle-nodes ml-1.5"></i>
+                </a>
+            </div>
+        </section>
+
+        <!-- 2. 三大核心炸裂更新 -->
+        <section id="features" class="space-y-12 scroll-mt-28">
+            <div class="text-center">
+                <h2 class="text-xs font-black text-fuchsia-400 uppercase tracking-widest mb-2">UPGRADES</h2>
+                <h3 class="text-2xl font-black text-white uppercase tracking-wider">三大终极深空迭代</h3>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Skins Upgrade -->
+                <div class="v6-glass-card rounded-3xl p-6 border border-white/5 flex flex-col justify-between">
+                    <div class="space-y-4">
+                        <div class="w-12 h-12 rounded-2xl bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center text-fuchsia-400 text-xl shrink-0"><i class="fa-solid fa-brush"></i></div>
+                        <div class="space-y-2">
+                            <span class="text-sm font-black text-white block">🎨 霓虹超维动态皮肤系统</span>
+                            <p class="text-[11px] text-gray-400 leading-relaxed">
+                                基于 Canvas 实时数学渲染的“超拟真矢量涂装”。三款发光微型外饰：**「星渊幻影」**拥有双螺旋紫光尾焰；**「超维雷霆」**搭载黄色闪电电弧防护罩；**「帝皇余晖」**具有恒星耀斑耀斑粒子，拾取合金废料磁吸提高并显示金色暴击字样。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-white/5 flex justify-between items-center text-[10px] font-mono text-fuchsia-400 font-bold">
+                        <span>COSMIC SKINS SYSTEM</span>
+                        <span>0-GC RENDERING</span>
+                    </div>
+                </div>
+
+                <!-- Warp Upgrade -->
+                <div class="v6-glass-card rounded-3xl p-6 border border-white/5 flex flex-col justify-between">
+                    <div class="space-y-4">
+                        <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 text-xl shrink-0"><i class="fa-solid fa-gauge-high"></i></div>
+                        <div class="space-y-2">
+                            <span class="text-sm font-black text-white block">🌀 战术超空间量子折跃</span>
+                            <p class="text-[11px] text-gray-400 leading-relaxed">
+                                键盘 `[Shift]` 键或双击 Canvas 实现瞬间折跃移位！折跃起点触发**「维度破裂」**向内坍缩吸附并碎裂流星（伤害25）；折跃终点引发**「量子轰鸣」**排斥涟漪震飞流星（伤害40），配备 3 秒 Warp HUD 能量冷却条。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-white/5 flex justify-between items-center text-[10px] font-mono text-cyan-400 font-bold">
+                        <span>TACTICAL WARP ENG.</span>
+                        <span>COOL DOWN: 3S</span>
+                    </div>
+                </div>
+
+                <!-- Boss Leviathan Worm Upgrade -->
+                <div class="v6-glass-card rounded-3xl p-6 border border-white/5 flex flex-col justify-between">
+                    <div class="space-y-4">
+                        <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 text-xl shrink-0"><i class="fa-solid fa-dragon"></i></div>
+                        <div class="space-y-2">
+                            <span class="text-sm font-black text-white block">🐉 虚空裂变：星体吞噬蠕虫</span>
+                            <p class="text-[11px] text-gray-400 leading-relaxed">
+                                关底超级蜈蚣巨虫 Boss！10个通过 32px 阻尼插值（Chain LERP）蛇形盘旋的发光结晶关节；头部吞流星会使身躯变长并回血；击碎中间部位触发**「断裂裂变」**，断成两条速度暴增 1.25 倍、血量独立的子蠕虫！
+                            </p>
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-white/5 flex justify-between items-center text-[10px] font-mono text-purple-400 font-bold">
+                        <span>LEVIATHAN MEGASTRUCTURE</span>
+                        <span>SEGMENT-FISSION</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. 三大皮肤对比 -->
+        <section class="space-y-8">
+            <div class="text-center">
+                <h2 class="text-xs font-black text-purple-400 uppercase tracking-widest mb-2">SKINS PREVIEW</h2>
+                <h3 class="text-2xl font-black text-white uppercase tracking-wider">V6 超维机体动态皮肤陈列</h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Skin 1 -->
+                <div class="v6-glass-card rounded-2xl p-5 border border-white/5 text-center space-y-4">
+                    <div class="w-20 h-20 rounded-full border border-fuchsia-500/20 bg-fuchsia-500/5 flex items-center justify-center mx-auto shadow-lg shadow-fuchsia-500/5">
+                        <i class="fa-solid fa-ghost text-3xl text-fuchsia-400"></i>
+                    </div>
+                    <div>
+                        <span class="px-2 py-0.5 bg-fuchsia-500/10 border border-fuchsia-500/30 rounded text-[9px] font-black text-fuchsia-400 uppercase tracking-widest">🌌 Void Phantom</span>
+                        <h4 class="text-sm font-black text-white mt-2">星渊幻影（Synthwave魅粉紫）</h4>
+                        <p class="text-[10px] text-gray-400 mt-2 leading-relaxed">
+                            双螺旋紫色等离子粒子尾流。释放高能大招时激荡起震撼的渐变魅紫重力海啸波。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Skin 2 -->
+                <div class="v6-glass-card rounded-2xl p-5 border border-white/5 text-center space-y-4">
+                    <div class="w-20 h-20 rounded-full border border-cyan-500/20 bg-cyan-500/5 flex items-center justify-center mx-auto shadow-lg shadow-cyan-500/5">
+                        <i class="fa-solid fa-bolt text-3xl text-cyan-400 animate-pulse"></i>
+                    </div>
+                    <div>
+                        <span class="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/30 rounded text-[9px] font-black text-cyan-400 uppercase tracking-widest">⚡ Dimension Thunder</span>
+                        <h4 class="text-sm font-black text-white mt-2">超维雷霆（锯齿雷暴青蓝）</h4>
+                        <p class="text-[10px] text-gray-400 mt-2 leading-relaxed">
+                            动态雷击电弧护甲，锯齿雷暴尾喷。僚机技能雷霆连击电链连锁范围扩大 30%。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Skin 3 -->
+                <div class="v6-glass-card rounded-2xl p-5 border border-white/5 text-center space-y-4">
+                    <div class="w-20 h-20 rounded-full border border-amber-500/20 bg-amber-500/5 flex items-center justify-center mx-auto shadow-lg shadow-amber-500/5">
+                        <i class="fa-solid fa-crown text-3xl text-amber-400"></i>
+                    </div>
+                    <div>
+                        <span class="px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 rounded text-[9px] font-black text-amber-400 uppercase tracking-widest">✨ Imperial Afterglow</span>
+                        <h4 class="text-sm font-black text-white mt-2">帝皇余晖（恒星暗金耀斑）</h4>
+                        <p class="text-[10px] text-gray-400 mt-2 leading-relaxed">
+                            恒星金红耀斑尾喷粒子。废料磁吸范围增加 50px，拾取时弹出华丽的金色暴击浮空字样。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. V6 战术推进里程碑 (Roadmap) -->
+        <section class="space-y-8">
+            <div class="text-center">
+                <h2 class="text-xs font-black text-purple-400 uppercase tracking-widest mb-2">ROADMAP</h2>
+                <h3 class="text-2xl font-black text-white uppercase tracking-wider">V6 星能折跃推进计划</h3>
+            </div>
+
+            <!-- 时间轴 -->
+            <div class="relative pl-6 md:pl-0 border-l border-white/10 md:border-l-0 md:grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                <!-- Step 1 -->
+                <div class="relative md:text-center pb-8 md:pb-0">
+                    <div class="absolute -left-[31px] md:left-1/2 md:-translate-x-1/2 -top-1 w-4 h-4 rounded-full bg-fuchsia-500 border-4 border-gray-950 timeline-pulse"></div>
+                    <div class="md:pt-6">
+                        <span class="text-[10px] font-black text-fuchsia-400 uppercase tracking-widest">PHASE 1 • ACTIVE</span>
+                        <h4 class="text-sm font-black text-white mt-1">「动态超维涂装」实装</h4>
+                        <p class="text-[10px] text-gray-500 mt-2 max-w-xs md:mx-auto">星渊幻影、超维雷霆与帝皇余晖三套实时计算的发光涂装和定制尾焰在改装机舱内完工解锁。</p>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="relative md:text-center pb-8 md:pb-0">
+                    <div class="absolute -left-[31px] md:left-1/2 md:-translate-x-1/2 -top-1 w-4 h-4 rounded-full bg-cyan-500 border-4 border-gray-950 timeline-pulse"></div>
+                    <div class="md:pt-6">
+                        <span class="text-[10px] font-black text-cyan-400 uppercase tracking-widest">PHASE 2 • IN-ENGINE</span>
+                        <h4 class="text-sm font-black text-white mt-1">「空间量子折跃」联调</h4>
+                        <p class="text-[10px] text-gray-500 mt-2 max-w-xs md:mx-auto">双击位置或按 Shift 折跃触发；起点引力坍缩、终点排斥震波物理物理撞击结算，Warp HUD 挂载。</p>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="relative md:text-center">
+                    <div class="absolute -left-[31px] md:left-1/2 md:-translate-x-1/2 -top-1 w-4 h-4 rounded-full bg-purple-500 border-4 border-gray-950 timeline-pulse"></div>
+                    <div class="md:pt-6">
+                        <span class="text-[10px] font-black text-purple-400 uppercase tracking-widest">PHASE 3 • TESTING</span>
+                        <h4 class="text-sm font-black text-white mt-1">「吞噬蠕虫」裂变降临</h4>
+                        <p class="text-[10px] text-gray-500 mt-2 max-w-xs md:mx-auto">多关节阻尼游走与断裂分裂子体算法实装；Wave 3 Boss 终决战封测，开启先驱者内测。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. 互动：编译空间折跃密钥通行证 -->
+        <section id="compiler" class="v6-glass-card rounded-3xl p-8 border border-fuchsia-500/20 bg-gradient-to-br from-fuchsia-950/10 via-gray-950/40 to-cyan-950/10 scroll-mt-28 scanner-line">
+            <div class="text-center max-w-xl mx-auto mb-8">
+                <h2 class="text-xs font-black text-fuchsia-400 uppercase tracking-widest mb-2"><i class="fa-solid fa-fingerprint animate-pulse mr-1"></i> INTERACTIVE COMPILER</h2>
+                <h3 class="text-2xl font-black text-white uppercase tracking-wider">申领您的 V6 超空间折跃先驱者通行证</h3>
+                <p class="text-[11px] text-gray-400 mt-2 leading-relaxed">
+                    输入您的专属战姬呼号，并指定您在 V6 概念战场中所装备的超维动态皮肤及起降折跃星门。量子雷达将实时编译带有**超载折跃时空矩阵密钥**的专属数码证书！
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <!-- 表单输入区 -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] font-black text-fuchsia-400 uppercase tracking-wider block mb-1.5">战姬呼号 (Pilot Callsign)</label>
+                        <input type="text" id="v6Callsign" value="HUNTER-01" class="w-full px-4 py-3 bg-gray-950/80 rounded-xl border border-white/10 text-xs font-bold text-white focus:outline-none focus:border-fuchsia-500 transition" placeholder="例如：VALKYRIE-99">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-fuchsia-400 uppercase tracking-wider block mb-1.5">配备动态矢量皮肤 (Cosmic Skin)</label>
+                        <select id="v6Skin" class="w-full px-4 py-3 bg-gray-950/80 rounded-xl border border-white/10 text-xs font-bold text-gray-300 focus:outline-none focus:border-fuchsia-500 transition">
+                            <option value="Void Phantom" selected>【星渊幻影】 (魅粉紫 DNA 螺旋尾流)</option>
+                            <option value="Dimension Thunder">【超维雷霆】 (锯齿电暴 僚机连锁+30%)</option>
+                            <option value="Imperial Afterglow">【帝皇余晖】 (恒星暗金 废料磁吸+50px)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-fuchsia-400 uppercase tracking-wider block mb-1.5">目标折跃星门 (Warp Singularity)</label>
+                        <select id="v6Singularity" class="w-full px-4 py-3 bg-gray-950/80 rounded-xl border border-white/10 text-xs font-bold text-gray-300 focus:outline-none focus:border-fuchsia-500 transition">
+                            <option value="仙女座视界">【仙女座量子视界】 (Andromeda Horizon)</option>
+                            <option value="猎户座裂隙" selected>【猎户座三维重力裂隙】 (Orion Rupture)</option>
+                            <option value="射手座奇点">【射手座白洞斥力奇点】 (Sagittarius Singularity)</option>
+                        </select>
+                    </div>
+                    <button onclick="compileV6Pass()" class="w-full py-4 bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-500 hover:from-fuchsia-500 hover:to-cyan-400 active:scale-95 transition text-white text-xs font-black rounded-xl tracking-widest uppercase shadow-md shadow-fuchsia-600/10">
+                        编译折跃密钥 • 生成通行证 <i class="fa-solid fa-signature ml-1"></i>
+                    </button>
+                </div>
+
+                <!-- 通行证呈现区 -->
+                <div class="flex justify-center">
+                    <div id="v6PassContainer" class="w-full max-w-[340px] p-6 rounded-3xl bg-black/60 border border-fuchsia-500/20 warp-scan flex flex-col justify-between h-[230px] relative overflow-hidden transition-all duration-300 shadow-xl shadow-fuchsia-500/5">
+                        <!-- Top -->
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-[9px] font-black text-fuchsia-400 tracking-widest block uppercase">WARP FLIGHT LICENSE</span>
+                                <span class="text-[7px] text-gray-500 uppercase block tracking-wider mt-0.5">STARSEA HUNTER V6</span>
+                            </div>
+                            <div class="w-6 h-6 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/30 flex items-center justify-center text-fuchsia-400 text-xs"><i class="fa-solid fa-expand"></i></div>
+                        </div>
+
+                        <!-- Mid -->
+                        <div class="my-4">
+                            <span class="text-[8px] text-gray-500 block uppercase">PILOT CALLSIGN</span>
+                            <span id="v6PassCallsign" class="text-xl font-black text-white tracking-widest neon-text-purple">HUNTER-01</span>
+                            <div class="mt-2 flex flex-wrap gap-1.5">
+                                <span class="px-2 py-0.5 bg-fuchsia-500/10 border border-fuchsia-500/30 rounded text-[7px] font-black text-fuchsia-400 uppercase tracking-widest" id="v6PassSkin">Void Phantom</span>
+                                <span class="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/30 rounded text-[7px] font-black text-cyan-400 uppercase tracking-widest" id="v6PassWarp">猎户座裂隙</span>
+                            </div>
+                        </div>
+
+                        <!-- Bottom -->
+                        <div class="flex justify-between items-end border-t border-white/5 pt-3">
+                            <div>
+                                <span class="text-[7px] text-gray-500 block uppercase">WARP SINGULARITY MATRIX</span>
+                                <span id="v6PassKey" class="text-[9px] font-mono font-bold text-gray-300 tracking-wider">WARP-KEY#A1B2C3</span>
+                            </div>
+                            <span class="text-[9px] font-black text-emerald-400 uppercase tracking-widest animate-pulse"><i class="fa-solid fa-atom"></i> ACTIVE</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="w-full text-center border-t border-white/5 pt-12 mt-24 text-[10px] text-gray-500 tracking-wider">
+        <p>© 2246 STARSEA V6 CHRONO DEVELOPMENT BOARD. ALL RIGHTS RESERVED.</p>
+        <p class="mt-2 text-fuchsia-500/50 uppercase font-semibold">星海猎手 V6 版本特遣整备组</p>
+    </footer>
+
+    <!-- Web Audio & 交互脚本 -->
+    <script>
+        function compileV6Pass() {
+            const callsign = document.getElementById('v6Callsign').value.trim() || 'HUNTER-01';
+            const skinSelect = document.getElementById('v6Skin');
+            const selectedSkin = skinSelect.options[skinSelect.selectedIndex].text.split(' ')[0].replace(/【|】/g, '');
+            const singularitySelect = document.getElementById('v6Singularity');
+            const selectedSingularity = singularitySelect.options[singularitySelect.selectedIndex].text.split(' ')[0].replace(/【|】/g, '');
+            
+            // Web Audio 实时重低音折跃 FM 扫频声效就地合成
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                if (ctx.state === 'suspended') {
+                    ctx.resume();
+                }
+                const now = ctx.currentTime;
+                
+                // Sweep oscillator
+                const osc = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+                
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(600, now);
+                // Heavy FM swept drop from 600Hz down to 80Hz
+                osc.frequency.exponentialRampToValueAtTime(80, now + 0.6);
+                
+                gainNode.gain.setValueAtTime(0.04, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                
+                // Add a bandpass filter to give a deep echoing hollow space sound
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(400, now);
+                filter.frequency.exponentialRampToValueAtTime(150, now + 0.6);
+                filter.Q.setValueAtTime(3, now);
+                
+                osc.connect(filter);
+                filter.connect(gainNode);
+                gainNode.connect(ctx.destination);
+                
+                osc.start(now);
+                osc.stop(now + 0.75);
+                
+                // Echoing chime at the end
+                setTimeout(() => {
+                    const osc2 = ctx.createOscillator();
+                    const gain2 = ctx.createGain();
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(880, ctx.currentTime);
+                    osc2.frequency.setValueAtTime(1320, ctx.currentTime + 0.05);
+                    gain2.gain.setValueAtTime(0.06, ctx.currentTime);
+                    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+                    osc2.connect(gain2);
+                    gain2.connect(ctx.destination);
+                    osc2.start(ctx.currentTime);
+                    osc2.stop(ctx.currentTime + 0.4);
+                }, 450);
+            } catch (e) {
+                console.log("Web Audio blocked or not supported", e);
+            }
+
+            // 产生随机 16 进制时空折跃密钥
+            const hex = '0123456789ABCDEF';
+            let randomWarpKey = 'WARP-KEY#';
+            for (let i = 0; i < 6; i++) {
+                randomWarpKey += hex[Math.floor(Math.random() * 16)];
+            }
+
+            // 渐变编译特效
+            const container = document.getElementById('v6PassContainer');
+            container.style.transform = 'scale(0.95)';
+            container.style.opacity = '0.7';
+
+            setTimeout(() => {
+                document.getElementById('v6PassCallsign').innerText = callsign.toUpperCase();
+                document.getElementById('v6PassSkin').innerText = selectedSkin;
+                document.getElementById('v6PassWarp').innerText = selectedSingularity;
+                document.getElementById('v6PassKey').innerText = randomWarpKey;
+                
+                container.style.transform = 'scale(1)';
+                container.style.opacity = '1';
+                container.style.borderColor = 'rgba(168, 85, 247, 0.6)';
+                container.style.boxShadow = '0 15px 50px rgba(168, 85, 247, 0.2)';
+            }, 300);
+        }
+    </script>
+</body>
+</html>

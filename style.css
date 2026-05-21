@@ -1,0 +1,51 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #02040a;
+    overflow: hidden;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+}
+#canvas-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    max-width: 540px; 
+    margin: 0 auto;
+    background: radial-gradient(circle at center, #09101f 0%, #02040a 100%);
+    box-shadow: 0 0 50px rgba(6, 182, 212, 0.2);
+}
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+.glass-panel {
+    background: rgba(10, 17, 34, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.neon-text-cyan {
+    text-shadow: 0 0 10px rgba(6, 182, 212, 0.7), 0 0 20px rgba(6, 182, 212, 0.3);
+}
+.neon-text-emerald {
+    text-shadow: 0 0 10px rgba(16, 185, 129, 0.7), 0 0 20px rgba(16, 185, 129, 0.3);
+}
+.neon-text-rose {
+    text-shadow: 0 0 10px rgba(244, 63, 94, 0.7), 0 0 20px rgba(244, 63, 94, 0.3);
+}
+.neon-border-cyan {
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.25);
+    border-color: rgba(6, 182, 212, 0.4);
+}
+.weapon-tag {
+    animation: pulse-border 2s infinite;
+}
+@keyframes pulse-border {
+    0% { border-color: rgba(6, 182, 212, 0.3); }
+    50% { border-color: rgba(6, 182, 212, 0.8); }
+    100% { border-color: rgba(6, 182, 212, 0.3); }
+}
