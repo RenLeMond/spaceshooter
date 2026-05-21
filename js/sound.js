@@ -2,6 +2,7 @@ class SoundFX {
     constructor() {
         this.ctx = null;
         this.muted = false;
+        this.lastPlayTime = {};
     }
 
     init() {
@@ -22,6 +23,9 @@ class SoundFX {
         if (this.muted) return;
         this.init();
         const now = this.ctx.currentTime;
+        if (now - (this.lastPlayTime['shoot'] || 0) < 0.05) return;
+        this.lastPlayTime['shoot'] = now;
+
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         
@@ -42,6 +46,9 @@ class SoundFX {
         if (this.muted) return;
         this.init();
         const now = this.ctx.currentTime;
+        if (now - (this.lastPlayTime['hit'] || 0) < 0.04) return;
+        this.lastPlayTime['hit'] = now;
+
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         
@@ -62,6 +69,10 @@ class SoundFX {
         if (this.muted) return;
         this.init();
         const now = this.ctx.currentTime;
+        const key = isLarge ? 'expl_L' : 'expl_S';
+        if (now - (this.lastPlayTime[key] || 0) < 0.06) return;
+        this.lastPlayTime[key] = now;
+
         const duration = isLarge ? 0.4 : 0.25;
         const bufferSize = this.ctx.sampleRate * duration;
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);

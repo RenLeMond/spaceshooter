@@ -21,20 +21,80 @@ class GameEngine {
         this.maxBullets = 200;
         this.maxMeteors = 40;
         this.bullets = Array.from({ length: this.maxBullets }, () => ({ active: false }));
-        this.meteors = Array.from({ length: this.maxMeteors }, () => ({ active: false }));
+        this.maxMeteorPoints = 12; // numPoints 范围 8~11，预留 12
+        this.meteors = Array.from({ length: this.maxMeteors }, () => ({
+            active: false,
+            offsets: new Float32Array(this.maxMeteorPoints)
+        }));
+        this.scratchMeteorOffsets = new Float32Array(this.maxMeteorPoints); // P2: spawnMeteor 复用，避免每次 new Array
         this.wingmen = [];
         this.whiteHole = null;
         this.slingshotTime = 0;
         this.slingshotActivated = false;
-        this.lightningChains = [];
-        this.titanRipples = [];
+        // P2: 0-GC 闭环对象池 — 杜绝 splice 引发的隐式内存重排
+        this.maxLightningChains = 16;
+        this.lightningChainSegs = 4;
+        this.lightningChains = Array.from({ length: this.maxLightningChains }, () => ({
+            active: false,
+            alpha: 0,
+            color: '#fbbf24',
+            segCount: 0,
+            segments: Array.from({ length: this.lightningChainSegs }, () => ({ x1: 0, y1: 0, x2: 0, y2: 0 }))
+        }));
+        this.maxTitanRipples = 16;
+        this.titanRipples = Array.from({ length: this.maxTitanRipples }, () => ({
+            active: false, x: 0, y: 0, radius: 0, maxRadius: 0, alpha: 0, color: null
+        }));
         this.maxParticles = 500;
         this.particleBuffer = new Float32Array(this.maxParticles * 8);
         this.particleColors = new Array(this.maxParticles).fill('');
-        this.powerups = [];
+        this.particleColorIds = new Uint16Array(this.maxParticles);
+        this.particleColorMap = new Map();
+        this.particleColorList = [];
+        this.maxUniqueColors = 64;
+        this.particleGroups = [];
+        for (let i = 0; i < this.maxUniqueColors * 5; i++) {
+            this.particleGroups[i] = {
+                count: 0,
+                indices: new Uint16Array(this.maxParticles)
+            };
+        }
+
+        this.powerupGradients = {};
+        this.wingmanFlameGradients = [];
+        this.blackHoleGradient = null;
+        // P0: 渐变创建延迟到 initGradients() 中，待真实 ctx 就绪后再生成
+        // (Worker 模式下 constructor 期间 ctx 是 mock 空对象，调用 createRadialGradient 会 TypeError)
+        if (this.ctx && typeof this.ctx.createRadialGradient === 'function') {
+            this.initGradients();
+        }
+
+        // P2: 预建 10 档 alpha 量化字符串池 — 用于 lightning/ripple 描边，杜绝每帧拼接
+        this.alphaBuckets = 10;
+        this.lightningGoldByAlpha = new Array(this.alphaBuckets + 1);
+        this.lightningWhiteByAlpha = new Array(this.alphaBuckets + 1);
+        for (let i = 0; i <= this.alphaBuckets; i++) {
+            const a = (i / this.alphaBuckets).toFixed(2);
+            this.lightningGoldByAlpha[i] = `rgba(251, 191, 36, ${a})`;
+            this.lightningWhiteByAlpha[i] = `rgba(255, 255, 255, ${a})`;
+        }
+        // ripple 颜色按 base RGB 串 + alpha bucket 缓存
+        this.rippleStyleCache = new Map();
+
+        // P2: 预建 floatText 字体串缓存 — 按 size 字号 lookup
+        this.floatTextFontCache = new Array(64);
+
+        this.maxPowerups = 32;
+        this.powerups = Array.from({ length: this.maxPowerups }, () => ({
+            active: false, x: 0, y: 0, type: 'scrap', vy: 0, pulse: 0
+        }));
         this.stars = [];
-        this.floatTexts = [];
+        this.maxFloatTexts = 40;
+        this.floatTexts = Array.from({ length: this.maxFloatTexts }, () => ({
+            active: false, x: 0, y: 0, text: '', color: '#ffffff', size: 14, alpha: 0
+        }));
         this.screenshake = 0;
+        this.frameNow = Date.now(); // 由 draw() 每帧刷新，作为渲染中所有时间动画的统一时钟
         
         this.hangar = {
             turretLevel: 0, 
@@ -43,13 +103,19 @@ class GameEngine {
         };
         
         this.currentSkin = localStorage.getItem('space_current_skin') || 'default';
-        this.unlockedSkins = JSON.parse(localStorage.getItem('space_unlocked_skins') || '["default"]');
+        try {
+            this.unlockedSkins = JSON.parse(localStorage.getItem('space_unlocked_skins') || '["default"]');
+            if (!Array.isArray(this.unlockedSkins)) this.unlockedSkins = ['default'];
+        } catch (e) {
+            this.unlockedSkins = ['default'];
+        }
         
         this.bulletSearchIndex = 0;
         this.meteorSearchIndex = 0;
         this.particleIndex = 0;
+        this.activeParticleCount = 0; // P2: 0-GC 活跃粒子计数，避免每次 spawn 都 O(maxParticles) 扫描
 
-        this.blackHole = null; 
+        this.blackHole = null;
         this.blackHoleSpawnTimer = 0;
         this.boss = null; 
         this.bossSpawned = false;
@@ -83,6 +149,45 @@ class GameEngine {
         window.addEventListener('resize', () => this.resizeCanvas());
         this.resizeCanvas();
         this.initStars();
+    }
+
+    // P0: 渐变在 ctx 真正就绪后才创建。constructor (worker mock) 与 worker init (真实 ctx) 都会调用
+    initGradients() {
+        const powerupColorMap = {
+            'EM': '#06b6d4', 'Frost': '#3b82f6', 'Fire': '#f43f5e',
+            'Rad': '#fbbf24', 'shield': '#06b6d4', 'heal': '#10b981'
+        };
+        const powerupTypes = ['EM', 'Frost', 'Fire', 'Rad', 'shield', 'heal'];
+        this.powerupGradients = {};
+        for (let i = 0; i < powerupTypes.length; i++) {
+            const type = powerupTypes[i];
+            const grad = this.ctx.createRadialGradient(0, 0, 2, 0, 0, 15);
+            grad.addColorStop(0, powerupColorMap[type]);
+            grad.addColorStop(1, 'transparent');
+            this.powerupGradients[type] = grad;
+        }
+
+        this.wingmanFlameGradients = [];
+        for (let h = 6; h <= 14; h++) {
+            const grad = this.ctx.createLinearGradient(0, 5, 0, 5 + h);
+            grad.addColorStop(0, '#a78bfa');
+            grad.addColorStop(1, 'transparent');
+            this.wingmanFlameGradients[h] = grad;
+        }
+
+        this.blackHoleGradient = this.ctx.createRadialGradient(0, 0, 5, 0, 0, 70);
+        this.blackHoleGradient.addColorStop(0, '#000000');
+        this.blackHoleGradient.addColorStop(0.2, '#f43f5e');
+        this.blackHoleGradient.addColorStop(0.5, '#ec4899');
+        this.blackHoleGradient.addColorStop(1, 'transparent');
+    }
+
+    // P2: 0-GC 池槽位获取 — 优先复用 inactive 槽；池满返回 null，调用方决定丢弃
+    acquirePoolSlot(pool) {
+        for (let i = 0; i < pool.length; i++) {
+            if (!pool[i].active) return pool[i];
+        }
+        return null;
     }
 
     bindUIElements() {
@@ -184,16 +289,47 @@ class GameEngine {
     }
 
     initStars() {
-        this.stars = [];
-        for (let i = 0; i < 80; i++) {
-            this.stars.push({
+        // P1: 10-band brightness-grouped starfield for 0-GC rendering
+        const NUM_STARS = 80;
+        const NUM_BANDS = 10;
+        this.starBandCount = NUM_BANDS;
+        this.starColors = [];
+        for (let b = 0; b < NUM_BANDS; b++) {
+            const brightness = (0.5 + (b / NUM_BANDS) * 0.5).toFixed(2);
+            this.starColors[b] = `rgba(255, 255, 255, ${brightness})`;
+        }
+        // Temporary collection bins
+        const bins = [];
+        for (let b = 0; b < NUM_BANDS; b++) bins[b] = [];
+        for (let i = 0; i < NUM_STARS; i++) {
+            const brightness = Math.random() * 0.5 + 0.5;
+            const bandIdx = Math.min(NUM_BANDS - 1, Math.floor((brightness - 0.5) / 0.5 * NUM_BANDS));
+            bins[bandIdx].push({
                 x: Math.random() * this.logicalWidth,
                 y: Math.random() * this.logicalHeight,
                 size: Math.random() * 2 + 0.5,
-                speed: Math.random() * 1.5 + 0.5,
-                brightness: Math.random() * 0.5 + 0.5
+                speed: Math.random() * 1.5 + 0.5
             });
         }
+        // Flatten into typed-like parallel arrays per band
+        this.starGroups = [];
+        for (let b = 0; b < NUM_BANDS; b++) {
+            const bin = bins[b];
+            const count = bin.length;
+            const xs = new Float32Array(count);
+            const ys = new Float32Array(count);
+            const sizes = new Float32Array(count);
+            const speeds = new Float32Array(count);
+            for (let j = 0; j < count; j++) {
+                xs[j] = bin[j].x;
+                ys[j] = bin[j].y;
+                sizes[j] = bin[j].size;
+                speeds[j] = bin[j].speed;
+            }
+            this.starGroups[b] = { count, xs, ys, sizes, speeds };
+        }
+        // Keep legacy this.stars as empty (no longer used in hot path)
+        this.stars = [];
     }
 
 
@@ -292,6 +428,7 @@ class GameEngine {
 
         const dt = deltaTime / 16.666;
         const dtClamped = Math.min(dt, 3.0);
+        const dtClampedMs = dtClamped * 16.666; // P2: 用于 ms 计时器，避免切标签后裸 deltaTime 一次性榨干 shield/slingshot
 
         this.applyBlackHoleGravity(dtClamped);
         this.applyWhiteHoleGravity(dtClamped);
@@ -301,16 +438,24 @@ class GameEngine {
             this.screenshake -= 0.5 * dtClamped;
         }
 
-        this.stars.forEach(star => {
-            star.y += star.speed * dtClamped;
-            if (star.y > this.logicalHeight) {
-                star.y = 0;
-                star.x = Math.random() * this.logicalWidth;
+        // P1: 0-GC star update via flat typed arrays per brightness band
+        for (let b = 0; b < this.starBandCount; b++) {
+            const group = this.starGroups[b];
+            const count = group.count;
+            const ys = group.ys;
+            const xs = group.xs;
+            const speeds = group.speeds;
+            for (let si = 0; si < count; si++) {
+                ys[si] += speeds[si] * dtClamped;
+                if (ys[si] > this.logicalHeight) {
+                    ys[si] = 0;
+                    xs[si] = Math.random() * this.logicalWidth;
+                }
             }
-        });
+        }
 
         if (this.shieldTime > 0) {
-            this.shieldTime -= deltaTime;
+            this.shieldTime -= dtClampedMs;
         }
 
         if (this.warpCharge < 100) {
@@ -319,23 +464,23 @@ class GameEngine {
         }
 
         if (this.slingshotTime > 0) {
-            this.slingshotTime -= deltaTime;
+            this.slingshotTime -= dtClampedMs;
         }
 
-        for (let i = this.lightningChains.length - 1; i >= 0; i--) {
+        for (let i = 0; i < this.maxLightningChains; i++) {
             const chain = this.lightningChains[i];
+            if (!chain.active) continue;
             chain.alpha -= 0.04 * dtClamped;
-            if (chain.alpha <= 0) {
-                this.lightningChains.splice(i, 1);
-            }
+            if (chain.alpha <= 0) chain.active = false;
         }
 
-        for (let i = this.titanRipples.length - 1; i >= 0; i--) {
+        for (let i = 0; i < this.maxTitanRipples; i++) {
             const ripple = this.titanRipples[i];
+            if (!ripple.active) continue;
             ripple.radius += 5.5 * dtClamped;
             ripple.alpha -= 0.015 * dtClamped;
             if (ripple.alpha <= 0 || ripple.radius >= ripple.maxRadius) {
-                this.titanRipples.splice(i, 1);
+                ripple.active = false;
             }
         }
 
@@ -382,6 +527,21 @@ class GameEngine {
 
         this.handleEnemySpawning(deltaTime);
 
+        // 引擎尾迹烧伤 (从 draw 移入 update，避免暂停期仍触发游戏状态改动)
+        if (this.hangar.engineLevel > 0 && Math.random() < 0.4) {
+            const burn = this.hangar.engineLevel * 0.8;
+            for (let i = 0; i < this.maxMeteors; i++) {
+                const m = this.meteors[i];
+                if (!m.active) continue;
+                const dx = this.player.x - m.x;
+                const dy = (this.player.y + 40) - m.y;
+                if (dx * dx + dy * dy < 4225) {
+                    m.hp -= burn;
+                    this.createHitParticles(m.x, m.y, '#f43f5e');
+                }
+            }
+        }
+
         for (let i = 0; i < this.maxMeteors; i++) {
             const meteor = this.meteors[i];
             if (!meteor.active) continue;
@@ -400,11 +560,12 @@ class GameEngine {
             }
         }
 
-        for (let i = this.floatTexts.length - 1; i >= 0; i--) {
+        for (let i = 0; i < this.maxFloatTexts; i++) {
             const ft = this.floatTexts[i];
+            if (!ft.active) continue;
             ft.y -= 1 * dtClamped;
             ft.alpha -= 0.02 * dtClamped;
-            if (ft.alpha <= 0) this.floatTexts.splice(i, 1);
+            if (ft.alpha <= 0) ft.active = false;
         }
 
         for (let i = 0; i < this.maxParticles; i++) {
@@ -415,12 +576,14 @@ class GameEngine {
             this.particleBuffer[o + 5] -= this.particleBuffer[o + 6] * dtClamped; // alpha -= decay
             if (this.particleBuffer[o + 5] <= 0) {
                 this.particleBuffer[o + 7] = 0; // active = 0
+                if (this.activeParticleCount > 0) this.activeParticleCount--;
             }
         }
 
-        for (let i = this.powerups.length - 1; i >= 0; i--) {
+        for (let i = 0; i < this.maxPowerups; i++) {
             const item = this.powerups[i];
-            
+            if (!item.active) continue;
+
             if (item.type === 'scrap') {
                 const dx = this.player.x - item.x;
                 const dy = this.player.y - item.y;
@@ -447,7 +610,7 @@ class GameEngine {
             }
 
             if (item.y > this.logicalHeight + 30) {
-                this.powerups.splice(i, 1);
+                item.active = false;
             }
         }
 
@@ -468,6 +631,8 @@ class GameEngine {
                 
                 // 生成多颗流星
                 for (let count = 0; count < 2; count++) {
+                    const benchOffsets = this.scratchMeteorOffsets;
+                    for (let k = 0; k < 8; k++) benchOffsets[k] = Math.random() * 0.4 + 0.8;
                     this.spawnMeteorInPool({
                         x: Math.random() * this.logicalWidth,
                         y: -30,
@@ -480,7 +645,7 @@ class GameEngine {
                         type: 'normal',
                         angle: Math.random() * Math.PI,
                         spinSpeed: (Math.random() - 0.5) * 0.1,
-                        offsets: Array.from({ length: 8 }, () => Math.random() * 0.4 + 0.8),
+                        offsets: benchOffsets,
                         numPoints: 8,
                         color: '#c084fc'
                     });
@@ -571,12 +736,20 @@ class GameEngine {
         this.shieldTime = 0;
         this.bombCharge = 100;
         this.warpCharge = 100;
-        this.bullets.forEach(b => b.active = false);
-        this.meteors.forEach(m => m.active = false);
+        for (let i = 0; i < this.maxBullets; i++) this.bullets[i].active = false;
+        for (let i = 0; i < this.maxMeteors; i++) this.meteors[i].active = false;
         this.particleBuffer.fill(0);
         this.particleColors.fill('');
-        this.powerups = [];
-        this.floatTexts = [];
+        this.particleColorIds.fill(0);
+        this.particleColorMap.clear();
+        this.particleColorList.length = 0;
+        for (let g = 0; g < this.particleGroups.length; g++) {
+            this.particleGroups[g].count = 0;
+        }
+        for (let i = 0; i < this.maxPowerups; i++) this.powerups[i].active = false;
+        for (let i = 0; i < this.maxFloatTexts; i++) this.floatTexts[i].active = false;
+        for (let i = 0; i < this.maxLightningChains; i++) this.lightningChains[i].active = false;
+        for (let i = 0; i < this.maxTitanRipples; i++) this.titanRipples[i].active = false;
         this.spawnTimer = 0;
         this.blackHoleSpawnTimer = 0;
         this.waveTransitionTimer = 0;
@@ -589,6 +762,18 @@ class GameEngine {
         this.bulletSearchIndex = 0;
         this.meteorSearchIndex = 0;
         this.particleIndex = 0;
+        this.activeParticleCount = 0;
+
+        // P2: 补齐遗漏的状态清理（whiteHole / wingmen / slingshot / toast 定时器等）
+        this.whiteHole = null;
+        if (this.wingmen) this.wingmen.length = 0;
+        this.slingshotTime = 0;
+        this.slingshotActivated = false;
+        this.screenshake = 0;
+        if (this.toastTimeout) {
+            clearTimeout(this.toastTimeout);
+            this.toastTimeout = null;
+        }
 
         this.player = {
             x: this.logicalWidth / 2,
@@ -633,9 +818,10 @@ class GameEngine {
 
     damagePlayer(amount) {
         this.player.hp -= amount;
-        sfx.playExplosion(true);
+        // P1: 仅当一次性伤害 ≥5 时播放大爆炸，避免激光持续掉血每帧触发声效 spam
+        sfx.playExplosion(amount >= 5);
         this.addFloatText(this.player.x, this.player.y - 30, `-${amount} HP`, '#f43f5e', 18);
-        
+
         if (this.player.hp <= 0) {
             this.player.hp = 0;
             this.triggerGameOver();
@@ -662,7 +848,7 @@ class GameEngine {
         
         // 1. Singularity Pull at Start Position
         this.createExplosionParticles(this.player.x, this.player.y, 50, "#c084fc");
-        this.addFloatText(this.player.x, this.player.y, "WARP", "#c084fc", "16px");
+        this.addFloatText(this.player.x, this.player.y, "WARP", "#c084fc", 16);
 
         // Execute Teleport
         this.player.x = tx;
@@ -755,8 +941,10 @@ class GameEngine {
             e.preventDefault();
             const touch = e.touches[0];
             const rect = this.canvas.getBoundingClientRect();
-            const touchX = (touch.clientX - rect.left) / this.scaleX;
-            const touchY = (touch.clientY - rect.top) / this.scaleY;
+            const scaleX = this.logicalWidth / rect.width;
+            const scaleY = this.logicalHeight / rect.height;
+            const touchX = (touch.clientX - rect.left) * scaleX;
+            const touchY = (touch.clientY - rect.top) * scaleY;
             
             const dx = touchX - touchStartX;
             const dy = touchY - touchStartY;
@@ -799,16 +987,20 @@ class GameEngine {
             if (this.controlMode === 'touch') {
                 isMouseDragging = true;
                 const rect = this.canvas.getBoundingClientRect();
-                mouseStartX = (e.clientX - rect.left) / this.scaleX;
-                mouseStartY = (e.clientY - rect.top) / this.scaleY;
+                const scaleX = this.logicalWidth / rect.width;
+                const scaleY = this.logicalHeight / rect.height;
+                mouseStartX = (e.clientX - rect.left) * scaleX;
+                mouseStartY = (e.clientY - rect.top) * scaleY;
             }
         };
 
         const onMouseMove = (e) => {
             if (!isMouseDragging || this.controlMode !== 'touch') return;
             const rect = this.canvas.getBoundingClientRect();
-            const mouseX = (e.clientX - rect.left) / this.scaleX;
-            const mouseY = (e.clientY - rect.top) / this.scaleY;
+            const scaleX = this.logicalWidth / rect.width;
+            const scaleY = this.logicalHeight / rect.height;
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            const mouseY = (e.clientY - rect.top) * scaleY;
             const dx = mouseX - mouseStartX;
             const dy = mouseY - mouseStartY;
             this.player.x += dx;
@@ -950,8 +1142,10 @@ class GameEngine {
 
         // 给玩家加上无敌和晶核，让跑分场面更酷炫
         this.shieldTime = 8000; // 8秒无敌护盾
-        this.player.elementSlots = ['fire', 'lightning']; // 极爆共鸣
-        
+        this.player.elementSlots = ['Fire', 'Rad']; // 坍缩黑洞星云爆 (Fire+Rad)
+        this._recomputeComboKey();
+
+
         // 强制初始化僚机
         this.wingmen = [
             { x: this.player.x - 45, y: this.player.y + 15, bankAngle: 0, lastShotTime: 0 },

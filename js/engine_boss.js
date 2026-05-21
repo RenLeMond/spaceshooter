@@ -1,5 +1,5 @@
 // =============================================
-// 星海猎手 V5: GameEngine - BOSS 模块
+// 星海猎手 V6: GameEngine - BOSS 模块
 // =============================================
 
 Object.assign(GameEngine.prototype, {
@@ -220,9 +220,18 @@ Object.assign(GameEngine.prototype, {
                 // Since this segment is dead, the next segment becomes a new head.
                 const nextPart = parts[`segment${i+1}`];
                 if (nextPart && nextPart.active && !nextPart.isHead) {
-                    nextPart.isHead = true;
-                    nextPart.label = "分裂突变首";
-                    this.addFloatText(nextPart.x, nextPart.y, "🦠 躯体断裂！产生分裂突变！", "#f43f5e", 14);
+                    // Count active heads
+                    let activeHeads = 0;
+                    for (let k = 0; k < 10; k++) {
+                        const p = parts[`segment${k}`];
+                        if (p && p.active && p.isHead) activeHeads++;
+                    }
+                    
+                    if (activeHeads < 3) {
+                        nextPart.isHead = true;
+                        nextPart.label = "分裂突变首";
+                        this.addFloatText(nextPart.x, nextPart.y, "🦠 躯体断裂！产生分裂突变！", "#f43f5e", 14);
+                    }
                 }
             }
         }
@@ -375,7 +384,6 @@ Object.assign(GameEngine.prototype, {
                 type: 'fast',
                 angle: angle,
                 spinSpeed: 0.03,
-                offsets: [1, 1, 1, 1, 1, 1, 1, 1],
                 numPoints: 8,
                 color: '#fb923c'
             });
@@ -388,14 +396,16 @@ Object.assign(GameEngine.prototype, {
         this.addFloatText(b.x, b.y + 45, "🌀 重力涟漪！", "#a78bfa", 16);
         this.createScreenShake(20);
         
-        if (!this.titanRipples) this.titanRipples = [];
-        this.titanRipples.push({
-            x: b.x,
-            y: b.y,
-            radius: 10,
-            maxRadius: 400,
-            alpha: 1.0
-        });
+        const ripple = this.acquirePoolSlot(this.titanRipples);
+        if (ripple) {
+            ripple.x = b.x;
+            ripple.y = b.y;
+            ripple.radius = 10;
+            ripple.maxRadius = 400;
+            ripple.alpha = 1.0;
+            ripple.color = null;
+            ripple.active = true;
+        }
         
         const dx = this.player.x - b.x;
         const dy = this.player.y - b.y;
@@ -426,7 +436,8 @@ Object.assign(GameEngine.prototype, {
         
         const angles = [Math.PI/2 - 0.4 + b.laserAngle, Math.PI/2 + 0.4 - b.laserAngle];
         
-        angles.forEach(angle => {
+        for (let ai = 0; ai < angles.length; ai++) {
+            const angle = angles[ai];
             const x1 = b.x;
             const y1 = b.y + 20;
             const x2 = b.x + Math.cos(angle) * 1000;
@@ -456,7 +467,7 @@ Object.assign(GameEngine.prototype, {
                     this.addFloatText(px, py - 30, "LASER BLOCKED!", "#06b6d4", 11);
                 }
             }
-        });
+        }
     },
 
     bossShoot() {
@@ -477,7 +488,6 @@ Object.assign(GameEngine.prototype, {
                     type: 'fast',
                     angle: 0,
                     spinSpeed: 0.01,
-                    offsets: [1, 1, 1, 1, 1, 1, 1, 1],
                     numPoints: 8,
                     color: '#06b6d4'
                 });
@@ -497,7 +507,6 @@ Object.assign(GameEngine.prototype, {
                 type: 'fast',
                 angle: 0,
                 spinSpeed: 0.02,
-                offsets: [1, 1, 1, 1, 1, 1, 1, 1],
                 numPoints: 8,
                 color: '#fb923c'
             });
@@ -516,7 +525,6 @@ Object.assign(GameEngine.prototype, {
                 type: 'fast',
                 angle: 0,
                 spinSpeed: -0.02,
-                offsets: [1, 1, 1, 1, 1, 1, 1, 1],
                 numPoints: 8,
                 color: '#fb923c'
             });

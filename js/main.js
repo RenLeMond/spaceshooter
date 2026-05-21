@@ -1,4 +1,4 @@
-// ⚡ 《星海猎手 V5.2.0：极客级双重底层性能飞跃》主线程桥接与加载入口
+// ⚡ 《星海猎手 V6：星能折跃与超维涂装》主线程桥接与加载入口
 window.onload = function() {
     const canvas = document.getElementById('gameCanvas');
     let useWorker = false;
@@ -280,11 +280,17 @@ window.onload = function() {
                     const slot2UI = document.getElementById('slot2');
                     const synergyNameUI = document.getElementById('synergyName');
                     
-                    const labelMap = { fire: '火', ice: '冰', lightning: '雷' };
+                    const labelMap = { 
+                        'EM': 'EM', 
+                        'Frost': 'FR', 
+                        'Fire': 'FI', 
+                        'Rad': 'RA' 
+                    };
                     const colorMap = {
-                        fire: 'border-rose-500/50 text-rose-400 bg-rose-950/20 shadow-sm shadow-rose-500/20',
-                        ice: 'border-blue-500/50 text-blue-400 bg-blue-950/20 shadow-sm shadow-blue-500/20',
-                        lightning: 'border-amber-500/50 text-amber-400 bg-amber-950/20 shadow-sm shadow-amber-500/20'
+                        'EM': 'border-cyan-500/50 text-cyan-400 bg-cyan-950/20 shadow-sm shadow-cyan-500/25',
+                        'Frost': 'border-blue-500/50 text-blue-400 bg-blue-950/20 shadow-sm shadow-blue-500/25',
+                        'Fire': 'border-rose-500/50 text-rose-400 bg-rose-950/20 shadow-sm shadow-rose-500/25',
+                        'Rad': 'border-amber-500/50 text-amber-400 bg-amber-950/20 shadow-sm shadow-amber-500/25'
                     };
 
                     [slot1UI, slot2UI].forEach((el, idx) => {
@@ -347,6 +353,18 @@ window.onload = function() {
                     // 在主线程播放合成声效
                     if (sfx[msg.method]) {
                         sfx[msg.method](...(msg.args || []));
+                    }
+                    break;
+
+                case 'soundBatch':
+                    // P1: 单帧聚合的多个 sfx 调用，减少跨线程往返
+                    if (msg.calls) {
+                        for (let bi = 0; bi < msg.calls.length; bi++) {
+                            const call = msg.calls[bi];
+                            if (sfx[call.method]) {
+                                sfx[call.method](...(call.args || []));
+                            }
+                        }
                     }
                     break;
                     

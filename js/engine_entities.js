@@ -1,6 +1,20 @@
 // =============================================
-// 星海猎手 V5: GameEngine - ENTITIES 模块
+// 星海猎手 V6: GameEngine - ENTITIES 模块
 // =============================================
+
+// P2: 武器名称表 — 模块级常量，避免每次 HUD/pickup 重建对象字面量
+const WEAPONS_NAMES = {
+    'EM': '【高频快速电磁炮】',
+    'Frost': '【超导绝对零度枪】',
+    'Fire': '【熔核聚变爆裂弹】',
+    'Rad': '【高能恒星辐射光】',
+    'EM+Frost': '【冰暴超导跃迁枪】',
+    'EM+Fire': '【雷霆聚变链式炮】',
+    'EM+Rad': '【磁重力爆破核心】',
+    'Fire+Frost': '【升华相差熔岩风暴】',
+    'Frost+Rad': '【绝对静止视界】',
+    'Fire+Rad': '【坍缩黑洞星云爆】'
+};
 
 Object.assign(GameEngine.prototype, {
     updateWingmen(dtClamped) {
@@ -19,7 +33,8 @@ Object.assign(GameEngine.prototype, {
         }
 
         const now = Date.now();
-        this.wingmen.forEach(w => {
+        for (let wi = 0; wi < this.wingmen.length; wi++) {
+            const w = this.wingmen[wi];
             const targetX = this.player.x + w.side * 42 + Math.sin(now * 0.003) * 6;
             const targetY = this.player.y + 12 + Math.cos(now * 0.003) * 5;
 
@@ -28,13 +43,14 @@ Object.assign(GameEngine.prototype, {
 
             const dx = targetX - w.x;
             w.bankAngle = Math.max(-0.25, Math.min(0.25, dx * 0.015));
-        });
+        }
     },
 
     wingmanFire(now, comboKey, slots) {
         const p = this.player;
         
-        this.wingmen.forEach(w => {
+        for (let wi = 0; wi < this.wingmen.length; wi++) {
+            const w = this.wingmen[wi];
             if (now - w.lastShotTime >= p.fireInterval) {
                 w.lastShotTime = now;
 
@@ -57,26 +73,28 @@ Object.assign(GameEngine.prototype, {
                     }
 
                     if (target) {
-                        const segments = [];
-                        let curX = w.x;
-                        let curY = w.y;
-                        const numSegs = 4;
-                        for (let j = 0; j < numSegs; j++) {
-                            const ratio = (j + 1) / numSegs;
-                            const nextTargetX = w.x + (target.x - w.x) * ratio;
-                            const nextTargetY = w.y + (target.y - w.y) * ratio;
-                            const noiseX = j === numSegs - 1 ? 0 : (Math.random() * 26 - 13);
-                            const noiseY = j === numSegs - 1 ? 0 : (Math.random() * 26 - 13);
-                            segments.push({ x1: curX, y1: curY, x2: nextTargetX + noiseX, y2: nextTargetY + noiseY });
-                            curX = nextTargetX + noiseX;
-                            curY = nextTargetY + noiseY;
+                        const chain = this.acquirePoolSlot(this.lightningChains);
+                        if (chain) {
+                            let curX = w.x;
+                            let curY = w.y;
+                            const numSegs = this.lightningChainSegs;
+                            for (let j = 0; j < numSegs; j++) {
+                                const ratio = (j + 1) / numSegs;
+                                const nextTargetX = w.x + (target.x - w.x) * ratio;
+                                const nextTargetY = w.y + (target.y - w.y) * ratio;
+                                const noiseX = j === numSegs - 1 ? 0 : (Math.random() * 26 - 13);
+                                const noiseY = j === numSegs - 1 ? 0 : (Math.random() * 26 - 13);
+                                const seg = chain.segments[j];
+                                seg.x1 = curX; seg.y1 = curY;
+                                seg.x2 = nextTargetX + noiseX; seg.y2 = nextTargetY + noiseY;
+                                curX = nextTargetX + noiseX;
+                                curY = nextTargetY + noiseY;
+                            }
+                            chain.segCount = numSegs;
+                            chain.alpha = 1.0;
+                            chain.color = '#fbbf24';
+                            chain.active = true;
                         }
-
-                        this.lightningChains.push({
-                            segments: segments,
-                            alpha: 1.0,
-                            color: '#fbbf24'
-                        });
 
                         target.hp -= 20;
                         this.createHitParticles(target.x, target.y, '#fbbf24');
@@ -126,69 +144,62 @@ Object.assign(GameEngine.prototype, {
                     });
                 }
             }
-        });
+        }
     },
 
     pickupElement(elementName) {
         if (!this.player.elementSlots) this.player.elementSlots = [];
-        
+
         if (this.player.elementSlots.length >= 2) {
             this.player.elementSlots.shift();
         }
         this.player.elementSlots.push(elementName);
+        this._recomputeComboKey();
 
         sfx.playPowerup();
         this.updateElementsHUD();
 
-        const comboKey = [...this.player.elementSlots].sort().join('+');
-        const weaponsNames = {
-            'EM': '【高频快速电磁炮】',
-            'Frost': '【超导绝对零度枪】',
-            'Fire': '【熔核聚变爆裂弹】',
-            'Rad': '【高能恒星辐射光】',
-            'EM+Frost': '【冰暴超导跃迁枪】',
-            'EM+Fire': '【雷霆聚变链式炮】',
-            'EM+Rad': '【磁重力爆破核心】',
-            'Fire+Frost': '【升华相差熔岩风暴】',
-            'Frost+Rad': '【绝对静止视界】',
-            'Fire+Rad': '【坍缩黑洞星云爆】'
-        };
-
-        const currentName = weaponsNames[comboKey] || weaponsNames[elementName] || '基础高频激光';
+        const comboKey = this.player.comboKey;
+        const currentName = WEAPONS_NAMES[comboKey] || WEAPONS_NAMES[elementName] || '基础高频激光';
         this.showToast(`🧬 晶核重组完毕：当前挂载 ${currentName}！`);
+    },
+
+    // P2: comboKey 仅在 elementSlots 变化时重算，playerFire 每发开火直接读缓存
+    _recomputeComboKey() {
+        const slots = this.player.elementSlots || [];
+        if (slots.length === 2) {
+            // 仅 2 项时按字典序简单排序
+            this.player.comboKey = (slots[0] < slots[1]) ? (slots[0] + '+' + slots[1]) : (slots[1] + '+' + slots[0]);
+        } else if (slots.length === 1) {
+            this.player.comboKey = slots[0];
+        } else {
+            this.player.comboKey = '';
+        }
     },
 
     updateElementsHUD() {
         const slots = this.player.elementSlots || [];
-        
+
         this.slot1UI.innerText = slots[0] ? slots[0].toUpperCase() : '空';
         this.slot1UI.className = `px-1.5 h-6 min-w-[24px] rounded-lg border text-[10px] font-black flex items-center justify-center transition-all ` + this.getElementColorClass(slots[0]);
-        
+
         this.slot2UI.innerText = slots[1] ? slots[1].toUpperCase() : '空';
         this.slot2UI.className = `px-1.5 h-6 min-w-[24px] rounded-lg border text-[10px] font-black flex items-center justify-center transition-all ` + this.getElementColorClass(slots[1]);
 
-        const comboKey = [...slots].sort().join('+');
-        const weaponsNames = {
-            'EM': '【高频快速电磁炮】',
-            'Frost': '【超导绝对零度枪】',
-            'Fire': '【熔核聚变爆裂弹】',
-            'Rad': '【高能恒星辐射光】',
-            'EM+Frost': '【冰暴超导跃迁枪】',
-            'EM+Fire': '【雷霆聚变链式炮】',
-            'EM+Rad': '【磁重力爆破核心】',
-            'Fire+Frost': '【升华相差熔岩风暴】',
-            'Frost+Rad': '【绝对静止视界】',
-            'Fire+Rad': '【坍缩黑洞星云爆】'
-        };
-        this.synergyNameUI.innerText = weaponsNames[comboKey] || weaponsNames[slots[0]] || '基础高频激光';
+        const comboKey = this.player.comboKey || '';
+        const currentSynergy = WEAPONS_NAMES[comboKey] || WEAPONS_NAMES[slots[0]] || '';
+        this.synergyNameUI.innerText = currentSynergy || '基础高频激光';
+        if (this.player) {
+            this.player.synergyName = currentSynergy;
+        }
     },
 
     getElementColorClass(name) {
         switch(name) {
-            case 'EM': return 'bg-cyan-500/10 border-cyan-500/40 text-cyan-400';
-            case 'Frost': return 'bg-blue-500/10 border-blue-500/40 text-blue-400';
-            case 'Fire': return 'bg-rose-500/10 border-rose-500/40 text-rose-400';
-            case 'Rad': return 'bg-amber-500/10 border-amber-500/40 text-amber-400';
+            case 'EM': return 'border-cyan-500/50 text-cyan-400 bg-cyan-950/20 shadow-sm shadow-cyan-500/25';
+            case 'Frost': return 'border-blue-500/50 text-blue-400 bg-blue-950/20 shadow-sm shadow-blue-500/25';
+            case 'Fire': return 'border-rose-500/50 text-rose-400 bg-rose-950/20 shadow-sm shadow-rose-500/25';
+            case 'Rad': return 'border-amber-500/50 text-amber-400 bg-amber-950/20 shadow-sm shadow-amber-500/25';
             default: return 'bg-gray-950 border-white/10 text-gray-500';
         }
     },
@@ -201,7 +212,7 @@ Object.assign(GameEngine.prototype, {
 
             const p = this.player;
             const slots = p.elementSlots || [];
-            const comboKey = [...slots].sort().join('+');
+            const comboKey = p.comboKey || '';
 
             if (this.hangar.turretLevel > 0) {
                 this.triggerAutoTurretFire();
@@ -253,7 +264,6 @@ Object.assign(GameEngine.prototype, {
     },
 
     triggerAutoTurretFire() {
-        if (this.meteors.length === 0) return;
         let target = null;
         let minDistSq = 202500;
         
@@ -357,9 +367,9 @@ Object.assign(GameEngine.prototype, {
         }
 
         const numPoints = Math.floor(Math.random() * 4) + 8;
-        const offsets = [];
+        const offsets = this.scratchMeteorOffsets;
         for (let i = 0; i < numPoints; i++) {
-            offsets.push(0.75 + Math.random() * 0.45);
+            offsets[i] = 0.75 + Math.random() * 0.45;
         }
 
         this.spawnMeteorInPool({
@@ -399,13 +409,13 @@ Object.assign(GameEngine.prototype, {
         else if (r < 0.75) chosenType = 'shield';
         else if (r < 0.9) chosenType = 'heal';
 
-        this.powerups.push({
-            x: x,
-            y: y,
-            type: chosenType,
-            vy: 2.5,
-            pulse: 0
-        });
+        const p = this.acquirePoolSlot(this.powerups);
+        if (!p) return;
+        p.x = x; p.y = y;
+        p.type = chosenType;
+        p.vy = 2.5;
+        p.pulse = 0;
+        p.active = true;
     },
 
     pickupPowerup(type) {
@@ -457,12 +467,14 @@ Object.assign(GameEngine.prototype, {
 
         const scrapDropCount = Math.floor(Math.random() * 2) + 1;
         for (let i = 0; i < scrapDropCount; i++) {
-            this.powerups.push({
-                x: m.x + (Math.random() * 30 - 15),
-                y: m.y + (Math.random() * 30 - 15),
-                type: 'scrap',
-                vy: 2.2 + Math.random() * 0.8
-            });
+            const p = this.acquirePoolSlot(this.powerups);
+            if (!p) break;
+            p.x = m.x + (Math.random() * 30 - 15);
+            p.y = m.y + (Math.random() * 30 - 15);
+            p.type = 'scrap';
+            p.vy = 2.2 + Math.random() * 0.8;
+            p.pulse = 0;
+            p.active = true;
         }
 
         if (Math.random() < 0.12) {
@@ -512,11 +524,7 @@ Object.assign(GameEngine.prototype, {
     },
 
     createHitParticles(x, y, color) {
-        let activeCount = 0;
-        for (let i = 0; i < this.maxParticles; i++) {
-            if (this.particleBuffer[i * 8 + 7] !== 0) activeCount++;
-        }
-        const densityReduce = activeCount > 150 ? 0.4 : 1.0;
+        const densityReduce = this.activeParticleCount > 150 ? 0.4 : 1.0;
         const count = Math.floor(8 * densityReduce);
         for (let i = 0; i < count; i++) {
             const angle = Math.random() * Math.PI * 2;
@@ -530,11 +538,7 @@ Object.assign(GameEngine.prototype, {
     },
 
     createExplosionParticles(x, y, size, color) {
-        let activeCount = 0;
-        for (let i = 0; i < this.maxParticles; i++) {
-            if (this.particleBuffer[i * 8 + 7] !== 0) activeCount++;
-        }
-        const densityReduce = activeCount > 150 ? 0.3 : 1.0;
+        const densityReduce = this.activeParticleCount > 150 ? 0.3 : 1.0;
         const count = Math.min(60, Math.floor(size * 1.2 * densityReduce));
         for (let i = 0; i < count; i++) {
             const angle = Math.random() * Math.PI * 2;
@@ -548,9 +552,14 @@ Object.assign(GameEngine.prototype, {
     },
 
     addFloatText(x, y, text, color, fontSize) {
-        this.floatTexts.push({
-            x: x, y: y, text: text, color: color, size: fontSize, alpha: 1
-        });
+        const ft = this.acquirePoolSlot(this.floatTexts);
+        if (!ft) return;
+        ft.x = x; ft.y = y;
+        ft.text = text;
+        ft.color = color;
+        ft.size = fontSize;
+        ft.alpha = 1;
+        ft.active = true;
     },
 
     getPowerupColor(type) {

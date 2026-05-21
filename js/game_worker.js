@@ -1,4 +1,4 @@
-// ⚡ 《星海猎手 V5.2.0：极客级双重底层性能飞跃》Web Worker 子线程引擎核心
+// ⚡ 《星海猎手 V6：星能折跃与超维涂装》Web Worker 子线程引擎核心
 // 声明顶层代理与全局 Mock 防线，使得包含 DOM/Audio 依赖的 JS 文件能在 DOM-less Web Worker 中直接执行
 self.document = {
     getElementById: (id) => {
@@ -59,15 +59,17 @@ self.window = {
 // 使得全局 localStorage 指向 mock
 self.localStorage = self.window.localStorage;
 
-// 极客级无感声效 Proxy 代理，将局内调用的所有 sfx 接口自动拦截并通过 postMessage 转发给主线程播放
+// 极客级无感声效 Proxy 代理 — 同帧 sfx 调用聚合为一个 postMessage，避免每发子弹/命中独立跨线程消息
+const sfxQueue = [];
+self.flushSfxQueue = function() {
+    if (sfxQueue.length === 0) return;
+    postMessage({ type: 'soundBatch', calls: sfxQueue.slice() });
+    sfxQueue.length = 0;
+};
 const sfxProxy = new Proxy({}, {
     get: function(target, prop) {
         return function(...args) {
-            postMessage({
-                type: 'sound',
-                method: prop,
-                args: args
-            });
+            sfxQueue.push({ method: prop, args: args });
         };
     }
 });
@@ -134,6 +136,35 @@ class GameEngineWorker extends GameEngine {
     }
 
     // 重写 HUD 更新，向主线程同步完整的 HUD 状态
+    // P1: dirty-tracking — 仅在标量字段变化时 postMessage，避免每帧无谓跨线程克隆
+    _hudIsDirty(payload) {
+        const last = this._lastHud;
+        if (!last) return true;
+        // 标量字段逐个比对
+        if (last.score !== payload.score) return true;
+        if (last.scrap !== payload.scrap) return true;
+        if (last.wave !== payload.wave) return true;
+        if (last.playerHp !== payload.playerHp) return true;
+        if (last.playerMaxHp !== payload.playerMaxHp) return true;
+        // shieldTime/bombCharge 量化到 100ms / 1% — 避免每帧浮点抖动触发消息
+        if ((last.shieldTime / 100 | 0) !== (payload.shieldTime / 100 | 0)) return true;
+        if ((last.bombCharge | 0) !== (payload.bombCharge | 0)) return true;
+        if (last.slot1 !== payload.slot1) return true;
+        if (last.slot2 !== payload.slot2) return true;
+        if (last.synergyName !== payload.synergyName) return true;
+        if (last.bossActive !== payload.bossActive) return true;
+        if (last.bossHp !== payload.bossHp) return true;
+        if (last.bossMaxHp !== payload.bossMaxHp) return true;
+        if (last.bossType !== payload.bossType) return true;
+        // bossParts 浅比对（结构稳定时 4 个数字字段）
+        const lp = last.bossParts, np = payload.bossParts;
+        if ((lp === null) !== (np === null)) return true;
+        if (lp && np) {
+            if (lp.shield !== np.shield || lp.left !== np.left || lp.right !== np.right) return true;
+        }
+        return false;
+    }
+
     updateHUD() {
         let bossHp = 0;
         let bossMaxHp = 0;
@@ -164,7 +195,7 @@ class GameEngineWorker extends GameEngine {
             }
         }
 
-        postMessage({
+        const payload = {
             type: 'hud',
             score: this.score,
             scrap: this.scrap,
@@ -182,7 +213,11 @@ class GameEngineWorker extends GameEngine {
             bossMaxHp: bossMaxHp,
             bossParts: bossParts,
             bossType: bossType
-        });
+        };
+        if (this._hudIsDirty(payload)) {
+            postMessage(payload);
+            this._lastHud = payload;
+        }
     }
 
     // 重写 Toast 显示，交由主线程 DOM 渲染
@@ -260,11 +295,14 @@ class GameEngineWorker extends GameEngine {
             
             // 物理更新
             this.update(deltaTime);
-            
+
             // 渲染管线结算
             const drawStart = performance.now();
             this.draw();
             this.drawDelay = performance.now() - drawStart;
+
+            // P1: 帧末统一刷出 sfx 队列，避免一帧内多次跨线程 postMessage
+            self.flushSfxQueue();
         };
         
         if (this.rafId) {
@@ -321,13 +359,16 @@ self.onmessage = function(e) {
             // 覆盖 canvas 和 ctx 引用
             engineInstance.canvas = data.canvas;
             engineInstance.ctx = data.canvas.getContext('2d');
-            
+
+            // P0: 真实 ctx 就绪后才创建渐变 (constructor 期间是 mock 空 ctx)
+            engineInstance.initGradients();
+
             // 物理/渲染尺寸设置
             engineInstance.canvas.width = data.width;
             engineInstance.canvas.height = data.height;
             engineInstance.scaleX = data.width / engineInstance.logicalWidth;
             engineInstance.scaleY = data.height / engineInstance.logicalHeight;
-            
+
             // 初始化背景恒星
             engineInstance.initStars();
             
@@ -380,7 +421,8 @@ self.onmessage = function(e) {
 
                 // 给玩家加上无敌和晶核，让跑分场面更酷炫
                 engineInstance.shieldTime = 8000; // 8秒无敌护盾
-                engineInstance.player.elementSlots = ['fire', 'lightning']; // 极爆共鸣
+                engineInstance.player.elementSlots = ['Fire', 'Rad']; // 坍缩黑洞星云爆 (Fire+Rad)
+                engineInstance._recomputeComboKey();
                 
                 // 强制初始化僚机
                 engineInstance.wingmen = [

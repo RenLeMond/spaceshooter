@@ -1,20 +1,19 @@
 // =============================================
-// 星海猎手 V5: GameEngine - RENDERER 模块
+// 星海猎手 V6: GameEngine - RENDERER 模块
 // =============================================
 
 Object.assign(GameEngine.prototype, {
     drawWingmen() {
-        this.wingmen.forEach(w => {
+        // P1: 0-GC for loop + cached flame gradient lookup
+        for (let wi = 0; wi < this.wingmen.length; wi++) {
+            const w = this.wingmen[wi];
             this.ctx.save();
             this.ctx.translate(w.x, w.y);
             this.ctx.rotate(w.bankAngle);
 
             const flameHeight = Math.random() * 8 + 6;
-            const flameGrad = this.ctx.createLinearGradient(0, 5, 0, 5 + flameHeight);
-            flameGrad.addColorStop(0, '#a78bfa');
-            flameGrad.addColorStop(1, 'transparent');
-            
-            this.ctx.fillStyle = flameGrad;
+            const hInt = Math.min(14, Math.max(6, Math.round(flameHeight)));
+            this.ctx.fillStyle = this.wingmanFlameGradients[hInt];
             this.ctx.beginPath();
             this.ctx.moveTo(-3, 6);
             this.ctx.lineTo(0, 6 + flameHeight);
@@ -44,7 +43,7 @@ Object.assign(GameEngine.prototype, {
             this.ctx.fill();
 
             this.ctx.restore();
-        });
+        }
     },
 
     drawPlayer() {
@@ -211,14 +210,14 @@ Object.assign(GameEngine.prototype, {
             this.ctx.lineWidth = 3;
             this.ctx.shadowBlur = 15;
             this.ctx.shadowColor = shieldGlow;
-            this.ctx.globalAlpha = 0.45 + Math.sin(Date.now() * 0.015) * 0.15;
+            this.ctx.globalAlpha = 0.45 + Math.sin(this.frameNow * 0.015) * 0.15;
             
             if (this.currentSkin === 'void') {
                 this.ctx.beginPath();
                 this.ctx.arc(0, -4, 35, 0, Math.PI * 2);
                 this.ctx.stroke();
                 
-                this.ctx.rotate(Date.now() * 0.005);
+                this.ctx.rotate(this.frameNow * 0.005);
                 this.ctx.beginPath();
                 this.ctx.arc(0, -4, 35, 0, Math.PI * 0.5);
                 this.ctx.stroke();
@@ -228,7 +227,7 @@ Object.assign(GameEngine.prototype, {
             } else if (this.currentSkin === 'thunder') {
                 this.ctx.beginPath();
                 for (let i = 0; i < 6; i++) {
-                    const angle = (i * Math.PI) / 3 + Date.now() * 0.001;
+                    const angle = (i * Math.PI) / 3 + this.frameNow * 0.001;
                     const rx = Math.cos(angle) * 36;
                     const ry = Math.sin(angle) * 36 - 4;
                     if (i === 0) this.ctx.moveTo(rx, ry);
@@ -265,13 +264,14 @@ Object.assign(GameEngine.prototype, {
             this.ctx.lineWidth = 3.5;
             this.ctx.shadowBlur = 20;
             this.ctx.shadowColor = slingshotGlow;
-            this.ctx.globalAlpha = 0.5 + Math.sin(Date.now() * 0.02) * 0.2;
+            this.ctx.globalAlpha = 0.5 + Math.sin(this.frameNow * 0.02) * 0.2;
             this.ctx.beginPath();
             this.ctx.arc(0, -4, 42, 0, Math.PI * 2);
             this.ctx.stroke();
             
-            this.ctx.rotate(Date.now() * 0.003);
-            this.ctx.strokeStyle = `rgba(${this.currentSkin === 'void' ? '217, 70, 239' : '251, 191, 36'}, 0.4)`;
+            this.ctx.rotate(this.frameNow * 0.003);
+            // P2: 预计算两种皮肤的描边颜色，避免每帧拼接
+            this.ctx.strokeStyle = this.currentSkin === 'void' ? 'rgba(217, 70, 239, 0.4)' : 'rgba(251, 191, 36, 0.4)';
             this.ctx.lineWidth = 1.5;
             this.ctx.strokeRect(-48, -48, 96, 96);
             this.ctx.restore();
@@ -320,7 +320,7 @@ Object.assign(GameEngine.prototype, {
                 
                 this.ctx.beginPath();
                 for (let j = 0; j < 6; j++) {
-                    const angle = j * Math.PI / 3 + Date.now() * 0.001 * (i % 2 === 0 ? 1 : -1);
+                    const angle = j * Math.PI / 3 + this.frameNow * 0.001 * (i % 2 === 0 ? 1 : -1);
                     const px = part.x + Math.cos(angle) * part.radius;
                     const py = part.y + Math.sin(angle) * part.radius;
                     if (j === 0) this.ctx.moveTo(px, py);
@@ -346,9 +346,9 @@ Object.assign(GameEngine.prototype, {
         this.ctx.translate(b.x, b.y);
 
         if (b.state === 'implosion') {
-            const angle = Date.now() * 0.01;
+            const angle = this.frameNow * 0.01;
             this.ctx.rotate(angle);
-            const radius = 60 + Math.sin(Date.now() * 0.05) * 10;
+            const radius = 60 + Math.sin(this.frameNow * 0.05) * 10;
 
             this.ctx.fillStyle = 'rgba(107, 33, 168, 0.7)'; // #6b21a8 equivalent
             this.ctx.beginPath();
@@ -409,7 +409,7 @@ Object.assign(GameEngine.prototype, {
                 this.ctx.strokeStyle = '#d946ef';
                 this.ctx.lineWidth = 3;
                 this.ctx.beginPath();
-                this.ctx.arc(0, 0, 26 + Math.sin(Date.now() * 0.02) * 5, 0, Math.PI * 2);
+                this.ctx.arc(0, 0, 26 + Math.sin(this.frameNow * 0.02) * 5, 0, Math.PI * 2);
                 this.ctx.fill();
                 this.ctx.stroke();
                 this.ctx.restore();
@@ -441,12 +441,13 @@ Object.assign(GameEngine.prototype, {
                 const startY = 20;
                 const angles = [Math.PI/2 - 0.4 + b.laserAngle, Math.PI/2 + 0.4 - b.laserAngle];
                 
-                angles.forEach(angle => {
+                for (let ai = 0; ai < angles.length; ai++) {
+                    const angle = angles[ai];
                     const endX = Math.cos(angle) * 1000;
                     const endY = Math.sin(angle) * 1000;
                     
                     this.ctx.strokeStyle = 'rgba(239, 68, 68, 0.75)';
-                    this.ctx.lineWidth = 20 + Math.sin(Date.now() * 0.05) * 6;
+                    this.ctx.lineWidth = 20 + Math.sin(this.frameNow * 0.05) * 6;
                     this.ctx.shadowBlur = 30;
                     this.ctx.shadowColor = '#ef4444';
                     this.ctx.beginPath();
@@ -455,13 +456,13 @@ Object.assign(GameEngine.prototype, {
                     this.ctx.stroke();
                     
                     this.ctx.strokeStyle = '#ffffff';
-                    this.ctx.lineWidth = 6 + Math.sin(Date.now() * 0.05) * 2;
+                    this.ctx.lineWidth = 6 + Math.sin(this.frameNow * 0.05) * 2;
                     this.ctx.shadowBlur = 0;
                     this.ctx.beginPath();
                     this.ctx.moveTo(startX, startY);
                     this.ctx.lineTo(endX, endY);
                     this.ctx.stroke();
-                });
+                }
                 
                 this.ctx.restore();
             }
@@ -505,7 +506,7 @@ Object.assign(GameEngine.prototype, {
             
             this.ctx.fillStyle = '#22d3ee';
             this.ctx.beginPath();
-            this.ctx.arc(sPart.offset.x, sPart.offset.y, 8 + Math.sin(Date.now() * 0.01) * 3, 0, Math.PI * 2);
+            this.ctx.arc(sPart.offset.x, sPart.offset.y, 8 + Math.sin(this.frameNow * 0.01) * 3, 0, Math.PI * 2);
             this.ctx.fill();
         }
 
@@ -548,7 +549,7 @@ Object.assign(GameEngine.prototype, {
         
         this.ctx.fillStyle = '#f43f5e';
         this.ctx.beginPath();
-        this.ctx.arc(0, 20, 10 + Math.sin(Date.now() * 0.02) * 4, 0, Math.PI * 2);
+        this.ctx.arc(0, 20, 10 + Math.sin(this.frameNow * 0.02) * 4, 0, Math.PI * 2);
         this.ctx.fill();
 
         this.ctx.restore();
@@ -562,16 +563,15 @@ Object.assign(GameEngine.prototype, {
         this.ctx.translate(bh.x, bh.y);
         this.ctx.rotate(bh.pulse * 0.2);
 
-        const radialGrad = this.ctx.createRadialGradient(0, 0, 5, 0, 0, bh.radius * 3.5);
-        radialGrad.addColorStop(0, '#000000');
-        radialGrad.addColorStop(0.2, '#f43f5e');
-        radialGrad.addColorStop(0.5, '#ec4899');
-        radialGrad.addColorStop(1, 'transparent');
-
-        this.ctx.fillStyle = radialGrad;
+        // P1: Use pre-allocated black hole gradient + scale transform instead of per-frame createRadialGradient
+        const scaleFactor = (bh.radius * 3.5) / 70;
+        this.ctx.save();
+        this.ctx.scale(scaleFactor, scaleFactor);
+        this.ctx.fillStyle = this.blackHoleGradient;
         this.ctx.beginPath();
-        this.ctx.arc(0, 0, bh.radius * 3.8, 0, Math.PI * 2);
+        this.ctx.arc(0, 0, 76, 0, Math.PI * 2); // 70 * (3.8/3.5) ≈ 76; bh.radius cancels
         this.ctx.fill();
+        this.ctx.restore();
 
         this.ctx.fillStyle = '#02040a';
         this.ctx.strokeStyle = '#ec4899';
@@ -586,6 +586,7 @@ Object.assign(GameEngine.prototype, {
 
     draw() {
         const drawStart = performance.now();
+        this.frameNow = Date.now(); // P2: 0-GC 每帧缓存时钟，draw 调用链中所有时间动画统一读 this.frameNow
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.save();
         
@@ -597,37 +598,32 @@ Object.assign(GameEngine.prototype, {
 
         this.ctx.scale(this.scaleX, this.scaleY);
 
-        this.stars.forEach(star => {
-            this.ctx.fillStyle = `rgba(255, 255, 255, ${star.brightness})`;
-            this.ctx.fillRect(star.x, star.y, star.size, star.size);
-        });
-
-        if (this.hangar.engineLevel > 0 && Math.random() < 0.4 && this.isRunning && !this.isPaused) {
-            for (let i = 0; i < this.maxMeteors; i++) {
-                const m = this.meteors[i];
-                if (!m.active) continue;
-                const dx = this.player.x - m.x;
-                const dy = (this.player.y + 40) - m.y;
-                if (dx * dx + dy * dy < 4225) { 
-                    m.hp -= this.hangar.engineLevel * 0.8;
-                    this.createHitParticles(m.x, m.y, '#f43f5e');
-                }
+        // P1: 0-GC banded star rendering — only 10 fillStyle changes for all 80 stars
+        for (let b = 0; b < this.starBandCount; b++) {
+            const group = this.starGroups[b];
+            if (group.count === 0) continue;
+            this.ctx.fillStyle = this.starColors[b];
+            const xs = group.xs, ys = group.ys, sizes = group.sizes;
+            for (let si = 0; si < group.count; si++) {
+                this.ctx.fillRect(xs[si], ys[si], sizes[si], sizes[si]);
             }
         }
 
-        this.powerups.forEach(item => {
+        // P1: 0-GC powerup rendering — for loop + cached radial gradients
+        for (let pi = 0; pi < this.maxPowerups; pi++) {
+            const item = this.powerups[pi];
+            if (!item.active) continue;
             this.ctx.save();
             this.ctx.translate(item.x, item.y);
             
             if (item.type === 'scrap') {
-                this.ctx.rotate(Date.now() * 0.004 + item.x * 0.01);
+                this.ctx.rotate(this.frameNow * 0.004 + item.x * 0.01);
                 this.ctx.fillStyle = '#fbbf24';
                 this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
                 this.ctx.lineWidth = 1;
                 this.ctx.shadowBlur = 8;
                 this.ctx.shadowColor = '#d97706';
                 
-                // Draw a beautiful rotating scrap triangle
                 this.ctx.beginPath();
                 this.ctx.moveTo(0, -6.5);
                 this.ctx.lineTo(5.63, 3.25);
@@ -636,10 +632,7 @@ Object.assign(GameEngine.prototype, {
                 this.ctx.fill();
                 this.ctx.stroke();
             } else {
-                const grad = this.ctx.createRadialGradient(0, 0, 2, 0, 0, 15);
-                grad.addColorStop(0, this.getPowerupColor(item.type));
-                grad.addColorStop(1, 'transparent');
-                this.ctx.fillStyle = grad;
+                this.ctx.fillStyle = this.powerupGradients[item.type] || this.powerupGradients['Rad'];
                 this.ctx.beginPath();
                 this.ctx.arc(0, 0, 16, 0, Math.PI * 2);
                 this.ctx.fill();
@@ -649,24 +642,37 @@ Object.assign(GameEngine.prototype, {
                 this.ctx.strokeRect(-6, -6, 12, 12);
             }
             this.ctx.restore();
-        });
+        }
 
         this.drawBlackHole();
         this.drawBoss();
 
-        if (this.titanRipples && this.titanRipples.length > 0) {
-            this.titanRipples.forEach(ripple => {
+        if (this.titanRipples) {
+            const aBuckets = this.alphaBuckets;
+            for (let ri = 0; ri < this.maxTitanRipples; ri++) {
+                const ripple = this.titanRipples[ri];
+                if (!ripple.active) continue;
                 this.ctx.save();
                 const colorStr = ripple.color || '167, 139, 250';
-                this.ctx.strokeStyle = `rgba(${colorStr}, ${ripple.alpha})`;
+                const aIdx = Math.max(0, Math.min(aBuckets, Math.round(ripple.alpha * aBuckets)));
+                // 缓存查找：base color + alpha bucket → 复用字符串实例
+                let entry = this.rippleStyleCache.get(colorStr);
+                if (!entry) {
+                    entry = { stroke: new Array(aBuckets + 1), shadow: `rgba(${colorStr}, 1)` };
+                    for (let i = 0; i <= aBuckets; i++) {
+                        entry.stroke[i] = `rgba(${colorStr}, ${(i / aBuckets).toFixed(2)})`;
+                    }
+                    this.rippleStyleCache.set(colorStr, entry);
+                }
+                this.ctx.strokeStyle = entry.stroke[aIdx];
                 this.ctx.lineWidth = 4;
                 this.ctx.shadowBlur = 20;
-                this.ctx.shadowColor = `rgba(${colorStr}, 1)`;
+                this.ctx.shadowColor = entry.shadow;
                 this.ctx.beginPath();
                 this.ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
                 this.ctx.stroke();
                 this.ctx.restore();
-            });
+            }
         }
 
         if (this.player && this.player.hp > 0) {
@@ -676,25 +682,31 @@ Object.assign(GameEngine.prototype, {
             }
         }
 
-        if (this.lightningChains && this.lightningChains.length > 0) {
-            this.lightningChains.forEach(chain => {
+        if (this.lightningChains) {
+            const aBuckets = this.alphaBuckets;
+            for (let ci = 0; ci < this.maxLightningChains; ci++) {
+                const chain = this.lightningChains[ci];
+                if (!chain.active) continue;
+                const aIdx = Math.max(0, Math.min(aBuckets, Math.round(chain.alpha * aBuckets)));
                 this.ctx.save();
-                this.ctx.strokeStyle = `rgba(251, 191, 36, ${chain.alpha})`;
+                this.ctx.strokeStyle = this.lightningGoldByAlpha[aIdx];
                 this.ctx.lineWidth = 3.5;
                 this.ctx.shadowBlur = 15;
                 this.ctx.shadowColor = '#fbbf24';
                 this.ctx.beginPath();
-                chain.segments.forEach((seg, idx) => {
-                    if (idx === 0) this.ctx.moveTo(seg.x1, seg.y1);
+                const segCount = chain.segCount;
+                for (let si = 0; si < segCount; si++) {
+                    const seg = chain.segments[si];
+                    if (si === 0) this.ctx.moveTo(seg.x1, seg.y1);
                     this.ctx.lineTo(seg.x2, seg.y2);
-                });
+                }
                 this.ctx.stroke();
-                
-                this.ctx.strokeStyle = `rgba(255, 255, 255, ${chain.alpha})`;
+
+                this.ctx.strokeStyle = this.lightningWhiteByAlpha[aIdx];
                 this.ctx.lineWidth = 1.2;
                 this.ctx.stroke();
                 this.ctx.restore();
-            });
+            }
         }
 
         for (let i = 0; i < this.maxBullets; i++) {
@@ -750,27 +762,70 @@ Object.assign(GameEngine.prototype, {
             this.ctx.restore();
         }
 
+        // P0: 0-GC 粒子渲染 — 纯整型索引分组 + beginPath/rect/fill 聚合，彻底消灭 Path2D/字符串拼接
+        const pGroups = this.particleGroups;
+        const pColorIds = this.particleColorIds;
+        const pBuf = this.particleBuffer;
+        const pColorList = this.particleColorList;
+        const maxUC = this.maxUniqueColors;
+        const totalSlots = pColorList.length * 5;
+        // Reset all group counters (only active slots)
+        for (let g = 0; g < totalSlots; g++) {
+            pGroups[g].count = 0;
+        }
+        // Classify particles into integer-indexed groups
         for (let i = 0; i < this.maxParticles; i++) {
             const o = i * 8;
-            if (this.particleBuffer[o + 7] === 0) continue;
-            this.ctx.globalAlpha = this.particleBuffer[o + 5];
-            this.ctx.fillStyle = this.particleColors[i];
-            const x = this.particleBuffer[o];
-            const y = this.particleBuffer[o + 1];
-            const size = this.particleBuffer[o + 4];
-            this.ctx.fillRect(x - size, y - size, size * 2, size * 2);
+            if (pBuf[o + 7] === 0) continue;
+            const alpha = pBuf[o + 5];
+            const alphaId = Math.min(4, Math.max(0, Math.ceil(alpha * 5) - 1));
+            const colorId = pColorIds[i];
+            const gIdx = colorId * 5 + alphaId;
+            if (gIdx >= 0 && gIdx < pGroups.length) {
+                const grp = pGroups[gIdx];
+                grp.indices[grp.count++] = i;
+            }
+        }
+        // Render each non-empty group with a single beginPath + batch rect + fill
+        const alphaValues = [0.2, 0.4, 0.6, 0.8, 1.0];
+        for (let g = 0; g < totalSlots; g++) {
+            const grp = pGroups[g];
+            if (grp.count === 0) continue;
+            const colorId = (g / 5) | 0;
+            const alphaId = g % 5;
+            this.ctx.globalAlpha = alphaValues[alphaId];
+            this.ctx.fillStyle = pColorList[colorId];
+            this.ctx.beginPath();
+            for (let k = 0; k < grp.count; k++) {
+                const idx = grp.indices[k];
+                const o = idx * 8;
+                const x = pBuf[o];
+                const y = pBuf[o + 1];
+                const size = pBuf[o + 4];
+                this.ctx.rect(x - size, y - size, size * 2, size * 2);
+            }
+            this.ctx.fill();
         }
         this.ctx.globalAlpha = 1.0;
 
-        this.floatTexts.forEach(ft => {
+        const fontCache = this.floatTextFontCache;
+        for (let fi = 0; fi < this.maxFloatTexts; fi++) {
+            const ft = this.floatTexts[fi];
+            if (!ft.active) continue;
             this.ctx.save();
             this.ctx.globalAlpha = ft.alpha;
             this.ctx.fillStyle = ft.color;
-            this.ctx.font = `bold ${ft.size}px Impact, system-ui`;
+            const size = ft.size | 0;
+            let font = fontCache[size];
+            if (!font) {
+                font = `bold ${size}px Impact, system-ui`;
+                if (size < fontCache.length) fontCache[size] = font;
+            }
+            this.ctx.font = font;
             this.ctx.textAlign = 'center';
             this.ctx.fillText(ft.text, ft.x, ft.y);
             this.ctx.restore();
-        });
+        }
 
         // 测量渲染延迟
         this.drawDelay = performance.now() - drawStart;
@@ -801,10 +856,7 @@ Object.assign(GameEngine.prototype, {
             if (this.meteors[i].active) activeMeteors++;
         }
         
-        let activeParticles = 0;
-        for (let i = 0; i < this.maxParticles; i++) {
-            if (this.particleBuffer[i * 8 + 7] !== 0) activeParticles++;
-        }
+        const activeParticles = this.activeParticleCount;
 
         // 2. 绘制磨砂发光玻璃面板
         const ox = 25;

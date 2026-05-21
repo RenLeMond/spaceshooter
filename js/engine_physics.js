@@ -1,8 +1,6 @@
 // =============================================
-// 星海猎手 V5: GameEngine - PHYSICS 模块
+// 星海猎手 V6: GameEngine - PHYSICS 模块
 // =============================================
-
-const STATIC_DEFAULT_OFFSETS = [1, 1, 1, 1, 1, 1, 1, 1];
 
 Object.assign(GameEngine.prototype, {
     spawnBulletInPool(props) {
@@ -62,8 +60,16 @@ Object.assign(GameEngine.prototype, {
             meteor.type = props.type;
             meteor.angle = props.angle;
             meteor.spinSpeed = props.spinSpeed;
-            meteor.offsets = props.offsets || STATIC_DEFAULT_OFFSETS;
-            meteor.numPoints = props.numPoints || 8;
+            // P2: 就地拷贝 offsets 到预分配 Float32Array，避免 props.offsets 引用导致的临时数组泄漏
+            const numPoints = props.numPoints || 8;
+            const targetOffsets = meteor.offsets;
+            if (props.offsets) {
+                const len = Math.min(numPoints, targetOffsets.length, props.offsets.length);
+                for (let k = 0; k < len; k++) targetOffsets[k] = props.offsets[k];
+            } else {
+                for (let k = 0; k < numPoints; k++) targetOffsets[k] = 1;
+            }
+            meteor.numPoints = numPoints;
             meteor.color = props.color;
             meteor.active = true;
             return meteor;
@@ -179,6 +185,7 @@ Object.assign(GameEngine.prototype, {
                 const force = (G * bh.mass) / (distP * 12 + 500);
                 const distVal = distP || 1;
                 this.player.x += (dxP / distVal) * force * dtClamped;
+                this.player.y += (dyP / distVal) * force * dtClamped;
             }
         }
     },
@@ -267,14 +274,16 @@ Object.assign(GameEngine.prototype, {
         this.createExplosionParticles(this.player.x, this.player.y, 40, '#fbbf24');
         
         if (this.currentSkin === 'void') {
-            this.titanRipples.push({
-                x: this.player.x,
-                y: this.player.y,
-                radius: 10,
-                maxRadius: 800,
-                alpha: 1.0,
-                color: '217, 70, 239' // #d946ef fuchsia
-            });
+            const ripple = this.acquirePoolSlot(this.titanRipples);
+            if (ripple) {
+                ripple.x = this.player.x;
+                ripple.y = this.player.y;
+                ripple.radius = 10;
+                ripple.maxRadius = 800;
+                ripple.alpha = 1.0;
+                ripple.color = '217, 70, 239'; // #d946ef fuchsia
+                ripple.active = true;
+            }
         }
     },
 
@@ -428,24 +437,25 @@ Object.assign(GameEngine.prototype, {
             }
         }
 
-        for (let pIndex = this.powerups.length - 1; pIndex >= 0; pIndex--) {
+        for (let pIndex = 0; pIndex < this.maxPowerups; pIndex++) {
             const item = this.powerups[pIndex];
+            if (!item.active) continue;
             const dx = this.player.x - item.x;
             const dy = this.player.y - item.y;
-            
-            if (dx * dx + dy * dy < 1225) { 
+
+            if (dx * dx + dy * dy < 1225) {
                 if (item.type === 'scrap') {
                     if (this.currentSkin === 'imperial') {
-                        this.scrap += 2; 
-                        this.addFloatText(item.x, item.y, "CRIT +2", "#fbbf24", "14px");
+                        this.scrap += 2;
+                        this.addFloatText(item.x, item.y, "CRIT +2", "#fbbf24", 14);
                     } else {
-                        this.scrap += 1; 
+                        this.scrap += 1;
                     }
                     sfx.playHit();
                 } else {
                     this.pickupPowerup(item.type);
                 }
-                this.powerups.splice(pIndex, 1);
+                item.active = false;
             }
         }
     },
@@ -500,6 +510,7 @@ Object.assign(GameEngine.prototype, {
 
     spawnParticle(x, y, vx, vy, size, color, decay) {
         const o = this.particleIndex * 8;
+        if (this.particleBuffer[o + 7] === 0) this.activeParticleCount++;
         this.particleBuffer[o] = x;
         this.particleBuffer[o + 1] = y;
         this.particleBuffer[o + 2] = vx;
@@ -509,6 +520,19 @@ Object.assign(GameEngine.prototype, {
         this.particleBuffer[o + 6] = decay;
         this.particleBuffer[o + 7] = 1.0;
         this.particleColors[this.particleIndex] = color;
+        // P0: 0-GC integer colorId registration for batch rendering
+        let colorId = this.particleColorMap.get(color);
+        if (colorId === undefined) {
+            if (this.particleColorList.length < this.maxUniqueColors) {
+                colorId = this.particleColorList.length;
+                this.particleColorMap.set(color, colorId);
+                this.particleColorList.push(color);
+            } else {
+                // 颜色表已达 maxUniqueColors，复用槽 0 颜色以保渲染（视觉降级而非粒子丢失）
+                colorId = 0;
+            }
+        }
+        this.particleColorIds[this.particleIndex] = colorId;
         this.particleIndex = (this.particleIndex + 1) % this.maxParticles;
     }
 

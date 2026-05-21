@@ -1,5 +1,5 @@
 // =============================================
-// 星海猎手 V5: GameEngine - HANGAR 模块
+// 星海猎手 V6: GameEngine - HANGAR 模块
 // =============================================
 
 Object.assign(GameEngine.prototype, {
