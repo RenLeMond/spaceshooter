@@ -63,9 +63,10 @@ window.onload = function() {
         }
         
         // 从 localStorage 中读取本地持久化状态数据
-        let mainUnlockedSkins = JSON.parse(localStorage.getItem('space_unlocked_skins') || '["default"]');
-        let mainCurrentSkin = localStorage.getItem('space_current_skin') || 'default';
-        let mainBestScore = parseInt(localStorage.getItem('space_best_score') || '0');
+        let mainUnlockedSkins = safeReadJSON('space_unlocked_skins', ['default']);
+        if (!Array.isArray(mainUnlockedSkins)) mainUnlockedSkins = ['default'];
+        let mainCurrentSkin = safeReadString('space_current_skin', 'default');
+        let mainBestScore = safeReadInt('space_best_score', 0);
         let mainScrap = 0;
         let mainHangar = { turretLevel: 0, engineLevel: 0, wingsLevel: 0 };
         
@@ -282,12 +283,6 @@ window.onload = function() {
                     const slot2UI = document.getElementById('slot2');
                     const synergyNameUI = document.getElementById('synergyName');
                     
-                    const labelMap = { 
-                        'EM': 'EM', 
-                        'Frost': 'FR', 
-                        'Fire': 'FI', 
-                        'Rad': 'RA' 
-                    };
                     const colorMap = {
                         'EM': 'border-cyan-500/50 text-cyan-400 bg-cyan-950/20 shadow-sm shadow-cyan-500/25',
                         'Frost': 'border-blue-500/50 text-blue-400 bg-blue-950/20 shadow-sm shadow-blue-500/25',
@@ -299,7 +294,7 @@ window.onload = function() {
                         if (!el) return;
                         const chip = idx === 0 ? msg.slot1 : msg.slot2;
                         if (chip) {
-                            el.innerText = labelMap[chip] || chip;
+                            el.innerText = formatElementChipLabel(chip);
                             el.className = `px-1.5 h-6 min-w-[24px] rounded-lg bg-gray-950 border flex items-center justify-center text-[10px] font-extrabold tracking-wider transition-all duration-300 ${colorMap[chip] || 'border-cyan-500/30 text-cyan-400 bg-cyan-950/10'}`;
                         } else {
                             el.innerText = "空";
@@ -308,13 +303,15 @@ window.onload = function() {
                     });
 
                     if (synergyNameUI) {
-                        const displayName = msg.synergyName || '基础机载激光';
+                        const displayName = msg.synergyName || '基础高频激光';
                         synergyNameUI.innerText = displayName;
-                        synergyNameUI.title = displayName; // hover/长按显示完整名
-                        if (msg.synergyName) {
-                            synergyNameUI.className = 'text-[10px] font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-emerald-400 to-indigo-400 animate-pulse truncate shrink-0 max-w-[130px] sm:max-w-[180px]';
+                        synergyNameUI.title = displayName;
+                        if (msg.synergyActive) {
+                            synergyNameUI.className = 'flex-1 min-w-0 text-[9px] font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-emerald-400 to-indigo-400 animate-pulse truncate';
+                        } else if (msg.slot1) {
+                            synergyNameUI.className = 'flex-1 min-w-0 text-[9px] font-bold text-cyan-400 truncate';
                         } else {
-                            synergyNameUI.className = 'text-[9px] font-bold text-cyan-400 truncate shrink-0 max-w-[130px] sm:max-w-[180px]';
+                            synergyNameUI.className = 'flex-1 min-w-0 text-[9px] font-bold text-gray-500 truncate';
                         }
                     }
                     
@@ -326,25 +323,33 @@ window.onload = function() {
                             const bossPercent = msg.bossMaxHp > 0 ? Math.ceil((msg.bossHp / msg.bossMaxHp) * 100) : 0;
                             document.getElementById('bossMainPercent').innerText = `${bossPercent}%`;
                             document.getElementById('bossMainHpBar').style.width = `${bossPercent}%`;
-                            
-                            if (msg.bossType === 'worm') {
+
+                            if (msg.bossTitle) {
+                                document.getElementById('bossMainTitle').innerText = msg.bossTitle;
+                            } else if (msg.bossType === 'worm') {
                                 document.getElementById('bossMainTitle').innerText = "💀 吞噬蠕虫 (Asteroid Devourer)";
+                            } else {
+                                document.getElementById('bossMainTitle').innerText = "⚠️ 星际掠夺者号 (Phase Reaver)";
+                            }
+
+                            if (msg.bossType === 'worm') {
                                 document.getElementById('partHpShield').innerText = "未激活";
                                 document.getElementById('partBarShield').style.width = "0%";
                                 document.getElementById('partHpLeft').innerText = "未激活";
                                 document.getElementById('partBarLeft').style.width = "0%";
                                 document.getElementById('partHpRight').innerText = "未激活";
                                 document.getElementById('partBarRight').style.width = "0%";
-                            } else {
-                                document.getElementById('bossMainTitle').innerText = "⚠️ 星际掠夺者号 (Phase Reaver)";
-                                if (msg.bossParts) {
-                                    document.getElementById('partHpShield').innerText = `${Math.ceil(msg.bossParts.shield * 100)}%`;
-                                    document.getElementById('partBarShield').style.width = `${msg.bossParts.shield * 100}%`;
-                                    document.getElementById('partHpLeft').innerText = `${Math.ceil(msg.bossParts.left * 100)}%`;
-                                    document.getElementById('partBarLeft').style.width = `${msg.bossParts.left * 100}%`;
-                                    document.getElementById('partHpRight').innerText = `${Math.ceil(msg.bossParts.right * 100)}%`;
-                                    document.getElementById('partBarRight').style.width = `${msg.bossParts.right * 100}%`;
-                                }
+                            } else if (msg.bossParts) {
+                                const bp = msg.bossParts;
+                                const shieldPctText = bp.shieldSlot === 'rear'
+                                    ? `尾炮 ${Math.ceil(bp.shield * 100)}%`
+                                    : (bp.shield > 0 ? `${Math.ceil(bp.shield * 100)}%` : '❌ 已瘫痪');
+                                document.getElementById('partHpShield').innerText = shieldPctText;
+                                document.getElementById('partBarShield').style.width = `${bp.shield * 100}%`;
+                                document.getElementById('partHpLeft').innerText = bp.left > 0 ? `${Math.ceil(bp.left * 100)}%` : '❌ 已炸飞';
+                                document.getElementById('partBarLeft').style.width = `${bp.left * 100}%`;
+                                document.getElementById('partHpRight').innerText = bp.right > 0 ? `${Math.ceil(bp.right * 100)}%` : '❌ 已炸飞';
+                                document.getElementById('partBarRight').style.width = `${bp.right * 100}%`;
                             }
                         } else {
                             bossHpGroup.classList.add('hidden');
@@ -377,9 +382,12 @@ window.onload = function() {
                     
                 case 'saveLocalStorage':
                     localStorage.setItem(msg.key, msg.val);
-                    if (msg.key === 'space_best_score') mainBestScore = parseInt(msg.val);
-                    if (msg.key === 'space_current_skin') mainCurrentSkin = msg.val;
-                    if (msg.key === 'space_unlocked_skins') mainUnlockedSkins = JSON.parse(msg.val);
+                    if (msg.key === 'space_best_score') mainBestScore = safeReadInt('space_best_score', 0);
+                    if (msg.key === 'space_current_skin') mainCurrentSkin = safeReadString('space_current_skin', 'default');
+                    if (msg.key === 'space_unlocked_skins') {
+                        const skins = safeReadJSON('space_unlocked_skins', ['default']);
+                        mainUnlockedSkins = Array.isArray(skins) ? skins : ['default'];
+                    }
                     break;
                     
                 case 'gameOver':
@@ -491,6 +499,9 @@ window.onload = function() {
         });
         
         // 声效/核弹/快捷键绑定
+        document.getElementById('pauseBtn').addEventListener('click', () => {
+            worker.postMessage({ type: 'togglePause' });
+        });
         document.getElementById('soundToggleBtn').addEventListener('click', (e) => {
             const muted = sfx.toggleMute();
             const icon = e.currentTarget.querySelector('i');

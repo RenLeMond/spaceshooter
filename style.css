@@ -49,3 +49,25 @@ canvas {
     50% { border-color: rgba(6, 182, 212, 0.8); }
     100% { border-color: rgba(6, 182, 212, 0.3); }
 }
+
+/* HUD：晶核行动条（晶核 + 暂停/音效 + 炸弹同一行） */
+#hud .hud-action-row {
+    background: rgba(8, 12, 24, 0.88);
+    border: 1px solid rgba(6, 182, 212, 0.14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+#hud .hud-action-divider {
+    width: 1px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+}
+#hud #synergyName {
+    letter-spacing: 0.02em;
+}
+#hud #pauseBtn:hover,
+#hud #soundToggleBtn:hover {
+    border-color: rgba(6, 182, 212, 0.5);
+    color: #22d3ee;
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+}

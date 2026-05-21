@@ -61,26 +61,36 @@
                 </div>
             </div>
 
-            <!-- Chips Slots and Bomb Interface -->
-            <div class="flex justify-between items-center mt-1">
-                <div class="flex items-center gap-1.5">
-                    <div class="text-[9px] text-gray-400 font-bold uppercase shrink-0">晶核:</div>
+            <!-- 晶核 + 控制 + EM 炸弹（同一行） -->
+            <div class="glass-panel hud-action-row flex items-center gap-2 px-2 py-1.5 rounded-xl mt-1 pointer-events-none">
+                <div class="flex-1 min-w-0 flex items-center gap-1.5">
+                    <div class="text-[9px] text-gray-400 font-bold uppercase shrink-0">晶核</div>
                     <div class="flex gap-1 items-center shrink-0">
                         <div id="slot1" class="px-1.5 h-6 min-w-[24px] rounded-lg bg-gray-950 border border-white/10 flex items-center justify-center text-[10px] text-gray-500 font-bold transition-all">空</div>
                         <div class="text-[9px] text-gray-600 font-black">+</div>
                         <div id="slot2" class="px-1.5 h-6 min-w-[24px] rounded-lg bg-gray-950 border border-white/10 flex items-center justify-center text-[10px] text-gray-500 font-bold transition-all">空</div>
                     </div>
-                    <span id="synergyName" title="基础高频激光" class="text-[9px] font-bold text-cyan-400 max-w-[130px] sm:max-w-[180px] truncate shrink-0">基础高频激光</span>
+                    <span id="synergyName" title="基础高频激光" class="flex-1 min-w-0 text-[9px] font-bold text-cyan-400 truncate">基础高频激光</span>
                 </div>
 
-                <div class="flex items-center gap-2 pointer-events-auto">
+                <div class="hud-action-divider"></div>
+
+                <div class="flex items-center gap-1 pointer-events-auto shrink-0">
+                    <button id="pauseBtn" title="暂停 (Esc / P)" class="glass-panel w-7 h-7 rounded-lg flex items-center justify-center text-[10px] text-gray-300 border border-gray-700 active:scale-95">
+                        <i class="fa-solid fa-pause"></i>
+                    </button>
                     <button id="soundToggleBtn" class="glass-panel w-7 h-7 rounded-lg flex items-center justify-center text-[10px] text-gray-300 border border-gray-700 active:scale-95">
                         <i class="fa-solid fa-volume-high"></i>
                     </button>
+                </div>
+
+                <div class="hud-action-divider"></div>
+
+                <div class="flex items-center gap-2 pointer-events-auto shrink-0">
                     <button id="bombBtn" class="glass-panel w-9 h-9 rounded-xl flex items-center justify-center active:scale-95 transition text-amber-400 border border-amber-500/30">
                         <i class="fa-solid fa-radiation text-sm animate-spin-slow"></i>
                     </button>
-                    <div class="w-16 h-1 bg-gray-950 rounded-full overflow-hidden border border-amber-500/20">
+                    <div class="w-12 h-1.5 bg-gray-950 rounded-full overflow-hidden border border-amber-500/20">
                         <div id="bombChargeBar" class="h-full bg-amber-400 transition-all duration-300" style="width: 100%"></div>
                     </div>
                 </div>
@@ -394,13 +404,13 @@
     </div>
 
     <!-- Scripts using global script tags for CORS-free local execution -->
-    <script charset="utf-8" src="js/sound.js?v=6.0.3"></script>
-    <script charset="utf-8" src="js/engine_base.js?v=6.0.3"></script>
-    <script charset="utf-8" src="js/engine_physics.js?v=6.0.3"></script>
-    <script charset="utf-8" src="js/engine_entities.js?v=6.0.3"></script>
-    <script charset="utf-8" src="js/engine_boss.js?v=6.0.3"></script>
-    <script charset="utf-8" src="js/engine_renderer.js?v=6.0.3"></script>
-    <script charset="utf-8" src="js/engine_hangar.js?v=6.0.3"></script>
-    <script charset="utf-8" src="js/main.js?v=6.0.3"></script>
+    <script charset="utf-8" src="js/sound.js?v=6.1.6"></script>
+    <script charset="utf-8" src="js/engine_base.js?v=6.1.6"></script>
+    <script charset="utf-8" src="js/engine_physics.js?v=6.1.6"></script>
+    <script charset="utf-8" src="js/engine_entities.js?v=6.1.6"></script>
+    <script charset="utf-8" src="js/engine_boss.js?v=6.1.6"></script>
+    <script charset="utf-8" src="js/engine_renderer.js?v=6.1.6"></script>
+    <script charset="utf-8" src="js/engine_hangar.js?v=6.1.6"></script>
+    <script charset="utf-8" src="js/main.js?v=6.1.6"></script>
 </body>
 </html>

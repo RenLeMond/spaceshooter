@@ -12,10 +12,11 @@ class GameEngine {
         
         this.score = 0;
         this.scrap = 0; 
-        this.bestScore = parseInt(localStorage.getItem('space_best_score') || '0');
+        this.bestScore = safeReadInt('space_best_score', 0);
         this.wave = 1;
         this.shieldTime = 0;
         this.bombCharge = 100;
+        this.warpCharge = 0;
         
         this.player = null;
         this.maxBullets = 200;
@@ -63,6 +64,7 @@ class GameEngine {
         this.powerupGradients = {};
         this.wingmanFlameGradients = [];
         this.blackHoleGradient = null;
+        this.whiteHoleGradient = null;
         // P0: 渐变创建延迟到 initGradients() 中，待真实 ctx 就绪后再生成
         // (Worker 模式下 constructor 期间 ctx 是 mock 空对象，调用 createRadialGradient 会 TypeError)
         if (this.ctx && typeof this.ctx.createRadialGradient === 'function') {
@@ -102,13 +104,9 @@ class GameEngine {
             wingsLevel: 0,  
         };
         
-        this.currentSkin = localStorage.getItem('space_current_skin') || 'default';
-        try {
-            this.unlockedSkins = JSON.parse(localStorage.getItem('space_unlocked_skins') || '["default"]');
-            if (!Array.isArray(this.unlockedSkins)) this.unlockedSkins = ['default'];
-        } catch (e) {
-            this.unlockedSkins = ['default'];
-        }
+        this.currentSkin = safeReadString('space_current_skin', 'default');
+        this.unlockedSkins = safeReadJSON('space_unlocked_skins', ['default']);
+        if (!Array.isArray(this.unlockedSkins)) this.unlockedSkins = ['default'];
         
         this.bulletSearchIndex = 0;
         this.meteorSearchIndex = 0;
@@ -118,7 +116,9 @@ class GameEngine {
         this.blackHole = null;
         this.blackHoleSpawnTimer = 0;
         this.boss = null; 
-        this.bossSpawned = false;
+        this.bossTier = 0; // 本局已歼灭的首领阶数，下一阶 = bossTier + 1
+        this.bossSpawnCooldown = 0; // 歼灭后冷却，防止连刷
+        this.nextBossThreshold = 3500; // 由 _refreshNextBossThreshold() 在 boss 模块加载后刷新
 
         this.spawnTimer = 0;
         this.waveTransitionTimer = 0;
@@ -160,6 +160,9 @@ class GameEngine {
         window.addEventListener('resize', () => this.resizeCanvas());
         this.resizeCanvas();
         this.initStars();
+        if (typeof this._refreshNextBossThreshold === 'function') {
+            this._refreshNextBossThreshold();
+        }
     }
 
     // P0: 渐变在 ctx 真正就绪后才创建。constructor (worker mock) 与 worker init (真实 ctx) 都会调用
@@ -191,6 +194,12 @@ class GameEngine {
         this.blackHoleGradient.addColorStop(0.2, '#f43f5e');
         this.blackHoleGradient.addColorStop(0.5, '#ec4899');
         this.blackHoleGradient.addColorStop(1, 'transparent');
+
+        this.whiteHoleGradient = this.ctx.createRadialGradient(0, 0, 5, 0, 0, 70);
+        this.whiteHoleGradient.addColorStop(0, '#ffffff');
+        this.whiteHoleGradient.addColorStop(0.2, '#22d3ee');
+        this.whiteHoleGradient.addColorStop(0.5, '#67e8f9');
+        this.whiteHoleGradient.addColorStop(1, 'transparent');
     }
 
     // P2: 0-GC 池槽位获取 — 优先复用 inactive 槽；池满返回 null，调用方决定丢弃
@@ -240,6 +249,8 @@ class GameEngine {
         document.getElementById('backToMenuBtn').addEventListener('click', () => this.showMenu());
         
         document.getElementById('soundToggleBtn').addEventListener('click', (e) => this.toggleSound(e));
+        const pauseBtn = document.getElementById('pauseBtn');
+        if (pauseBtn) pauseBtn.addEventListener('click', () => this.togglePause());
         document.getElementById('bombBtn').addEventListener('click', () => this.triggerEomBomb());
 
         document.getElementById('buyTurretBtn').addEventListener('click', () => this.buyModule('turret', 50));
@@ -468,6 +479,11 @@ class GameEngine {
             this.shieldTime -= dtClampedMs;
         }
 
+        if (this.bossSpawnCooldown > 0) {
+            this.bossSpawnCooldown -= dtClampedMs;
+            if (this.bossSpawnCooldown < 0) this.bossSpawnCooldown = 0;
+        }
+
         if (this.warpCharge < 100) {
             this.warpCharge += 0.333 * dtClamped; // 5 秒充满: 100 / (5 * 60fps) ≈ 0.333/帧
             if (this.warpCharge > 100) this.warpCharge = 100;
@@ -487,8 +503,12 @@ class GameEngine {
         for (let i = 0; i < this.maxTitanRipples; i++) {
             const ripple = this.titanRipples[i];
             if (!ripple.active) continue;
+            const prevRadius = ripple.radius;
             ripple.radius += 5.5 * dtClamped;
             ripple.alpha -= 0.015 * dtClamped;
+            if (ripple.maxRadius >= 800 && ripple.color === '217, 70, 239') {
+                this.applyVoidTsunamiPush(ripple, prevRadius, dtClamped);
+            }
             if (ripple.alpha <= 0 || ripple.radius >= ripple.maxRadius) {
                 ripple.active = false;
             }
@@ -768,7 +788,11 @@ class GameEngine {
         this.hangar = { turretLevel: 0, engineLevel: 0, wingsLevel: 0 };
         this.blackHole = null;
         this.boss = null;
-        this.bossSpawned = false;
+        this.bossTier = 0;
+        this.bossSpawnCooldown = 0;
+        if (typeof this._refreshNextBossThreshold === 'function') {
+            this._refreshNextBossThreshold();
+        }
         
         this.bulletSearchIndex = 0;
         this.meteorSearchIndex = 0;
@@ -869,7 +893,7 @@ class GameEngine {
         // 2. Quantum Boom at End Position
         this.createExplosionParticles(tx, ty, 60, "#22d3ee");
         this.createScreenShake(15);
-        sfx.playBomb();
+        sfx.playWarp();
 
         // 3. Calculate physics push and damage for meteors
         for (let i = 0; i < this.maxMeteors; i++) {

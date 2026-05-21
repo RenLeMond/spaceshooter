@@ -2,6 +2,42 @@
 // 星海猎手 V6: GameEngine - ENTITIES 模块
 // =============================================
 
+// 晶核槽 HUD 短标签 — Worker / 主线程共用（var 供 classic script 跨文件访问）
+var ELEMENT_CHIP_LABELS = {
+    'EM': 'EM',
+    'Frost': 'FR',
+    'Fire': 'FI',
+    'Rad': 'RA'
+};
+
+function formatElementChipLabel(name) {
+    if (!name) return '空';
+    return ELEMENT_CHIP_LABELS[name] || name.toUpperCase();
+}
+
+// localStorage 容错读取 — Worker / 主线程共用
+function safeReadJSON(key, fallback) {
+    try {
+        const raw = localStorage.getItem(key);
+        if (raw === null || raw === '') return fallback;
+        return JSON.parse(raw);
+    } catch (e) {
+        return fallback;
+    }
+}
+
+function safeReadInt(key, fallback) {
+    const raw = localStorage.getItem(key);
+    if (raw === null || raw === '') return fallback;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) ? n : fallback;
+}
+
+function safeReadString(key, fallback) {
+    const raw = localStorage.getItem(key);
+    return (raw !== null && raw !== '') ? raw : fallback;
+}
+
 // P2: 武器名称表 — 模块级常量，避免每次 HUD/pickup 重建对象字面量
 // HUD 字号 9px、宽度有限，去掉装饰【】让单核/共鸣名能完整显示
 const WEAPONS_NAMES = {
@@ -181,19 +217,27 @@ Object.assign(GameEngine.prototype, {
     updateElementsHUD() {
         const slots = this.player.elementSlots || [];
 
-        this.slot1UI.innerText = slots[0] ? slots[0].toUpperCase() : '空';
+        this.slot1UI.innerText = formatElementChipLabel(slots[0]);
         this.slot1UI.className = `px-1.5 h-6 min-w-[24px] rounded-lg border text-[10px] font-black flex items-center justify-center transition-all ` + this.getElementColorClass(slots[0]);
 
-        this.slot2UI.innerText = slots[1] ? slots[1].toUpperCase() : '空';
+        this.slot2UI.innerText = formatElementChipLabel(slots[1]);
         this.slot2UI.className = `px-1.5 h-6 min-w-[24px] rounded-lg border text-[10px] font-black flex items-center justify-center transition-all ` + this.getElementColorClass(slots[1]);
 
         const comboKey = this.player.comboKey || '';
         const currentSynergy = WEAPONS_NAMES[comboKey] || WEAPONS_NAMES[slots[0]] || '';
         const displayName = currentSynergy || '基础高频激光';
         this.synergyNameUI.innerText = displayName;
-        this.synergyNameUI.title = displayName; // hover/长按显示完整名，防 truncate 截断
+        this.synergyNameUI.title = displayName;
         if (this.player) {
             this.player.synergyName = currentSynergy;
+        }
+        const hasCombo = comboKey.includes('+');
+        if (hasCombo) {
+            this.synergyNameUI.className = 'flex-1 min-w-0 text-[9px] font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-emerald-400 to-indigo-400 animate-pulse truncate';
+        } else if (slots[0]) {
+            this.synergyNameUI.className = 'flex-1 min-w-0 text-[9px] font-bold text-cyan-400 truncate';
+        } else {
+            this.synergyNameUI.className = 'flex-1 min-w-0 text-[9px] font-bold text-gray-500 truncate';
         }
     },
 
@@ -319,8 +363,7 @@ Object.assign(GameEngine.prototype, {
             this.spawnBlackHole();
         }
 
-        if (this.score >= 3500 && !this.boss && !this.bossSpawned) {
-            this.wave = 3;
+        if (this.bossSpawnCooldown <= 0 && this.score >= this.nextBossThreshold && !this.boss) {
             this.spawnBoss();
         }
 

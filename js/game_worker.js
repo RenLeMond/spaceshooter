@@ -153,15 +153,19 @@ class GameEngineWorker extends GameEngine {
         if (last.slot1 !== payload.slot1) return true;
         if (last.slot2 !== payload.slot2) return true;
         if (last.synergyName !== payload.synergyName) return true;
+        if (last.synergyActive !== payload.synergyActive) return true;
         if (last.bossActive !== payload.bossActive) return true;
         if (last.bossHp !== payload.bossHp) return true;
         if (last.bossMaxHp !== payload.bossMaxHp) return true;
         if (last.bossType !== payload.bossType) return true;
+        if (last.bossTitle !== payload.bossTitle) return true;
+        if (last.bossTier !== payload.bossTier) return true;
         // bossParts 浅比对（结构稳定时 4 个数字字段）
         const lp = last.bossParts, np = payload.bossParts;
         if ((lp === null) !== (np === null)) return true;
         if (lp && np) {
             if (lp.shield !== np.shield || lp.left !== np.left || lp.right !== np.right) return true;
+            if (lp.shieldSlot !== np.shieldSlot) return true;
         }
         return false;
     }
@@ -171,8 +175,11 @@ class GameEngineWorker extends GameEngine {
         let bossMaxHp = 0;
         let bossParts = null;
         let bossType = null;
+        let bossTitle = null;
         if (this.boss && this.boss.active) {
             bossType = this.boss.type;
+            const tier = this.boss.encounterTier || 1;
+            const tierLabel = tier > 1 ? ` · 第${tier}阶` : '';
             if (this.boss.type === 'worm') {
                 let totalHp = 0;
                 let totalMaxHp = 0;
@@ -185,16 +192,40 @@ class GameEngineWorker extends GameEngine {
                 }
                 bossHp = totalHp;
                 bossMaxHp = totalMaxHp;
+                bossTitle = `💀 吞噬蠕虫${tierLabel} (${this.boss.wormSegmentCount || 10}节)`;
             } else if (this.boss.parts && this.boss.parts.core) {
                 bossHp = this.boss.parts.core.hp;
                 bossMaxHp = this.boss.parts.core.maxHp;
+                const shield = this.boss.parts.shieldCore;
+                const left = this.boss.parts.leftWing;
+                const right = this.boss.parts.rightWing;
+                const rear = this.boss.parts.rearBattery;
+                // 槽位策略与主线程一致：盾在用 shield 槽；盾破后 rear 顶替 shield 槽，左右翼独立
+                let shieldRatio = 0;
+                let shieldLabel = null;
+                if (shield && shield.active) {
+                    shieldRatio = shield.hp / shield.maxHp;
+                } else if (rear && rear.active) {
+                    shieldRatio = rear.hp / rear.maxHp;
+                    shieldLabel = 'rear';
+                }
                 bossParts = {
-                    shield: (this.boss.parts.shieldCore && this.boss.parts.shieldCore.active) ? this.boss.parts.shieldCore.hp / this.boss.parts.shieldCore.maxHp : 0,
-                    left: (this.boss.parts.leftWing && this.boss.parts.leftWing.active) ? this.boss.parts.leftWing.hp / this.boss.parts.leftWing.maxHp : 0,
-                    right: (this.boss.parts.rightWing && this.boss.parts.rightWing.active) ? this.boss.parts.rightWing.hp / this.boss.parts.rightWing.maxHp : 0
+                    shield: shieldRatio,
+                    shieldSlot: shieldLabel, // 'rear' 表示该槽现在显示尾炮
+                    left: (left && left.active) ? left.hp / left.maxHp : 0,
+                    right: (right && right.active) ? right.hp / right.maxHp : 0
                 };
+                if (this.boss.state === 'titan') {
+                    bossTitle = `💀 星云巨神兵${tierLabel}`;
+                } else {
+                    bossTitle = `⚠️ 星际掠夺者号${tierLabel}`;
+                }
             }
         }
+
+        const slots = this.player && this.player.elementSlots ? this.player.elementSlots : [];
+        const comboKey = this.player ? (this.player.comboKey || '') : '';
+        const synergyActive = comboKey.includes('+');
 
         const payload = {
             type: 'hud',
@@ -207,14 +238,17 @@ class GameEngineWorker extends GameEngine {
             shieldTime: this.shieldTime,
             bombCharge: this.bombCharge,
             warpCharge: this.warpCharge,
-            slot1: this.player && this.player.elementSlots ? this.player.elementSlots[0] : null,
-            slot2: this.player && this.player.elementSlots ? this.player.elementSlots[1] : null,
+            slot1: slots[0] || null,
+            slot2: slots[1] || null,
             synergyName: this.player ? this.player.synergyName : '',
+            synergyActive: synergyActive,
             bossActive: !!(this.boss && this.boss.active),
             bossHp: bossHp,
             bossMaxHp: bossMaxHp,
             bossParts: bossParts,
-            bossType: bossType
+            bossType: bossType,
+            bossTitle: bossTitle,
+            bossTier: this.bossTier
         };
         if (this._hudIsDirty(payload)) {
             postMessage(payload);

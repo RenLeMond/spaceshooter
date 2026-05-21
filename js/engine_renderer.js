@@ -287,6 +287,7 @@ Object.assign(GameEngine.prototype, {
         if (b.type === 'worm') {
             this.ctx.save();
             const parts = b.parts;
+            const segCount = b.wormSegmentCount || 10;
             
             this.ctx.strokeStyle = '#10b981';
             this.ctx.lineWidth = 4;
@@ -294,7 +295,7 @@ Object.assign(GameEngine.prototype, {
             this.ctx.shadowColor = '#34d399';
             
             let prevPart = null;
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < segCount; i++) {
                 const part = parts[`segment${i}`];
                 if (!part || !part.active) {
                     prevPart = null;
@@ -310,7 +311,7 @@ Object.assign(GameEngine.prototype, {
                 prevPart = part;
             }
             
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < segCount; i++) {
                 const part = parts[`segment${i}`];
                 if (!part || !part.active) continue;
                 
@@ -555,6 +556,55 @@ Object.assign(GameEngine.prototype, {
         this.ctx.restore();
     },
 
+    drawWhiteHole() {
+        if (!this.whiteHole || !this.whiteHole.active) return;
+        const wh = this.whiteHole;
+
+        this.ctx.save();
+        this.ctx.translate(wh.x, wh.y);
+        this.ctx.rotate(wh.pulse * 0.25);
+
+        const scaleFactor = (wh.radius * 3.5) / 70;
+        this.ctx.save();
+        this.ctx.scale(scaleFactor, scaleFactor);
+        this.ctx.fillStyle = this.whiteHoleGradient;
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, 76, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.restore();
+
+        this.ctx.strokeStyle = 'rgba(251, 191, 36, 0.18)';
+        this.ctx.lineWidth = 1;
+        this.ctx.setLineDash([4, 4]);
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, 35, 0, Math.PI * 2);
+        this.ctx.stroke();
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, 70, 0, Math.PI * 2);
+        this.ctx.strokeStyle = 'rgba(251, 191, 36, 0.28)';
+        this.ctx.lineWidth = 1.2;
+        this.ctx.stroke();
+        this.ctx.setLineDash([]);
+
+        this.ctx.fillStyle = '#02040a';
+        this.ctx.strokeStyle = '#22d3ee';
+        this.ctx.lineWidth = 3;
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, wh.radius + Math.sin(wh.pulse) * 1.5, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.stroke();
+
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.shadowBlur = 12;
+        this.ctx.shadowColor = '#22d3ee';
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, 6 + Math.sin(wh.pulse * 2.5) * 1.5, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.shadowBlur = 0;
+
+        this.ctx.restore();
+    },
+
     drawBlackHole() {
         if (!this.blackHole || !this.blackHole.active) return;
         const bh = this.blackHole;
@@ -645,6 +695,7 @@ Object.assign(GameEngine.prototype, {
         }
 
         this.drawBlackHole();
+        this.drawWhiteHole();
         this.drawBoss();
 
         if (this.titanRipples) {

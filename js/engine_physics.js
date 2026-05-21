@@ -508,9 +508,39 @@ Object.assign(GameEngine.prototype, {
         }
     },
 
+    applyVoidTsunamiPush(ripple, prevRadius, dtClamped) {
+        const waveOuter = ripple.radius;
+        const waveInner = prevRadius;
+        const outerSq = waveOuter * waveOuter;
+        const innerSq = waveInner * waveInner;
+        for (let i = 0; i < this.maxMeteors; i++) {
+            const m = this.meteors[i];
+            if (!m.active || m.size > 45) continue;
+            const dx = m.x - ripple.x;
+            const dy = m.y - ripple.y;
+            const distSq = dx * dx + dy * dy;
+            if (distSq > outerSq || distSq < innerSq * 0.64) continue;
+            const dist = Math.sqrt(distSq) || 1;
+            const push = 18 * dtClamped;
+            m.vx += (dx / dist) * push;
+            m.vy += (dy / dist) * push;
+        }
+    },
+
     spawnParticle(x, y, vx, vy, size, color, decay) {
         const o = this.particleIndex * 8;
-        if (this.particleBuffer[o + 7] === 0) this.activeParticleCount++;
+        if (this.particleBuffer[o + 7] !== 0) {
+            // 覆盖仍活跃的槽位（环形缓冲已满）— 净增量为 0
+            if (this.activeParticleCount > 0) {
+                this.activeParticleCount--;
+            } else if (!this._particleCountDriftWarned) {
+                // 状态漂移：槽位标记为活跃但计数已归零，说明别处计数减多了
+                console.warn('[spawnParticle] activeParticleCount drift detected: slot active but count<=0');
+                this._particleCountDriftWarned = true;
+            }
+        } else {
+            this.activeParticleCount++;
+        }
         this.particleBuffer[o] = x;
         this.particleBuffer[o + 1] = y;
         this.particleBuffer[o + 2] = vx;

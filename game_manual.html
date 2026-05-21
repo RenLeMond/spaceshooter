@@ -672,14 +672,14 @@
                 </div>
                 
                 <p class="text-xs text-gray-300 mb-6 leading-relaxed">
-                    在 V6 纪元中，战研参谋总部确认了双重星际主宰者的存在。在攻破星区防线时，玩家将面临截然不同的双首领死斗机制。
+                    在 V6 纪元中，战研参谋总部确认了双重星际主宰者的存在。歼灭首领后可触发<strong>多阶连战</strong>（分数门槛递增 + 12 秒冷却）；首领阶数只影响 Boss 自身强度，<strong>不会</strong>抬升当前波次（WAVE）——波次仍仅由得分进度驱动。
                 </p>
 
                 <!-- Boss 1: Nebula Titan -->
                 <div class="bg-black/40 p-5 rounded-2xl border border-rose-500/15 mb-6 space-y-4">
-                    <h3 class="text-xs font-black text-rose-400 uppercase tracking-widest mb-1"><i class="fa-solid fa-shield-halved text-rose-400 mr-1.5"></i> 主宰一：星云巨神兵 (Nebula Titan)</h3>
+                    <h3 class="text-xs font-black text-rose-400 uppercase tracking-widest mb-1"><i class="fa-solid fa-shield-halved text-rose-400 mr-1.5"></i> 主宰一：星际掠夺者号 → 星云巨神兵 (Phase Reaver / Nebula Titan)</h3>
                     <p class="text-[11px] text-gray-400 leading-relaxed">
-                        当敌方旗舰受击爆碎时触发【引力大坍缩 (Implosion Reset)】，聚爆重组为拥有 800HP 的究极要塞。
+                        一阶形态为<strong>星际掠夺者号</strong>：自上方空降后会在屏幕顶部<strong>横向追踪玩家</strong>，并从可破坏部件（防护罩、双翼、核心；高阶另含尾炮）倾泻弹幕。核心被毁时触发【引力大坍缩 (Implosion Reset)】，吸附全屏碎石并聚爆重组为二阶<strong>星云巨神兵</strong>（高阶 HP 随 encounter 阶数缩放）。
                     </p>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-[10px] text-gray-400">
                         <div class="p-3 bg-gray-900/60 rounded-xl border border-amber-500/10">
@@ -701,16 +701,16 @@
                 <div class="bg-black/40 p-5 rounded-2xl border border-lime-500/20 mb-6 space-y-4">
                     <h3 class="text-xs font-black text-lime-400 uppercase tracking-widest mb-1"><i class="fa-solid fa-bug text-lime-400 mr-1.5 animate-pulse"></i> 主宰二：深空星体吞噬者 (Asteroid Devourer Worm)</h3>
                     <p class="text-[11px] text-gray-400 leading-relaxed">
-                        10 节链式物理巨虫。头部（1500HP）自动追捕陨石和玩家，而中段躯干关节最大血量为 400HP，具有独特的成长与分裂属性。
+                        10～14 节链式物理巨虫（阶数越高节数越多）。每个<strong>颚颅</strong>始终<strong>直追玩家飞船</strong>；躯干关节 HP 随阶数缩放。与旧版不同，头部<strong>不会</strong>再主动改道去追陨石——仅在追玩家途中<strong>擦碰</strong>到流星才会吞噬。
                     </p>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-[10px] text-gray-400">
                         <div class="p-3 bg-gray-900/60 rounded-xl border border-emerald-500/10">
-                            <span class="text-emerald-400 font-bold block mb-1">🦖 1. 自动吞食成长与超速回血</span>
-                            蠕虫头会自动寻路吃掉流星。吃掉流星时，它将吞噬流星并恢复其剩余血量 2 倍的巨额生命值（并漂浮 <code>DEVOUR +HP</code> 绿字）。必须在它吃掉前将流星击碎！
+                            <span class="text-emerald-400 font-bold block mb-1">🦖 1. 沿途吞食成长与超速回血</span>
+                            颚颅在追击玩家过程中，若碰撞半径内碰到流星，会将其吞噬并按 <code>流星剩余 HP × 吞噬倍率</code>（基础 2 倍，高阶更高）回血，漂浮 <code>DEVOUR +HP</code> 绿字。优先用火力清空其路径上的流星，或提前击碎高价值目标，避免养蛊！
                         </div>
                         <div class="p-3 bg-gray-900/60 rounded-xl border border-rose-500/10">
                             <span class="text-rose-400 font-bold block mb-1">🦠 2. 关节断裂分裂机制</span>
-                            如果聚焦火力射击其身体中后段，击碎其骨节，会触发“躯体断裂裂变”。断裂处后面的节点会突变为新的头部（变为多条独立长虫），战况会急剧恶化！<strong>不过在 V6 版中，引擎加入了活跃头部节流阀：同屏最多允许 3 条独立蠕虫头部并存</strong>。一旦超出 3 条，后续的关节断裂将不再生成新头部，防止漫天飞虫导致系统负载过高或战斗失控。
+                            聚焦火力射击中后段骨节，击碎后会触发“躯体断裂裂变”：后一节突变为新的颚颅或<strong>分裂突变首</strong>。颚颅被毁时下一节<strong>必定</strong>接替，不受数量限制；普通骨节断裂则受<strong>活跃头部节流阀</strong>约束（基础 3 头，高阶最高 5 头）。超出上限时不再产生新头，防止战局失控。
                         </div>
                         <div class="p-3 bg-gray-900/60 rounded-xl border border-purple-500/10">
                             <span class="text-purple-400 font-bold block mb-1">🔮 3. 集中条块与重力陷阱</span>
