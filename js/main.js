@@ -308,12 +308,13 @@ window.onload = function() {
                     });
 
                     if (synergyNameUI) {
+                        const displayName = msg.synergyName || '基础机载激光';
+                        synergyNameUI.innerText = displayName;
+                        synergyNameUI.title = displayName; // hover/长按显示完整名
                         if (msg.synergyName) {
-                            synergyNameUI.innerText = msg.synergyName;
-                            synergyNameUI.className = 'text-[10px] font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-emerald-400 to-indigo-400 animate-pulse truncate shrink-0 max-w-[85px] sm:max-w-[120px]';
+                            synergyNameUI.className = 'text-[10px] font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-emerald-400 to-indigo-400 animate-pulse truncate shrink-0 max-w-[130px] sm:max-w-[180px]';
                         } else {
-                            synergyNameUI.innerText = "基础机载激光";
-                            synergyNameUI.className = 'text-[9px] font-bold text-cyan-400 truncate shrink-0 max-w-[85px] sm:max-w-[120px]';
+                            synergyNameUI.className = 'text-[9px] font-bold text-cyan-400 truncate shrink-0 max-w-[130px] sm:max-w-[180px]';
                         }
                     }
                     
@@ -490,18 +491,6 @@ window.onload = function() {
         });
         
         // 声效/核弹/快捷键绑定
-        document.getElementById('controlToggleBtn').addEventListener('click', () => {
-            const nextMode = mainControlMode === 'touch' ? 'keyboard' : 'touch';
-            setMainControlMode(nextMode);
-            const mobileControls = document.getElementById('mobileControls');
-            if (mobileControls) {
-                if (nextMode === 'keyboard') {
-                    mobileControls.classList.remove('hidden');
-                } else {
-                    mobileControls.classList.add('hidden');
-                }
-            }
-        });
         document.getElementById('soundToggleBtn').addEventListener('click', (e) => {
             const muted = sfx.toggleMute();
             const icon = e.currentTarget.querySelector('i');

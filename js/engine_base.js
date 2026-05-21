@@ -239,7 +239,6 @@ class GameEngine {
         document.getElementById('retryBtn').addEventListener('click', () => this.resetGame(true));
         document.getElementById('backToMenuBtn').addEventListener('click', () => this.showMenu());
         
-        document.getElementById('controlToggleBtn').addEventListener('click', () => this.toggleControlModeDirectly());
         document.getElementById('soundToggleBtn').addEventListener('click', (e) => this.toggleSound(e));
         document.getElementById('bombBtn').addEventListener('click', () => this.triggerEomBomb());
 

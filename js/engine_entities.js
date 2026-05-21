@@ -3,6 +3,7 @@
 // =============================================
 
 // P2: 武器名称表 — 模块级常量，避免每次 HUD/pickup 重建对象字面量
+// HUD 字号 9px、宽度有限，去掉装饰【】让单核/共鸣名能完整显示
 const WEAPONS_NAMES = {
     'EM': '【高频快速电磁炮】',
     'Frost': '【超导绝对零度枪】',
@@ -188,7 +189,9 @@ Object.assign(GameEngine.prototype, {
 
         const comboKey = this.player.comboKey || '';
         const currentSynergy = WEAPONS_NAMES[comboKey] || WEAPONS_NAMES[slots[0]] || '';
-        this.synergyNameUI.innerText = currentSynergy || '基础高频激光';
+        const displayName = currentSynergy || '基础高频激光';
+        this.synergyNameUI.innerText = displayName;
+        this.synergyNameUI.title = displayName; // hover/长按显示完整名，防 truncate 截断
         if (this.player) {
             this.player.synergyName = currentSynergy;
         }
