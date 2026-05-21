@@ -314,15 +314,28 @@ window.onload = function() {
                     if (bossHpGroup) {
                         if (msg.bossActive) {
                             bossHpGroup.classList.remove('hidden');
-                            document.getElementById('bossMainPercent').innerText = `${Math.ceil(msg.bossHp / msg.bossMaxHp * 100)}%`;
-                            document.getElementById('bossMainHpBar').style.width = `${(msg.bossHp / msg.bossMaxHp) * 100}%`;
-                            if (msg.bossParts) {
-                                document.getElementById('partHpShield').innerText = `${Math.ceil(msg.bossParts.shield * 100)}%`;
-                                document.getElementById('partBarShield').style.width = `${msg.bossParts.shield * 100}%`;
-                                document.getElementById('partHpLeft').innerText = `${Math.ceil(msg.bossParts.left * 100)}%`;
-                                document.getElementById('partBarLeft').style.width = `${msg.bossParts.left * 100}%`;
-                                document.getElementById('partHpRight').innerText = `${Math.ceil(msg.bossParts.right * 100)}%`;
-                                document.getElementById('partBarRight').style.width = `${msg.bossParts.right * 100}%`;
+                            const bossPercent = msg.bossMaxHp > 0 ? Math.ceil((msg.bossHp / msg.bossMaxHp) * 100) : 0;
+                            document.getElementById('bossMainPercent').innerText = `${bossPercent}%`;
+                            document.getElementById('bossMainHpBar').style.width = `${bossPercent}%`;
+                            
+                            if (msg.bossType === 'worm') {
+                                document.getElementById('bossMainTitle').innerText = "💀 吞噬蠕虫 (Asteroid Devourer)";
+                                document.getElementById('partHpShield').innerText = "未激活";
+                                document.getElementById('partBarShield').style.width = "0%";
+                                document.getElementById('partHpLeft').innerText = "未激活";
+                                document.getElementById('partBarLeft').style.width = "0%";
+                                document.getElementById('partHpRight').innerText = "未激活";
+                                document.getElementById('partBarRight').style.width = "0%";
+                            } else {
+                                document.getElementById('bossMainTitle').innerText = "⚠️ 星际掠夺者号 (Phase Reaver)";
+                                if (msg.bossParts) {
+                                    document.getElementById('partHpShield').innerText = `${Math.ceil(msg.bossParts.shield * 100)}%`;
+                                    document.getElementById('partBarShield').style.width = `${msg.bossParts.shield * 100}%`;
+                                    document.getElementById('partHpLeft').innerText = `${Math.ceil(msg.bossParts.left * 100)}%`;
+                                    document.getElementById('partBarLeft').style.width = `${msg.bossParts.left * 100}%`;
+                                    document.getElementById('partHpRight').innerText = `${Math.ceil(msg.bossParts.right * 100)}%`;
+                                    document.getElementById('partBarRight').style.width = `${msg.bossParts.right * 100}%`;
+                                }
                             }
                         } else {
                             bossHpGroup.classList.add('hidden');

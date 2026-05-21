@@ -307,7 +307,7 @@ Object.assign(GameEngine.prototype, {
 
             let bulletRemoved = false;
 
-            if (this.boss && this.boss.active && this.boss.y >= 50) {
+            if (this.boss && this.boss.active && (this.boss.y === undefined || this.boss.y >= 50)) {
                 const b = this.boss;
                 const parts = b.parts;
 

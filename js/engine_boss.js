@@ -527,7 +527,9 @@ Object.assign(GameEngine.prototype, {
         this.boss.active = false;
         this.createScreenShake(45);
         sfx.playExplosion(true);
-        this.addFloatText(this.boss.x, this.boss.y, "🏆 战役大捷 • BOSS歼灭！", "#10b981", 24);
+        const bX = this.boss.x !== undefined ? this.boss.x : this.logicalWidth / 2;
+        const bY = this.boss.y !== undefined ? this.boss.y : this.logicalHeight / 3;
+        this.addFloatText(bX, bY, "🏆 战役大捷 • BOSS歼灭！", "#10b981", 24);
         this.scrap += 150;
         this.score += 5000;
         document.getElementById('bossHpGroup').classList.add('hidden');

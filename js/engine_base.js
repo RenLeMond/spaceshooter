@@ -773,9 +773,22 @@ class GameEngine {
 
         const onTouchEnd = () => { isDragging = false; };
 
+        const onDblClick = (e) => {
+            if (!this.isRunning || this.isPaused) return;
+            if (this.warpCharge >= 100) {
+                const rect = this.canvas.getBoundingClientRect();
+                const scaleX = this.logicalWidth / rect.width;
+                const scaleY = this.logicalHeight / rect.height;
+                const x = (e.clientX - rect.left) * scaleX;
+                const y = (e.clientY - rect.top) * scaleY;
+                this.triggerWarp(x, y);
+            }
+        };
+
         this.canvas.addEventListener('touchstart', onTouchStart, { passive: false });
         this.canvas.addEventListener('touchmove', onTouchMove, { passive: false });
         this.canvas.addEventListener('touchend', onTouchEnd);
+        this.canvas.addEventListener('dblclick', onDblClick);
 
         let isMouseDragging = false;
         let mouseStartX = 0;
@@ -846,6 +859,7 @@ class GameEngine {
             this.canvas.removeEventListener('touchstart', onTouchStart);
             this.canvas.removeEventListener('touchmove', onTouchMove);
             this.canvas.removeEventListener('touchend', onTouchEnd);
+            this.canvas.removeEventListener('dblclick', onDblClick);
             this.canvas.removeEventListener('mousedown', onMouseDown);
             window.removeEventListener('mousemove', onMouseMove);
             window.removeEventListener('mouseup', onMouseUp);

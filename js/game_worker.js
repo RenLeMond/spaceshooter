@@ -135,6 +135,35 @@ class GameEngineWorker extends GameEngine {
 
     // 重写 HUD 更新，向主线程同步完整的 HUD 状态
     updateHUD() {
+        let bossHp = 0;
+        let bossMaxHp = 0;
+        let bossParts = null;
+        let bossType = null;
+        if (this.boss && this.boss.active) {
+            bossType = this.boss.type;
+            if (this.boss.type === 'worm') {
+                let totalHp = 0;
+                let totalMaxHp = 0;
+                for (const key in this.boss.parts) {
+                    const part = this.boss.parts[key];
+                    if (part.active) {
+                        totalHp += part.hp;
+                    }
+                    totalMaxHp += part.maxHp;
+                }
+                bossHp = totalHp;
+                bossMaxHp = totalMaxHp;
+            } else if (this.boss.parts && this.boss.parts.core) {
+                bossHp = this.boss.parts.core.hp;
+                bossMaxHp = this.boss.parts.core.maxHp;
+                bossParts = {
+                    shield: (this.boss.parts.shieldCore && this.boss.parts.shieldCore.active) ? this.boss.parts.shieldCore.hp / this.boss.parts.shieldCore.maxHp : 0,
+                    left: (this.boss.parts.leftWing && this.boss.parts.leftWing.active) ? this.boss.parts.leftWing.hp / this.boss.parts.leftWing.maxHp : 0,
+                    right: (this.boss.parts.rightWing && this.boss.parts.rightWing.active) ? this.boss.parts.rightWing.hp / this.boss.parts.rightWing.maxHp : 0
+                };
+            }
+        }
+
         postMessage({
             type: 'hud',
             score: this.score,
@@ -149,13 +178,10 @@ class GameEngineWorker extends GameEngine {
             slot2: this.player && this.player.elementSlots ? this.player.elementSlots[1] : null,
             synergyName: this.player ? this.player.synergyName : '',
             bossActive: !!(this.boss && this.boss.active),
-            bossHp: this.boss ? this.boss.hp : 0,
-            bossMaxHp: this.boss ? this.boss.maxHp : 0,
-            bossParts: this.boss ? {
-                shield: this.boss.parts.shield.hp / this.boss.parts.shield.maxHp,
-                left: this.boss.parts.leftGun.hp / this.boss.parts.leftGun.maxHp,
-                right: this.boss.parts.rightGun.hp / this.boss.parts.rightGun.maxHp
-            } : null
+            bossHp: bossHp,
+            bossMaxHp: bossMaxHp,
+            bossParts: bossParts,
+            bossType: bossType
         });
     }
 

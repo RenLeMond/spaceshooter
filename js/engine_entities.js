@@ -497,10 +497,12 @@ Object.assign(GameEngine.prototype, {
             for (const key in parts) {
                 if (parts[key].active) {
                     parts[key].hp -= 120;
+                    const pX = parts[key].x !== undefined ? parts[key].x : this.boss.x + parts[key].offset.x;
+                    const pY = parts[key].y !== undefined ? parts[key].y : this.boss.y + parts[key].offset.y;
                     if (parts[key].hp <= 0) {
                         parts[key].active = false;
-                        this.createExplosionParticles(this.boss.x + parts[key].offset.x, this.boss.y + parts[key].offset.y, 80, '#fbbf24');
-                        this.addFloatText(this.boss.x + parts[key].offset.x, this.boss.y + parts[key].offset.y, `💥 部位歼灭!`, '#fbbf24', 14);
+                        this.createExplosionParticles(pX, pY, 80, '#fbbf24');
+                        this.addFloatText(pX, pY, `💥 ${parts[key].label} 歼灭!`, '#fbbf24', 14);
                         if (key === 'core') this.destroyBossEpic();
                     }
                 }
