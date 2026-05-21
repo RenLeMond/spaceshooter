@@ -441,12 +441,26 @@ self.onmessage = function(e) {
                 if (data.code === 'Escape' || data.code === 'KeyP') {
                     engineInstance.togglePause();
                 }
+                if ((data.code === 'ShiftLeft' || data.code === 'ShiftRight')
+                    && engineInstance.isRunning && !engineInstance.isPaused
+                    && engineInstance.warpCharge >= 100) {
+                    // Shift → 向上跳 300px 折跃
+                    engineInstance.triggerWarp(engineInstance.player.x, Math.max(20, engineInstance.player.y - 300));
+                }
                 if (data.code === 'KeyK' && engineInstance.isRunning && !engineInstance.isPaused) {
                     engineInstance.score += 1000;
                     engineInstance.scrap += 10;
                     engineInstance.player.hp = Math.min(engineInstance.player.maxHp, engineInstance.player.hp + 20);
                     engineInstance.showToast(`🧪 极客热更新调试：积分 +1000 (当前: ${engineInstance.score})`);
                 }
+            }
+            break;
+
+        case 'warpAt':
+            // 主线程双击 / 双指双触发的折跃 — 跳到指定逻辑坐标
+            if (engineInstance && engineInstance.isRunning && !engineInstance.isPaused
+                && engineInstance.warpCharge >= 100) {
+                engineInstance.triggerWarp(data.x, data.y);
             }
             break;
             

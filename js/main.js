@@ -610,11 +610,26 @@ window.onload = function() {
         let touchStartY = 0;
         let isDragging = false;
         
+        // 折跃触发：移动端 300ms 内双触发即触发量子折跃
+        let lastTapTime = 0;
         canvas.addEventListener('touchstart', (e) => {
             isDragging = true;
             const touch = e.touches[0];
             touchStartX = touch.clientX;
             touchStartY = touch.clientY;
+
+            const now = performance.now();
+            if (now - lastTapTime < 300) {
+                const rect = canvas.getBoundingClientRect();
+                const sx = 540 / rect.width;
+                const sy = 960 / rect.height;
+                worker.postMessage({
+                    type: 'warpAt',
+                    x: (touch.clientX - rect.left) * sx,
+                    y: (touch.clientY - rect.top) * sy
+                });
+            }
+            lastTapTime = now;
         }, { passive: false });
 
         canvas.addEventListener('touchmove', (e) => {
@@ -655,7 +670,19 @@ window.onload = function() {
         });
 
         window.addEventListener('mouseup', () => { isMouseDragging = false; });
-        
+
+        // 折跃触发：PC 端在画布上双击即触发量子折跃到光标位置
+        canvas.addEventListener('dblclick', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const sx = 540 / rect.width;
+            const sy = 960 / rect.height;
+            worker.postMessage({
+                type: 'warpAt',
+                x: (e.clientX - rect.left) * sx,
+                y: (e.clientY - rect.top) * sy
+            });
+        });
+
         // 设置最佳得分
         const bestScoreText = document.getElementById('bestScoreText');
         if (bestScoreText) bestScoreText.innerText = String(mainBestScore).padStart(6, '0');
