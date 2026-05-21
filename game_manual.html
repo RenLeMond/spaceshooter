@@ -296,13 +296,13 @@
                                 <span class="px-2 py-0.5 bg-cyan-500/10 text-[9px] text-cyan-400 font-bold rounded">推荐模式</span>
                             </div>
                             <p class="text-[11px] text-gray-400 leading-relaxed">
-                                适用于移动端触屏或 PC 鼠标。在画布上按住飞船并任意方向拖拽，战机会极度丝滑地跟随您的手指或指针移动。
+                                适用于移动端触屏或 PC 鼠标。在画布上按住飞船并任意方向拖拽，战机会极度丝滑地跟随您的手指或指针移动。<strong>V6 新版已全面升级 DPI 自适应视口精密映射变换</strong>，在 4K 高分辨率、Retina 视网膜屏幕或浏览器任意百分比缩放（Zoom）下，均能实现 100% 精确的指尖坐标绝对同步，零偏移漂移！
                             </p>
                         </div>
                         <ul class="text-[10px] text-cyan-300 font-bold space-y-1.5 mt-4">
                             <li><i class="fa-solid fa-circle-check mr-1.5"></i> 极佳的手势丝滑度，避弹灵敏。</li>
                             <li><i class="fa-solid fa-circle-check mr-1.5"></i> 战机在拖动状态下将<strong>自动无限连发开火</strong>。</li>
-                            <li><i class="fa-solid fa-bolt mr-1.5 text-purple-400 animate-pulse"></i> 双击/双击屏幕：瞬间向光标坐标折跃，释放落点量子爆破！</li>
+                            <li><i class="fa-solid fa-bolt mr-1.5 text-purple-400 animate-pulse"></i> 双击屏幕：瞬间向目标坐标折跃，释放落点量子爆破！</li>
                         </ul>
                     </div>
 
@@ -710,7 +710,7 @@
                         </div>
                         <div class="p-3 bg-gray-900/60 rounded-xl border border-rose-500/10">
                             <span class="text-rose-400 font-bold block mb-1">🦠 2. 关节断裂分裂机制</span>
-                            如果聚焦火力射击其身体中后段，击碎其骨节，会触发“躯体断裂裂变”。断裂处后面的节点会突变为新的头部（变为多条独立长虫），战况会急剧恶化！
+                            如果聚焦火力射击其身体中后段，击碎其骨节，会触发“躯体断裂裂变”。断裂处后面的节点会突变为新的头部（变为多条独立长虫），战况会急剧恶化！<strong>不过在 V6 版中，引擎加入了活跃头部节流阀：同屏最多允许 3 条独立蠕虫头部并存</strong>。一旦超出 3 条，后续的关节断裂将不再生成新头部，防止漫天飞虫导致系统负载过高或战斗失控。
                         </div>
                         <div class="p-3 bg-gray-900/60 rounded-xl border border-purple-500/10">
                             <span class="text-purple-400 font-bold block mb-1">🔮 3. 集中条块与重力陷阱</span>
@@ -769,6 +769,35 @@
                             <span class="text-[11px] text-gray-400 leading-relaxed block mt-1">
                                 10节长蛇首领使用多关节追随物理（Inverse Kinematics / LERP Follow），当节点间距拉大时以线性插值阻尼紧随，摆脱了逐帧重计算的沉重开销。同时结合强制 Letterbox 黄金纵横比，确保在任何分辨率拉伸下，船体和怪物的受击框 100% 绝对吻合。
                             </span>
+                    </div>
+                </div>
+
+                <!-- V6 性能评级基准 -->
+                <div class="mt-8 border-t border-white/5 pt-6">
+                    <h3 class="text-xs font-black text-amber-500 uppercase tracking-widest mb-4"><i class="fa-solid fa-gauge-high mr-1"></i> V6 超频性能基准测评与物理评级 (FPS Benchmark Ranks)</h3>
+                    <p class="text-[11px] text-gray-400 leading-relaxed mb-4">
+                        星海战场中玩家可以随时在主界面或整备界面唤出 <strong>1000 粒子超载物理压力测试 (Extreme Benchmark)</strong>。引擎将自动根据连续 100 帧更新的平均帧率以及 CPU 物理/渲染延迟指标算出性能等级分数（基准公式：$\text{Score} = \text{Average FPS} \times 100 - (\text{Physics Delay} + \text{Renderer Delay}) \times 400$）。其具体物理评级划分如下：
+                    </p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        <div class="p-3 bg-gray-950/40 border border-cyan-500/30 rounded-xl">
+                            <span class="text-xs font-black text-cyan-400 block mb-1">⚡ Godlike</span>
+                            <span class="text-[10px] text-gray-500 block mb-2">天神超频完美态</span>
+                            <span class="px-2 py-0.5 bg-cyan-500/10 text-[9px] text-cyan-400 font-bold rounded">$\ge 110$ FPS</span>
+                        </div>
+                        <div class="p-3 bg-gray-950/40 border border-emerald-500/30 rounded-xl">
+                            <span class="text-xs font-black text-emerald-400 block mb-1">🚀 Ultra</span>
+                            <span class="text-[10px] text-gray-500 block mb-2">极速无缝战斗态</span>
+                            <span class="px-2 py-0.5 bg-emerald-500/10 text-[9px] text-emerald-400 font-bold rounded">$\ge 85$ FPS</span>
+                        </div>
+                        <div class="p-3 bg-gray-950/40 border border-amber-500/30 rounded-xl">
+                            <span class="text-xs font-black text-amber-400 block mb-1">💎 Premium</span>
+                            <span class="text-[10px] text-gray-500 block mb-2">尊享流畅稳定态</span>
+                            <span class="px-2 py-0.5 bg-amber-500/10 text-[9px] text-amber-400 font-bold rounded">$\ge 55$ FPS</span>
+                        </div>
+                        <div class="p-3 bg-gray-950/40 border border-rose-500/30 rounded-xl">
+                            <span class="text-xs font-black text-rose-400 block mb-1">⚠️ Standard</span>
+                            <span class="text-[10px] text-gray-500 block mb-2">标准常规负荷态</span>
+                            <span class="px-2 py-0.5 bg-rose-500/10 text-[9px] text-rose-400 font-bold rounded">$&lt; 55$ FPS</span>
                         </div>
                     </div>
                 </div>

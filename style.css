@@ -3,7 +3,7 @@ body {
     padding: 0;
     background-color: #02040a;
     overflow: hidden;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Outfit', 'Noto Sans SC', 'Inter', system-ui, -apple-system, sans-serif;
     user-select: none;
     -webkit-user-select: none;
     touch-action: none;

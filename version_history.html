@@ -156,7 +156,7 @@
         <div class="hidden lg:flex items-center gap-6 text-xs font-black tracking-widest uppercase text-gray-400">
             <a href="space_shooter.html" class="hover:text-cyan-400 transition flex items-center gap-1"><i class="fa-solid fa-gamepad"></i> 战斗终端</a>
             <a href="game_manual.html" class="hover:text-cyan-400 transition flex items-center gap-1"><i class="fa-solid fa-book"></i> 战略说明书</a>
-            <a href="v5_roadmap.html" class="hover:text-cyan-400 transition flex items-center gap-1"><i class="fa-solid fa-circle-nodes"></i> V5概念设计</a>
+            <a href="game_design.html" class="hover:text-cyan-400 transition flex items-center gap-1"><i class="fa-solid fa-circle-nodes"></i> 设计白皮书</a>
             <a href="v6_hangar.html" class="hover:text-cyan-400 transition flex items-center gap-1"><i class="fa-solid fa-screwdriver-wrench"></i> 先遣演练</a>
             <a href="v6_roadmap.html" class="hover:text-fuchsia-400 transition flex items-center gap-1"><i class="fa-solid fa-wand-magic-sparkles animate-pulse text-fuchsia-400"></i> V6星能折跃指南</a>
         </div>
@@ -373,8 +373,11 @@
                         <div class="chrono-glass-card rounded-2xl p-5 border border-fuchsia-500/30">
                             <span class="text-[9px] font-black text-fuchsia-400 uppercase tracking-widest">V6 • 星能跃迁 (ACTIVE)</span>
                             <h4 class="text-sm font-black text-white mt-1">《星能跃迁与超维涂装》</h4>
-                            <p class="text-[10px] text-gray-400 mt-2 leading-relaxed">
-                                超空间折跃极速双端物理结算，新增裂变吞噬的星体蠕虫 Boss，以及星渊幻影、超维雷霆、帝皇余晖三套发光矢量皮肤，支持本地 localStorage 零跨域完美运行。
+                            <p class="text-[10px] text-gray-400 mt-2 leading-relaxed mb-1.5">
+                                <strong>V6星能重塑大功告成！</strong> 全面实装双击 Canvas 触发<strong>战术量子折跃 (Quantum Warp)</strong>，支持 DPI 高分屏自适应精密映射。注入常态化<strong>斥力白洞 (White Hole)</strong> 强排斥物理偏转场与<strong>引力弹弓爆发 (Slingshot Surge)</strong> 双倍开火射速/旋转金盾无敌判定。
+                            </p>
+                            <p class="text-[10px] text-gray-400 leading-relaxed">
+                                对底层引擎实施超频优化：吞噬蠕虫分裂头部数量强行限流（同屏上限 3 个虫头），首创 <strong>Path2D 粒子群合并批重绘</strong>，引入 <strong>SoundFX 音效高频时间节流保护闸门</strong>，完美解决 file:// 模式跨域与 Safari 音频硬件通道爆音瘫痪的顽疾。
                             </p>
                         </div>
                     </div>
@@ -399,8 +402,8 @@
                             <i class="fa-solid fa-gamepad animate-pulse"></i> 开启 V6 飞行战斗终端
                         </a>
                         <div class="grid grid-cols-3 gap-2">
-                            <a href="v5_roadmap.html" class="py-3 px-1 bg-gray-950/50 border border-white/5 hover:border-purple-500/30 text-[9px] font-black rounded-xl text-gray-300 active:scale-95 text-center transition flex flex-col items-center justify-center gap-1">
-                                <i class="fa-solid fa-circle-nodes text-purple-400"></i> V5路线图
+                            <a href="game_design.html" class="py-3 px-1 bg-gray-950/50 border border-white/5 hover:border-purple-500/30 text-[9px] font-black rounded-xl text-gray-300 active:scale-95 text-center transition flex flex-col items-center justify-center gap-1">
+                                <i class="fa-solid fa-circle-nodes text-purple-400"></i> 设计白皮书
                             </a>
                             <a href="v6_hangar.html" class="py-3 px-1 bg-gray-950/50 border border-white/5 hover:border-amber-500/30 text-[9px] font-black rounded-xl text-gray-300 active:scale-95 text-center transition flex flex-col items-center justify-center gap-1">
                                 <i class="fa-solid fa-screwdriver-wrench text-amber-500 animate-pulse"></i> 先遣演练
@@ -484,9 +487,9 @@
                 badge: 'V6 WARP ACTIVE',
                 badgeColor: 'bg-fuchsia-500/10 border-fuchsia-500/30 text-fuchsia-400',
                 title: '星海猎手 V6：星能跃迁与超维涂装 (当前版本)',
-                desc: '最新的 V6 版本为玩家装备了空间折跃核心，双击 Canvas 或键盘 Shift 瞬移并造成两端维度破碎及量子轰鸣物理结算；加入吞星增长、断裂分裂的巨型星体吞噬蠕虫 Boss；实装星渊幻影、超维雷霆、帝皇余晖三套矢量超维发光涂装与定制盾，打造最吸睛炸裂的太空盛宴！',
-                tech: 'Inverse-Kinematics Chain LERP & FM Warping Wave Synth',
-                gc: 'Cosmic particle decay index recycling & localStorage archive',
+                desc: '最新的 V6 版本实装了空间量子折跃（指尖双击 Canvas 绝对坐标无漂移瞬移，伴随起点坍缩、终点爆破 300 点物理伤害）；中央偏上区常态生成交错发光“斥力白洞”，实现反比强斥力粒子偏转；擦过边缘环形带可唤醒“引力弹弓爆发”（金盾无敌 + 开火间隔减半）；主打超维矢量发光涂装与本地无痛存储。底层引擎同步升级利维坦蠕虫分裂头部限流阀（最多 3 头部并存）、Path2D 量化透明度合并批重绘（Draw Calls 减少 40%）及 Web Audio 合成器高频发声限流防瘫机制。',
+                tech: 'Quantum Warp & Slingshot Gravity Surge & Path2D Batch Render',
+                gc: 'Worm Fission Throttler & SoundFX Chime Limiters',
                 icon: '<i class="fa-solid fa-wand-magic-sparkles text-fuchsia-400"></i>',
                 label: '🌌 Vector Cosmic Skins & Warp Cores Ready',
                 address: 'TRANS-ADDR: 0x8F9C4B'

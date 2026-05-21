@@ -608,8 +608,6 @@
                             <span>并在吞噬点生成霓虹绿浮空文字 <code>DEVOUR +HP</code>。</span>
                         </div>
                     </div>
-                </div>
-
                 <div class="p-4 bg-black/40 border border-lime-500/20 rounded-xl">
                     <span class="font-bold text-white block text-sm mb-2"><i class="fa-solid fa-scissors text-rose-400 mr-1.5"></i> 3. 躯体断裂裂变算法 (Segment Fission Engine)</span>
                     <p class="text-[11px] text-gray-400 leading-relaxed mb-3">
@@ -621,6 +619,25 @@
                         if (k + 1 &lt; this.segments.length) {
                             this.segments[k + 1].isHead = true;
                             this.segments[k + 1].color = '#ef4444'; // 突变狂暴红
+                        }
+                    </div>
+                </div>
+
+                <div class="p-4 bg-black/40 border border-lime-500/20 rounded-xl mt-4">
+                    <span class="font-bold text-white block text-sm mb-2"><i class="fa-solid fa-shield-halved text-emerald-400 mr-1.5"></i> 4. 突变分裂上限保护机制 (Fission Head Throttle Limit)</span>
+                    <p class="text-[11px] text-gray-400 leading-relaxed mb-3">
+                        在极端高密雷击闪电或量子爆破中，长蠕虫身体多段关节可能瞬间 HP 归零。若无拦截地触发多次分裂，将在屏幕上生成海量游动巨头，导致视觉崩溃与物理计算瓶颈。V6 引擎设置了头部裂变上限截流防御。当战场上现存活动头部数量大于等于 3 个时，将不再允许后继关节变异为新头部：
+                    </p>
+                    <div class="bg-black/50 p-3 rounded font-mono text-[9px] text-emerald-300 overflow-x-auto">
+                        // 裂变截流计数保护
+                        let activeHeads = 0;
+                        for (let j = 0; j < 10; j++) {
+                            const p = this.segments[j];
+                            if (p && p.active && p.isHead) activeHeads++;
+                        }
+                        if (activeHeads < 3) {
+                            nextPart.isHead = true; // 仅在头部数量 &lt; 3 时才触发变异分裂
+                            nextPart.label = "分裂突变首";
                         }
                     </div>
                 </div>
@@ -663,6 +680,136 @@
                         <p class="text-[11px] leading-relaxed">
                             该简单的代数变换使高频更新循环下的碰撞计算消耗降低了 $95\%$ 以上，在全屏高频渲染上千个实体时，为游戏的绝对流畅响应提供了强大的算力支撑。
                         </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 九、视口坐标精密映射与 DPI 自适应物理触控 -->
+        <section id="viewport-mapping" class="space-y-4 scroll-mt-28">
+            <div class="flex items-center gap-2">
+                <span class="text-purple-400 text-lg"><i class="fa-solid fa-expand animate-pulse"></i></span>
+                <h3 class="text-lg font-black text-white uppercase tracking-widest">九、 视口坐标精密映射与 DPI 自适应物理触控 (DPI-Aware Touch Physics)</h3>
+            </div>
+            <p class="text-xs text-gray-400 leading-relaxed pl-6">
+                在 V6 引擎的多分辨率缩放和 Retina/4K 高 DPI 屏幕适配中，直接使用绝对屏幕坐标或常规缩放因子会导致拖拽触控漂移。《星海猎手 V6》设计了完美的客户端到逻辑像素动态双射映射：
+            </p>
+            <div class="glass-card p-6 rounded-2xl glow-border-purple ml-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-gray-400">
+                    <div class="p-4 bg-black/30 border border-purple-500/25 rounded-xl space-y-2">
+                        <span class="font-bold text-white block text-sm"><i class="fa-solid fa-calculator text-purple-400 mr-1.5"></i> 精确视口映射变换方程</span>
+                        <p class="text-[11px] leading-relaxed">
+                            每一次触碰事件 $e$ 都会实时通过当前画布容器的 <code>getBoundingClientRect()</code> 边界矩形进行动态逆投影计算，其数学映射方程如下：
+                        </p>
+                        <div class="bg-black/50 p-3 rounded font-mono text-[10.5px] text-purple-300 space-y-2">
+                            $$X_{\text{logical}} = (X_{\text{client}} - \text{rect.left}) \times \frac{W_{\text{logical}}}{\text{rect.width}}$$
+                            $$Y_{\text{logical}} = (Y_{\text{client}} - \text{rect.top}) \times \frac{H_{\text{logical}}}{\text{rect.height}}$$
+                        </div>
+                        <p class="text-[11px] leading-relaxed">
+                            该投影方程将任意分辨率比例下的浏览器客户端触控物理视界 $\mathbb{R}^2_{\text{client}}$ 完美变换至飞船的逻辑坐标视界 $\mathbb{R}^2_{\text{logical}}$ ($800 \times 900$)，彻底规避了高 DPI 或视口拉伸带来的手指错位偏差。
+                        </p>
+                    </div>
+                    
+                    <div class="p-4 bg-black/30 border border-purple-500/25 rounded-xl flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <span class="font-bold text-white block text-sm"><i class="fa-solid fa-gamepad text-cyan-400 mr-1.5"></i> 手指位置平滑差值与瞬态增益</span>
+                            <p class="text-[11px] leading-relaxed">
+                                在主物理帧的事件回调中，通过获取的 $\Delta X_{\text{logical}}$ 配合飞船的位置状态做增量平滑累加。这不仅在缩放及双击折跃判定（延迟差 $<300\text{ms}$）中反应极其灵敏，亦为移动端玩家带来了极为丝滑、物理交互响应完美的跟手指战斗操纵感。
+                            </p>
+                        </div>
+                        <div class="bg-black/50 p-2.5 rounded font-mono text-[9px] text-cyan-300">
+                            const scaleX = this.logicalWidth / rect.width;<br>
+                            const scaleY = this.logicalHeight / rect.height;<br>
+                            touchX = (touch.clientX - rect.left) * scaleX;
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 十、超大级粒子群 Path2D 阶梯透明度分批渲染 -->
+        <section id="path2d-rendering" class="space-y-4 scroll-mt-28">
+            <div class="flex items-center gap-2">
+                <span class="text-amber-400 text-lg"><i class="fa-solid fa-burst animate-spin-slow"></i></span>
+                <h3 class="text-lg font-black text-white uppercase tracking-widest">十、 超大级粒子群 Path2D 阶梯透明度分批渲染 (Path2D Alpha Quantized Batch Rendering)</h3>
+            </div>
+            <p class="text-xs text-gray-400 leading-relaxed pl-6">
+                在 V6 终极星云巨神兵决战、电爆网连锁雷击以及星能折跃量子爆破中，每帧有上百颗高亮物理粒子活跃。如果遍历粒子使用传统的 <code>ctx.fillRect()</code>，将为 CPU/GPU 带来灾难性的 Draw Calls 开销。V6 重构了透明度阶梯复合路径批量重绘策略。
+            </p>
+            <div class="glass-card p-6 rounded-2xl glow-border-amber ml-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-gray-400">
+                    <div class="p-4 bg-black/30 border border-amber-500/20 rounded-xl space-y-3">
+                        <span class="font-bold text-white block text-sm"><i class="fa-solid fa-compress-arrows-alt text-amber-400 mr-1.5 animate-pulse"></i> 1. 透明度区间量化分配 (Alpha Quantization)</span>
+                        <p class="text-[11px] leading-relaxed">
+                            高频衰变粒子的透明度 $\alpha \in [0.0, 1.0]$ 为连续浮点数。若不做处理，每个粒子都需要单独设置 <code>ctx.globalAlpha</code>。V6 将其透明度阶梯量化为 $5$ 个高亮通道，量化映射算子如下：
+                        </p>
+                        <div class="bg-black/50 p-2.5 rounded font-mono text-[10px] text-amber-300 text-center">
+                            $$\alpha_{\text{quantized}} = \frac{\lceil \alpha \times 5 \rceil}{5} \quad \left(\alpha_{\text{quantized}} \in \{0.2, \ 0.4, \ 0.6, \ 0.8, \ 1.0\}\right)$$
+                        </div>
+                        <p class="text-[11px] leading-relaxed">
+                            该代数变换将全屏数百种不同的透明度物理属性，精准归纳至 $5$ 个固定梯度中，为批量路径拼装提供了先决条件。
+                        </p>
+                    </div>
+
+                    <div class="p-4 bg-black/30 border border-amber-500/20 rounded-xl space-y-3">
+                        <span class="font-bold text-white block text-sm"><i class="fa-solid fa-cubes text-emerald-400 mr-1.5 animate-pulse"></i> 2. 复合 Path2D 路径单次绘制 (Draw Calls Drop)</span>
+                        <p class="text-[11px] leading-relaxed">
+                            引擎在每帧渲染中，按 <code>color_alphaBand</code> 双关键字拼装哈希列表。每一组生成一个原生的 <code>Path2D</code> 复合矢量：
+                        </p>
+                        <div class="bg-black/50 p-3 rounded font-mono text-[9px] text-emerald-300 overflow-x-auto space-y-1">
+                            <div>// 按量化组复合填充路径</div>
+                            <div>path.rect(x - size, y - size, size * 2, size * 2);</div>
+                            <div class="text-gray-500">// 统一应用渲染指令 (Draw Call: 1)</div>
+                            <div>ctx.globalAlpha = g.alpha; ctx.fillStyle = g.color;</div>
+                            <div>ctx.fill(g.path);</div>
+                        </div>
+                        <p class="text-[11px] leading-relaxed">
+                            通过此技术，在最恶劣的 500+ 粒子同屏暴风雨中，Draw Calls 从 $O(N)$ (几百次) 极限压缩至最大仅为 $O(C \times K)$ (约 5~15 次，降低 $95\%$)，实现了惊人的内存零回收与渲染零卡顿！
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 十一、极客合成器保护：高频音效时间节流闸门 -->
+        <section id="audio-throttling" class="space-y-4 scroll-mt-28">
+            <div class="flex items-center gap-2">
+                <span class="text-rose-400 text-lg"><i class="fa-solid fa-shield-halved animate-bounce"></i></span>
+                <h3 class="text-lg font-black text-white uppercase tracking-widest">十一、 极客合成器保护：高频音效时间节流闸门 (Audio Throttling Defense System)</h3>
+            </div>
+            <p class="text-xs text-gray-400 leading-relaxed pl-6">
+                当高频子弹爆轰、陨石撞击物理或雷击电网在同一帧大量触发时，如果无节制地频繁调用 Web Audio API 实例声效，将导致浏览器音频通道极速阻塞饱和，引发爆音、破音或显著的 CPU 线程卡死。V6 音效防线配置了毫秒级的时间防御隔离闸：
+            </p>
+            <div class="glass-card p-6 rounded-2xl glow-border-rose ml-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-gray-400">
+                    <div class="p-4 bg-black/30 border border-rose-500/10 rounded-xl space-y-2">
+                        <span class="font-bold text-white block text-sm"><i class="fa-solid fa-gun text-cyan-400 mr-1.5 animate-pulse"></i> 1. 连发武器声效闸 ($50\text{ms}$)</span>
+                        <p class="text-[11px] leading-relaxed">
+                            当飞船射速通过双晶核大招超频，或激活引力弹弓获得 $200\%$ 攻击速度爆发时，为 <code>playShoot</code> 设定 $50\text{ms}$ 的安全时间隔离：
+                        </p>
+                        <div class="bg-black/50 p-2.5 rounded font-mono text-[9px] text-cyan-300">
+                            if (now - lastPlayTime['shoot'] &lt; 0.05) return;
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-black/30 border border-rose-500/10 rounded-xl space-y-2">
+                        <span class="font-bold text-white block text-sm"><i class="fa-solid fa-shield-halved text-amber-400 mr-1.5 animate-pulse"></i> 2. 高频击中声效闸 ($40\text{ms}$)</span>
+                        <p class="text-[11px] leading-relaxed">
+                            在链式雷电或熔岩风暴多角度撞击中，雷爆在几毫秒内将产生上百次撞击声效。为 <code>playHit</code> 设定 $40\text{ms}$ 闸门：
+                        </p>
+                        <div class="bg-black/50 p-2.5 rounded font-mono text-[9px] text-amber-300">
+                            if (now - lastPlayTime['hit'] &lt; 0.04) return;
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-black/30 border border-rose-500/10 rounded-xl space-y-2">
+                        <span class="font-bold text-white block text-sm"><i class="fa-solid fa-burst text-rose-400 mr-1.5 animate-pulse"></i> 3. 爆裂核弹声效闸 ($60\text{ms}$)</span>
+                        <p class="text-[11px] leading-relaxed">
+                            在大规模陨石裂变解体或释放全屏 EM 电浆核弹瞬间，为了在激越打击感中防止杂音失真，为大/小爆裂声效设置 $60\text{ms}$ 保护：
+                        </p>
+                        <div class="bg-black/50 p-2.5 rounded font-mono text-[9px] text-rose-300">
+                            if (now - lastPlayTime[key] &lt; 0.06) return;
+                        </div>
                     </div>
                 </div>
             </div>

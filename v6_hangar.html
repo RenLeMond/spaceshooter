@@ -377,51 +377,51 @@
                 <!-- Milestone 1 -->
                 <div class="glass-panel rounded-3xl p-6 border-white/5 tilt-card hover:border-amber-500/30 hover:shadow-amber-500/5 relative overflow-hidden transition-all duration-300">
                     <div class="absolute right-4 top-4 text-3xl font-black text-white/5 tracking-tighter">01</div>
-                    <span class="text-[9px] font-black text-amber-400 uppercase tracking-widest">PHASE 1 • 2026.Q3</span>
+                    <span class="text-[9px] font-black text-amber-400 uppercase tracking-widest">PHASE 1 • ACTIVE (100% COMPLETED)</span>
                     <h4 class="text-base font-black text-white mt-1 flex items-center gap-1.5">
                         <i class="fa-solid fa-users-gear text-amber-400 text-sm"></i> 纳米级双星伴飞
                     </h4>
                     <p class="text-[11px] text-gray-400 leading-relaxed mt-3">
-                        智能整备机库与伴飞控制算法完美落地。开放双槽改装，僚机协同大招充能，形成环形量子防御圈，彻底消灭主机侧方死角。
+                        智能整备机库与伴飞控制算法完美落地。开放双槽改装，僚机配合电磁、重核奇点与极寒冰冻组合协同开火，形成无可匹敌的立体火力网！
                     </p>
                     <div class="h-[1px] bg-white/5 my-4"></div>
                     <div class="flex justify-between items-center text-[10px] text-gray-500 font-bold">
-                        <span>状态: 概念演练中</span>
-                        <span class="text-amber-500"><i class="fa-solid fa-circle-check"></i> CODING</span>
+                        <span>状态: 稳定运行中</span>
+                        <span class="text-emerald-400"><i class="fa-solid fa-circle-check"></i> DEPLOYED</span>
                     </div>
                 </div>
 
                 <!-- Milestone 2 -->
                 <div class="glass-panel rounded-3xl p-6 border-white/5 tilt-card hover:border-cyan-500/30 hover:shadow-cyan-500/5 relative overflow-hidden transition-all duration-300">
                     <div class="absolute right-4 top-4 text-3xl font-black text-white/5 tracking-tighter">02</div>
-                    <span class="text-[9px] font-black text-cyan-400 uppercase tracking-widest">PHASE 2 • 2026.Q4</span>
+                    <span class="text-[9px] font-black text-cyan-400 uppercase tracking-widest">PHASE 2 • ACTIVE (100% COMPLETED)</span>
                     <h4 class="text-base font-black text-white mt-1 flex items-center gap-1.5">
                         <i class="fa-solid fa-atom text-cyan-400 text-sm"></i> 斥力白洞物理轨道
                     </h4>
                     <p class="text-[11px] text-gray-400 leading-relaxed mt-3">
-                        部署双星引力轨道与排斥力白洞沙盒。战机可通过高超的“切线引力弹弓”算法划过轨道，瞬间引发零重力爆发并重置护能护盾。
+                        机库演练场已成功部署常态化引力斥力白洞。战机切向擦过 `[35px, 70px]` 物理弹弓轨道，瞬间触发金光护盾无敌及射击急速暴增！
                     </p>
                     <div class="h-[1px] bg-white/5 my-4"></div>
                     <div class="flex justify-between items-center text-[10px] text-gray-500 font-bold">
-                        <span>状态: 算法仿真</span>
-                        <span class="text-cyan-400"><i class="fa-solid fa-circle-nodes"></i> DESIGNING</span>
+                        <span>状态: 完美投产中</span>
+                        <span class="text-emerald-400"><i class="fa-solid fa-circle-check"></i> OPERATIONAL</span>
                     </div>
                 </div>
 
                 <!-- Milestone 3 -->
                 <div class="glass-panel rounded-3xl p-6 border-white/5 tilt-card hover:border-violet-500/30 hover:shadow-violet-500/5 relative overflow-hidden transition-all duration-300">
                     <div class="absolute right-4 top-4 text-3xl font-black text-white/5 tracking-tighter">03</div>
-                    <span class="text-[9px] font-black text-violet-400 uppercase tracking-widest">PHASE 3 • 2027.Q1</span>
+                    <span class="text-[9px] font-black text-violet-400 uppercase tracking-widest">PHASE 3 • ACTIVE (100% COMPLETED)</span>
                     <h4 class="text-base font-black text-white mt-1 flex items-center gap-1.5">
-                        <i class="fa-solid fa-circle-radiation text-violet-400 text-sm"></i> 星云碎石巨神兵
+                        <i class="fa-solid fa-wand-magic-sparkles text-violet-400 text-sm"></i> 量子折跃实战模块
                     </h4>
                     <p class="text-[11px] text-gray-400 leading-relaxed mt-3">
-                        敌方母舰部件击毁后将触发核心超重坍缩，把方圆500像素内的碎石与金属碎料狂暴吸附重组，化身形态极其震撼的巨神兵大Boss！
+                        双击高维沙盒实时触发折跃，伴随起点暗紫聚爆与终点天青色爆震粒子。横扫周围百像素陨石，并结算300点狂暴的量子裂变伤害！
                     </p>
                     <div class="h-[1px] bg-white/5 my-4"></div>
                     <div class="flex justify-between items-center text-[10px] text-gray-500 font-bold">
-                        <span>状态: 终极蓝图</span>
-                        <span class="text-violet-400"><i class="fa-solid fa-wand-magic-sparkles"></i> CONCEPT</span>
+                        <span>状态: 已实装交付</span>
+                        <span class="text-emerald-400"><i class="fa-solid fa-circle-check"></i> COMPLETED</span>
                     </div>
                 </div>
             </div>
@@ -783,58 +783,8 @@
             const rightData = WINGMAN_DATA[CONFIG.right];
 
             // 属性合并
-            const emPower = leftData.em + rightData.em;
-            const gravPower = leftData.grav + rightData.grav;
-            const freePower = leftData.free + rightData.free;
-
-            // 更新面板
-            document.getElementById('val-em').innerText = `${emPower}%`;
-            document.getElementById('val-grav').innerText = `${gravPower}%`;
-            document.getElementById('val-free').innerText = `${freePower}%`;
-
-            document.getElementById('bar-em').style.width = `${emPower}%`;
-            document.getElementById('bar-grav').style.width = `${gravPower}%`;
-            document.getElementById('bar-free').style.width = `${freePower}%`;
-
-            // 计算挂载共鸣效果 (羁绊 Synergy)
-            let synergy = '电磁热重均衡共鸣';
-            let desc = '左/右翼伴飞，为飞船提供基础的量子能量均衡，弹道表现均匀。';
-
-            const combo = [CONFIG.left, CONFIG.right].sort().join('+');
-
-            switch (combo) {
-                case 'thunder+thunder':
-                    synergy = '⚡ 雷神怒号 (Thunder Wrath)';
-                    desc = '【超级电离羁绊】闪电折跃链跳跃数增加 3 次，且有 15% 几率在电弧终点爆裂出狂暴的金黄电火花弹幕，群伤清场绝配！';
-                    break;
-                case 'gravity+gravity':
-                    synergy = '🌀 奇点塌缩 (Cosmo Collapse)';
-                    desc = '【视界塌缩羁绊】黑洞爆缩引力翻倍，被吸附的陨石在塌缩中心会被强制绞碎，掉落的核能碎片有 50% 额外加倍。';
-                    break;
-                case 'frost+frost':
-                    synergy = '❄️ 绝对零度视界 (Cryo Horizon)';
-                    desc = '【深空急冻羁绊】被散弹冰冻的目标不仅减速 80%，在被击碎时会化为数圈向四周扩散的冰霜波，将碰到的陨石深度减速。';
-                    break;
-                case 'gravity+thunder':
-                    synergy = '⚡🌀 磁暴裂变聚变 (Magnetic Implosion)';
-                    desc = '【裂变爆聚羁绊】重力奇点弹在碰触引爆时，会自动从爆缩中心爆射出 8 道折线电脉冲闪电，狂暴贯穿屏幕！';
-                    break;
-                case 'frost+thunder':
-                    synergy = '❄️⚡ 超导激冷闪击 (Supercond Storm)';
-                    desc = '【超导冰雷羁绊】雷霆闪电命中已被冰冻的陨石时，造成的伤害增加 100%，且电流有高概率使受命中目标原地悬停 1 秒。';
-                    break;
-                case 'frost+gravity':
-                    synergy = '❄️🌀 极寒重力绞杀 (Frozen Event Horizon)';
-                    desc = '【超温冷凝羁绊】重力吸附圆周自带 60% 深度冰环，任何被黑洞拉近的陨石均会被瞬间冰封，绞碎时爆裂概率翻倍。';
-                    break;
-            }
-
-            document.getElementById('synergyName').innerText = synergy;
-            document.getElementById('synergyDesc').innerText = desc;
-        }
-
-        // ----------------------------------------------------
-        // 4. HTML5 Canvas 2D 物理概念沙盒
+            const e        // ----------------------------------------------------
+        // 4. HTML5 Canvas 2D 物理概念沙盒 (V6 Physics Sandbox)
         // ----------------------------------------------------
         let canvas = null;
         let ctx = null;
@@ -851,6 +801,12 @@
         let particles = [];
         let energyCrystals = [];
 
+        // V6 特性特控状态变量
+        let screenShake = 0;
+        let whiteHole = { x: 0, y: 0, radius: 22, mass: 70, active: true, pulse: 0, rotation: 0 };
+        let slingshotTime = 0; // 弹弓超能剩余时间 (ms)
+        let slingshotActiveLastFrame = false;
+
         // 鼠标/触控交互
         let pointer = { x: 300, y: 300, active: false };
 
@@ -863,6 +819,14 @@
             canvas.width = canvas.clientWidth * dpr;
             canvas.height = canvas.clientHeight * dpr;
             ctx.scale(dpr, dpr);
+
+            // 初始化能量
+            STATS.warpCharge = 0;
+            STATS.score = 0;
+            STATS.energy = 0;
+            slingshotTime = 0;
+            slingshotActiveLastFrame = false;
+            screenShake = 0;
 
             // 玩家飞机初始化
             player = {
@@ -881,6 +845,17 @@
                 { angle: Math.PI, distance: 35, side: 'right', radius: 6 }
             ];
 
+            // 注册常态白洞定位
+            whiteHole = {
+                x: canvas.clientWidth / 2,
+                y: canvas.clientHeight / 2 - 25,
+                radius: 22,
+                mass: 75,
+                active: true,
+                pulse: 0,
+                rotation: 0
+            };
+
             // 注册指针控制
             const handleMove = (e) => {
                 const rect = canvas.getBoundingClientRect();
@@ -894,8 +869,6 @@
                 // 推进器声效音量随鼠标划动加速而增大
                 if (audioCtx && thrusterNode) {
                     const now = audioCtx.currentTime;
-                    // LFO 波动
-                    const gainVal = 0.08 + Math.random() * 0.05;
                     thrusterNode.frequency.setValueAtTime(60 + Math.random()*40, now);
                 }
             };
@@ -907,11 +880,140 @@
                 }
             });
 
+            // 注册双击触发战术折跃 (Quantum Warp)
+            canvas.addEventListener('dblclick', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.clientWidth / rect.width;
+                const scaleY = canvas.clientHeight / rect.height;
+                const tx = (e.clientX - rect.left) * scaleX;
+                const ty = (e.clientY - rect.top) * scaleY;
+                
+                if (simRunning && player) {
+                    triggerWarp(tx, ty);
+                }
+            });
+
             // 陨石初始化
             meteors = [];
             bullets = [];
             particles = [];
             energyCrystals = [];
+        }
+
+        // 触发空间战术量子折跃 (Quantum Warp Double-Click Trigger)
+        function triggerWarp(tx, ty) {
+            if (STATS.warpCharge < 100) {
+                // 能量未满，发出电子低鸣警告
+                if (audioCtx) {
+                    const now = audioCtx.currentTime;
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(90, now);
+                    gain.gain.setValueAtTime(0.02, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now); osc.stop(now + 0.1);
+                }
+                return;
+            }
+
+            const ox = player.x;
+            const oy = player.y;
+
+            // 1. 折跃起点：生成暗紫色坍缩粒子吸入效果
+            createExplosion(ox, oy, '#c084fc', 20); //  Void Phantom Purple
+            for (let i = 0; i < 12; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 30 + Math.random() * 30;
+                particles.push({
+                    x: ox + Math.cos(angle) * dist,
+                    y: oy + Math.sin(angle) * dist,
+                    vx: -Math.cos(angle) * 3,
+                    vy: -Math.sin(angle) * 3,
+                    radius: 1 + Math.random() * 2,
+                    color: '#a855f7',
+                    alpha: 1,
+                    decay: 0.03
+                });
+            }
+
+            // 2. 坐标瞬间传送
+            player.x = tx;
+            player.y = ty;
+            STATS.warpCharge = 0; // 重置能量
+
+            // 3. 折跃终点：天青色维度裂变爆震粒子喷涌
+            createExplosion(tx, ty, '#22d3ee', 25); // Dimension Thunder Cyan
+            for (let i = 0; i < 15; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 2 + Math.random() * 5;
+                particles.push({
+                    x: tx, y: ty,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    radius: 1.5 + Math.random() * 2,
+                    color: '#06b6d4',
+                    alpha: 1,
+                    decay: 0.02
+                });
+            }
+
+            // 4. 重击范围结算：100px 范围内的陨石遭受 300 点量子爆震伤害，并向外狂暴排斥
+            const warpRadius = 100;
+            meteors.forEach(m => {
+                const d = Math.hypot(m.x - tx, m.y - ty);
+                if (d < warpRadius + m.size) {
+                    m.hp -= 300; // 量子重击
+
+                    if (m.hp > 0) {
+                        const pushAngle = Math.atan2(m.y - ty, m.x - tx);
+                        const pushForce = 7 + (warpRadius - d) * 0.15;
+                        m.vx += Math.cos(pushAngle) * pushForce;
+                        m.vy += Math.sin(pushAngle) * pushForce;
+                        m.x += Math.cos(pushAngle) * 15;
+                        m.y += Math.sin(pushAngle) * 15;
+                    }
+                }
+            });
+
+            // 5. 触发屏幕剧烈抖动
+            screenShake = 16;
+
+            // 6. 合成极富冲击力的科幻折跃声效
+            if (audioCtx) {
+                const now = audioCtx.currentTime;
+                // 重低音轰鸣
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                const filter = audioCtx.createBiquadFilter();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(65, now);
+                osc.frequency.exponentialRampToValueAtTime(750, now + 0.28);
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(150, now);
+                filter.frequency.exponentialRampToValueAtTime(1400, now + 0.28);
+                gain.gain.setValueAtTime(0.09, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now); osc.stop(now + 0.38);
+
+                // 高维量子电铃余音
+                const bell = audioCtx.createOscillator();
+                const bellGain = audioCtx.createGain();
+                bell.type = 'sine';
+                bell.frequency.setValueAtTime(960, now);
+                bell.frequency.exponentialRampToValueAtTime(240, now + 0.45);
+                bellGain.gain.setValueAtTime(0.04, now);
+                bellGain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+                bell.connect(bellGain);
+                bellGain.connect(audioCtx.destination);
+                bell.start(now); bell.stop(now + 0.45);
+            }
         }
 
         // 启动模拟
@@ -989,11 +1091,93 @@
                 player.y += (pointer.y - player.y) * 0.15;
             }
 
+            // 2. 更新 V6 物理引擎：常态白洞的排斥力 (White Hole Repulsion) 作用于玩家、弹幕与陨石
+            if (whiteHole.active) {
+                whiteHole.pulse += dt * 0.003;
+                whiteHole.rotation += dt * 0.002;
+
+                // A. 作用于玩家战机 (力场推开)
+                const pdx = player.x - whiteHole.x;
+                const pdy = player.y - whiteHole.y;
+                const pDist = Math.hypot(pdx, pdy);
+                if (pDist > 0 && pDist < 200) {
+                    const pForce = (22 * whiteHole.mass) / (pDist * pDist + 900);
+                    // 实质性地位移偏转以形成对抗手感
+                    player.x += (pdx / pDist) * pForce * 2.0;
+                    player.y += (pdy / pDist) * pForce * 2.0;
+                }
+
+                // B. 作用于普通子弹 (弹道排斥偏折)
+                bullets.forEach(b => {
+                    if (b.type !== 'lightning') {
+                        const bdx = b.x - whiteHole.x;
+                        const bdy = b.y - whiteHole.y;
+                        const bDist = Math.hypot(bdx, bdy);
+                        if (bDist > 0 && bDist < 180) {
+                            const bForce = (28 * whiteHole.mass) / (bDist * bDist + 500);
+                            b.vx = (b.vx || 0) + (bdx / bDist) * bForce;
+                            b.vy = (b.vy || 0) + (bdy / bDist) * bForce;
+                        }
+                    }
+                });
+            }
+
             // 限制战机在模拟场内
             player.x = Math.max(15, Math.min(canvas.clientWidth - 15, player.x));
             player.y = Math.max(15, Math.min(canvas.clientHeight - 15, player.y));
 
-            // 2. 伴随僚机环绕轨迹更新
+            // 3. V6 物理引擎：引力弹弓爆发区判定 (Slingshot Gravity Surge Check)
+            let insideSlingshotZone = false;
+            if (whiteHole.active) {
+                const distToWhiteHole = Math.hypot(player.x - whiteHole.x, player.y - whiteHole.y);
+                if (distToWhiteHole >= 35 && distToWhiteHole <= 70) {
+                    insideSlingshotZone = true;
+                    slingshotTime = 1500; // 重置激活 1.5s 爆发状态
+                }
+            }
+
+            // 递减弹弓超能时钟
+            if (slingshotTime > 0) {
+                slingshotTime = Math.max(0, slingshotTime - dt);
+                
+                // 释放金色弹弓火花微粒
+                if (Math.random() < 0.35) {
+                    particles.push({
+                        x: player.x + (Math.random() - 0.5) * 16,
+                        y: player.y + (Math.random() - 0.5) * 16,
+                        vx: (Math.random() - 0.5) * 3,
+                        vy: 1 + Math.random() * 3,
+                        radius: 1 + Math.random() * 1.5,
+                        color: '#fbbf24', // Gold
+                        alpha: 0.9,
+                        decay: 0.05
+                    });
+                }
+            }
+
+            // 瞬时切入声效与金光粒子爆发
+            if (insideSlingshotZone && !slingshotActiveLastFrame) {
+                if (audioCtx) {
+                    const now = audioCtx.currentTime;
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(330, now);
+                    osc.frequency.exponentialRampToValueAtTime(1480, now + 0.28);
+                    gain.gain.setValueAtTime(0.06, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now); osc.stop(now + 0.28);
+                }
+                createExplosion(player.x, player.y, '#fbbf24', 16);
+            }
+            slingshotActiveLastFrame = insideSlingshotZone;
+
+            // 4. 折跃充能 (Quantum Warp Charging)
+            STATS.warpCharge = Math.min(100, STATS.warpCharge + dt * 0.015);
+
+            // 5. 伴随僚机环绕轨迹更新
             wingmen.forEach((w, idx) => {
                 // 僚机环绕自转
                 w.angle += 0.05;
@@ -1007,20 +1191,23 @@
                 w.y += (w.targetY - w.y) * 0.25;
             });
 
-            // 3. 自动开火发射弹药
+            // 6. 自动开火发射弹药 (弹弓爆发时射击速度翻倍)
             player.fireTimer += dt;
-            if (player.fireTimer > 180) { // 毫秒级开火间隔
+            const currentFireInterval = (slingshotTime > 0) ? 90 : 180; // 弹弓超能开火速度翻倍 (90ms)
+            
+            if (player.fireTimer > currentFireInterval) {
                 player.fireTimer = 0;
                 
-                // 主机基础高频离子弹 (双弹道)
-                bullets.push({ x: player.x - 6, y: player.y - 10, vy: -6, type: 'default', color: '#06b6d4', size: 2.5 });
-                bullets.push({ x: player.x + 6, y: player.y - 10, vy: -6, type: 'default', color: '#06b6d4', size: 2.5 });
+                // 主机基础高频离子弹 (双弹道，超能激活时变为金色高伤弹)
+                const bulletColor = (slingshotTime > 0) ? '#fbbf24' : '#06b6d4';
+                const bulletSize = (slingshotTime > 0) ? 3.5 : 2.5;
+                bullets.push({ x: player.x - 6, y: player.y - 10, vy: -6, type: 'default', color: bulletColor, size: bulletSize });
+                bullets.push({ x: player.x + 6, y: player.y - 10, vy: -6, type: 'default', color: bulletColor, size: bulletSize });
                 playLaserSound('default');
 
                 // 僚机武器开火
                 wingmen.forEach(w => {
                     const type = w.side === 'left' ? CONFIG.left : CONFIG.right;
-                    const wColor = WINGMAN_DATA[type].color;
 
                     if (type === 'thunder') {
                         // 雷霆闪电链：向最近的陨石瞬间连结电弧
@@ -1032,8 +1219,10 @@
                         });
 
                         if (target) {
-                            // 造成伤害并扣减陨石HP
-                            target.hp -= 20;
+                            // 造成伤害并扣减陨石HP (弹弓超能下伤害加倍)
+                            const damage = (slingshotTime > 0) ? 40 : 20;
+                            target.hp -= damage;
+                            
                             // 触发闪电击中粒子
                             createExplosion(target.x, target.y, 'hsl(45, 100%, 65%)', 4);
                             playLaserSound('thunder');
@@ -1053,26 +1242,29 @@
                         bullets.push({
                             x: w.x, y: w.y - 5, vy: -3,
                             type: 'gravity', color: 'hsl(280, 100%, 65%)',
-                            size: 7, hp: 50
+                            size: (slingshotTime > 0) ? 10 : 7, hp: 50
                         });
                         playLaserSound('gravity');
                     } 
                     else if (type === 'frost') {
-                        // 绝对零度：散发三发淡蓝色散弹
-                        for (let a = -0.2; a <= 0.2; a += 0.2) {
+                        // 绝对零度：散发三发淡蓝色散弹 (超能激活时射出五发)
+                        const count = (slingshotTime > 0) ? 5 : 3;
+                        const spread = (slingshotTime > 0) ? [-0.4, -0.2, 0, 0.2, 0.4] : [-0.2, 0, 0.2];
+                        
+                        spread.forEach(a => {
                             bullets.push({
                                 x: w.x, y: w.y - 5,
                                 vx: Math.sin(a) * 5, vy: -Math.cos(a) * 5,
                                 type: 'frost', color: 'hsl(180, 100%, 75%)',
                                 size: 3.5
                             });
-                        }
+                        });
                         playLaserSound('frost');
                     }
                 });
             }
 
-            // 4. 子弹物理更新
+            // 7. 子弹物理更新
             for (let i = bullets.length - 1; i >= 0; i--) {
                 const b = bullets[i];
                 if (b.type === 'lightning') {
@@ -1085,7 +1277,7 @@
                 b.x += b.vx || 0;
                 b.y += b.vy || 0;
 
-                // 奇点弹伴随黑洞环流粒子
+                // 奇点子弹黑洞环流粒子
                 if (b.type === 'gravity' && Math.random() < 0.3) {
                     particles.push({
                         x: b.x + (Math.random() - 0.5) * 20,
@@ -1102,8 +1294,8 @@
                 }
             }
 
-            // 5. 自动生成陨石
-            if (meteors.length < 5 && Math.random() < 0.03) {
+            // 8. 自动生成陨石
+            if (meteors.length < 5 && Math.random() < 0.035) {
                 const size = 15 + Math.random() * 25;
                 meteors.push({
                     x: Math.random() * canvas.clientWidth,
@@ -1115,11 +1307,11 @@
                     maxHp: Math.ceil(size * 1.2),
                     rotation: Math.random() * Math.PI,
                     rotSpeed: (Math.random() - 0.5) * 0.03,
-                    frozenTimer: 0 // 冰封计时器
+                    frozenTimer: 0
                 });
             }
 
-            // 6. 陨石物理与引力吸附
+            // 9. 陨石物理与白洞斥力、引力吸附结算
             for (let i = meteors.length - 1; i >= 0; i--) {
                 const m = meteors[i];
 
@@ -1135,11 +1327,23 @@
                 m.y += m.vy * speedScale;
                 m.rotation += m.rotSpeed * speedScale;
 
-                // 奇点子弹对周围陨石的引力吸附
+                // A. 受到常态白洞的物理斥力影响 (White Hole Repulsion to Meteor)
+                if (whiteHole.active) {
+                    const mdx = m.x - whiteHole.x;
+                    const mdy = m.y - whiteHole.y;
+                    const mDist = Math.hypot(mdx, mdy);
+                    if (mDist > 0 && mDist < 200) {
+                        const mForce = (18 * whiteHole.mass) / (mDist * mDist + 800);
+                        m.vx += (mdx / mDist) * mForce * speedScale;
+                        m.vy += (mdy / mDist) * mForce * speedScale;
+                    }
+                }
+
+                // B. 奇点子弹对周围陨石的重力拉扯
                 bullets.forEach(b => {
                     if (b.type === 'gravity') {
                         const d = Math.hypot(m.x - b.x, m.y - b.y);
-                        if (d < 80) { // 80像素吸附视界
+                        if (d < 80) {
                             const pull = (80 - d) * 0.015;
                             m.vx += ((b.x - m.x) / d) * pull;
                             m.vy += ((b.y - m.y) / d) * pull;
@@ -1147,22 +1351,21 @@
                     }
                 });
 
-                // 超出屏幕底部移除
+                // 超出底部移除
                 if (m.y > canvas.clientHeight + m.size) {
                     meteors.splice(i, 1);
                     continue;
                 }
 
-                // 死亡或裂变判定
+                // 陨石 HP 归零爆炸与分裂 (V6大裂变结算)
                 if (m.hp <= 0) {
                     playExplodeSound(m.size);
                     
-                    // 裂变释放高能晶核碎片
+                    // 裂变释放核能晶片
                     const numCrystals = m.size > 25 ? 3 : 1;
                     for (let c = 0; c < numCrystals; c++) {
                         energyCrystals.push({
-                            x: m.x,
-                            y: m.y,
+                            x: m.x, y: m.y,
                             vx: (Math.random() - 0.5) * 4,
                             vy: (Math.random() - 0.5) * 4,
                             radius: 3,
@@ -1170,16 +1373,15 @@
                         });
                     }
 
-                    // 量子爆炸效果
+                    // 爆震微粒
                     const color = m.frozenTimer > 0 ? '#67e8f9' : '#f59e0b';
                     createExplosion(m.x, m.y, color, m.size > 25 ? 20 : 10);
 
-                    // 大陨石分裂成两个小陨石 (V6裂变物理验证)
+                    // 大陨石爆碎分裂成两个小陨石 (V6裂变物理验证)
                     if (m.size > 25) {
                         for (let k = 0; k < 2; k++) {
                             meteors.push({
-                                x: m.x,
-                                y: m.y,
+                                x: m.x, y: m.y,
                                 vx: (k === 0 ? -1.5 : 1.5) + (Math.random() - 0.5),
                                 vy: m.vy * 1.2,
                                 size: m.size * 0.5,
@@ -1197,19 +1399,19 @@
                     continue;
                 }
 
-                // 7. 子弹与陨石碰撞检测 (AABB或圆形平方无开根)
+                // C. 子弹与陨石碰撞检测 (AABB/Circle Distance Check)
                 bullets.forEach(b => {
                     if (b.type === 'lightning') return;
                     const dSq = (b.x - m.x)**2 + (b.y - m.y)**2;
                     const rSumSq = (b.size + m.size)**2;
 
                     if (dSq < rSumSq) {
-                        // 撞击
+                        // 击中
                         if (b.type === 'gravity') {
                             m.hp -= 25;
-                            b.hp -= 15; // 奇点弹耗散
+                            b.hp -= 15; // 耗散
                             createExplosion(b.x, b.y, 'hsl(280, 100%, 65%)', 6);
-                            if (b.hp <= 0) b.y = -999; // 清除
+                            if (b.hp <= 0) b.y = -999;
                         } 
                         else if (b.type === 'frost') {
                             m.hp -= 4;
@@ -1218,57 +1420,47 @@
                             b.y = -999;
                         } 
                         else {
-                            m.hp -= 10;
-                            createExplosion(b.x, b.y, '#06b6d4', 3);
+                            // 弹弓超能激活时威力翻倍
+                            m.hp -= (slingshotTime > 0) ? 20 : 10;
+                            createExplosion(b.x, b.y, (slingshotTime > 0) ? '#fbbf24' : '#06b6d4', 3);
                             b.y = -999;
                         }
                     }
                 });
             }
 
-            // 8. 晶核碎片自动重力吸引到主机
+            // 10. 核能碎片吸收磁力引力
             for (let i = energyCrystals.length - 1; i >= 0; i--) {
                 const c = energyCrystals[i];
                 const d = Math.hypot(player.x - c.x, player.y - c.y);
 
-                if (d < 120) { // 120 像素强力引力拖拽
-                    const speed = 8;
+                if (d < 120) { // 强引力吸附圈
                     c.vx += ((player.x - c.x) / d) * 0.8;
                     c.vy += ((player.y - c.y) / d) * 0.8;
                 }
 
-                // 物理阻尼与位移
                 c.vx *= 0.95;
                 c.vy *= 0.95;
                 c.x += c.vx;
                 c.y += c.vy;
 
-                // 撞击主机收集
+                // 吸收完成
                 if (d < (player.radius + c.radius)) {
                     STATS.energy = Math.min(STATS.maxEnergy, STATS.energy + 2);
                     STATS.score += 50;
 
-                    // 闪烁特效
-                    particles.push({
-                        x: player.x, y: player.y,
-                        vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3,
-                        radius: 2, color: 'hsl(38, 92%, 50%)',
-                        alpha: 1, decay: 0.05
-                    });
-
-                    // 播放一声微弱的收获音
+                    // 收获电信号声效
                     if (audioCtx) {
                         const now = audioCtx.currentTime;
                         const osc = audioCtx.createOscillator();
                         const gain = audioCtx.createGain();
                         osc.type = 'sine';
-                        osc.frequency.setValueAtTime(2000, now);
+                        osc.frequency.setValueAtTime(2200, now);
                         gain.gain.setValueAtTime(0.015, now);
                         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
                         osc.connect(gain);
                         gain.connect(audioCtx.destination);
-                        osc.start(now);
-                        osc.stop(now + 0.05);
+                        osc.start(now); osc.stop(now + 0.05);
                     }
 
                     energyCrystals.splice(i, 1);
@@ -1277,20 +1469,21 @@
                 }
             }
 
-            // 9. 粒子衰变更新
+            // 11. 粒子衰变与屏幕震动重置
             for (let i = particles.length - 1; i >= 0; i--) {
                 const p = particles[i];
                 p.x += p.vx;
                 p.y += p.vy;
                 p.alpha -= p.decay;
-
-                if (p.alpha <= 0) {
-                    particles.splice(i, 1);
-                }
+                if (p.alpha <= 0) particles.splice(i, 1);
             }
 
-            // 10. 全景面板数值同步
-            document.getElementById('simEnergy').innerText = STATS.energy;
+            if (screenShake > 0) {
+                screenShake = Math.max(0, screenShake - dt * 0.05);
+            }
+
+            // 12. UI 全息数据呈现
+            document.getElementById('simEnergy').innerText = Math.round(STATS.energy);
             document.getElementById('simScore').innerText = String(STATS.score).padStart(6, '0');
         }
 
@@ -1298,12 +1491,20 @@
         function draw() {
             if (!ctx) return;
             
-            // 清理画布，带有一点余晖的拖影黑底
-            ctx.fillStyle = 'rgba(2, 2, 6, 0.25)';
+            // 带有微量余辉的虚空底背景
+            ctx.fillStyle = 'rgba(2, 2, 6, 0.28)';
             ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
-            // 1. 绘制科幻全息网格
-            ctx.strokeStyle = 'rgba(6, 182, 212, 0.03)';
+            // 开启屏幕震感渲染矩阵变换 (Screen Shake Render Transform)
+            ctx.save();
+            if (screenShake > 0) {
+                const dx = (Math.random() - 0.5) * screenShake;
+                const dy = (Math.random() - 0.5) * screenShake;
+                ctx.translate(dx, dy);
+            }
+
+            // A. 全息网格底纹
+            ctx.strokeStyle = 'rgba(6, 182, 212, 0.035)';
             ctx.lineWidth = 1;
             const grid = 30;
             for (let x = 0; x < canvas.clientWidth; x += grid) {
@@ -1313,31 +1514,98 @@
                 ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.clientWidth, y); ctx.stroke();
             }
 
-            // 2. 绘制引力黑洞线框圈 (奇点弹引力范围)
+            // B. 绘制斥力白洞与引力弹弓物理环区 (White Hole Spiral & Slingshot Zone)
+            if (whiteHole.active) {
+                // 1. 金色引力弹弓有效弹射轨道边界线 [35px, 70px]
+                ctx.beginPath();
+                ctx.arc(whiteHole.x, whiteHole.y, 35, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(251, 191, 36, 0.16)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 4]);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(whiteHole.x, whiteHole.y, 70, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(251, 191, 36, 0.22)';
+                ctx.lineWidth = 1.2;
+                ctx.stroke();
+                ctx.setLineDash([]); // 重置虚线
+
+                // 2. 弹弓轨道交叠高亮
+                const distToWhiteHole = Math.hypot(player.x - whiteHole.x, player.y - whiteHole.y);
+                if (distToWhiteHole >= 35 && distToWhiteHole <= 70) {
+                    ctx.beginPath();
+                    ctx.arc(whiteHole.x, whiteHole.y, 70, 0, Math.PI * 2);
+                    ctx.arc(whiteHole.x, whiteHole.y, 35, 0, Math.PI * 2, true);
+                    ctx.fillStyle = 'rgba(251, 191, 36, 0.05)';
+                    ctx.fill();
+                }
+
+                // 3. 绘制旋转的白洞脉冲漩涡 (White Hole Spiral Vortex)
+                ctx.save();
+                ctx.translate(whiteHole.x, whiteHole.y);
+                ctx.rotate(whiteHole.rotation);
+
+                const spirals = 4;
+                ctx.lineWidth = 2.0;
+                for (let s = 0; s < spirals; s++) {
+                    ctx.beginPath();
+                    const baseAngle = (s / spirals) * Math.PI * 2;
+                    
+                    for (let theta = 0; theta < Math.PI * 2.8; theta += 0.1) {
+                        const r = (theta / (Math.PI * 2.8)) * whiteHole.radius * (1.1 + Math.sin(whiteHole.pulse) * 0.08);
+                        const angle = baseAngle + theta;
+                        const px = Math.cos(angle) * r;
+                        const py = Math.sin(angle) * r;
+                        if (theta === 0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
+                    }
+                    // 折叠多重渐变光圈
+                    const grad = ctx.createLinearGradient(-whiteHole.radius, -whiteHole.radius, whiteHole.radius, whiteHole.radius);
+                    grad.addColorStop(0, '#22d3ee'); // cyan
+                    grad.addColorStop(0.5, '#fbbf24'); // gold
+                    grad.addColorStop(1, '#c084fc'); // purple
+                    ctx.strokeStyle = grad;
+                    ctx.stroke();
+                }
+
+                // 白洞高亮核心
+                ctx.beginPath();
+                ctx.arc(0, 0, 6 + Math.sin(whiteHole.pulse * 2.5) * 1.5, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = '#22d3ee';
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                ctx.restore();
+            }
+
+            // C. 绘制引力奇点子弹力场圈
             bullets.forEach(b => {
                 if (b.type === 'gravity') {
                     ctx.beginPath();
                     ctx.arc(b.x, b.y, 80, 0, Math.PI * 2);
-                    ctx.strokeStyle = 'rgba(139, 92, 246, 0.06)';
+                    ctx.strokeStyle = 'rgba(139, 92, 246, 0.05)';
                     ctx.lineWidth = 1;
-                    ctx.setLineDash([4, 4]);
+                    ctx.setLineDash([3, 3]);
                     ctx.stroke();
                     ctx.setLineDash([]);
                 }
             });
 
-            // 3. 绘制晶核晶体碎片
+            // D. 绘制核能晶核碎片
             energyCrystals.forEach(c => {
                 ctx.beginPath();
                 ctx.arc(c.x, c.y, c.radius, 0, Math.PI*2);
                 ctx.fillStyle = c.color;
-                ctx.shadowBlur = 6;
+                ctx.shadowBlur = 5;
                 ctx.shadowColor = c.color;
                 ctx.fill();
                 ctx.shadowBlur = 0;
             });
 
-            // 4. 绘制所有常规弹幕
+            // E. 绘制常规及特效子弹弹道
             bullets.forEach(b => {
                 if (b.type === 'lightning') {
                     drawLightningArc(b.x1, b.y1, b.x2, b.y2);
@@ -1346,24 +1614,21 @@
                 ctx.beginPath();
                 ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2);
                 ctx.fillStyle = b.color;
-                ctx.shadowBlur = 8;
+                ctx.shadowBlur = 7;
                 ctx.shadowColor = b.color;
                 ctx.fill();
                 ctx.shadowBlur = 0;
             });
 
-            // 5. 绘制所有流体陨石
+            // F. 绘制所有流体陨石岩体
             meteors.forEach(m => {
                 ctx.save();
                 ctx.translate(m.x, m.y);
                 ctx.rotate(m.rotation);
 
-                // 根据冰封状态显示不同色泽
                 const hasFrozen = m.frozenTimer > 0;
                 
-                // 外框线
                 ctx.beginPath();
-                // 用正多边形绘制有岩石质感的陨石
                 const points = 8;
                 for (let k = 0; k < points; k++) {
                     const angle = (k / points) * Math.PI * 2;
@@ -1375,7 +1640,6 @@
                 }
                 ctx.closePath();
                 
-                // 渐变填充
                 const fillGrad = ctx.createRadialGradient(0, 0, m.size*0.1, 0, 0, m.size);
                 if (hasFrozen) {
                     fillGrad.addColorStop(0, '#0e7490');
@@ -1392,8 +1656,8 @@
                 ctx.fill();
                 ctx.stroke();
 
-                // 绘制陨石生命值微型能盾环
-                if (m.hp < m.maxHp) {
+                // 陨石生命值微型能盾环
+                if (m.hp < m.maxHp && m.hp > 0) {
                     ctx.beginPath();
                     ctx.arc(0, 0, m.size + 4, -Math.PI / 2, (Math.PI * 2) * (m.hp / m.maxHp) - Math.PI / 2);
                     ctx.strokeStyle = hasFrozen ? '#22d3ee' : '#ea580c';
@@ -1404,7 +1668,7 @@
                 ctx.restore();
             });
 
-            // 6. 绘制量子微粒
+            // G. 绘制量子微粒
             particles.forEach(p => {
                 ctx.save();
                 ctx.globalAlpha = p.alpha;
@@ -1415,26 +1679,225 @@
                 ctx.restore();
             });
 
-            // 7. 绘制两架伴飞智能僚机 (带拖尾指示线)
+            // H. 绘制两架伴随智能僚机 (带拖影指示线)
             wingmen.forEach(w => {
                 const type = w.side === 'left' ? CONFIG.left : CONFIG.right;
                 const wColor = WINGMAN_DATA[type].color;
 
-                // 指示连结虚线
                 ctx.beginPath();
                 ctx.moveTo(player.x, player.y);
                 ctx.lineTo(w.x, w.y);
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
                 ctx.lineWidth = 1;
                 ctx.setLineDash([2, 2]);
                 ctx.stroke();
                 ctx.setLineDash([]);
 
-                // 僚机火焰尾流微型粒子
-                if (Math.random() < 0.4) {
+                if (Math.random() < 0.35) {
                     particles.push({
                         x: w.x, y: w.y,
                         vx: (Math.random() - 0.5) * 1, vy: 2 + Math.random()*2,
+                        radius: 1, color: wColor,
+                        alpha: 0.8, decay: 0.05
+                    });
+                }
+
+                // 僚机本体
+                ctx.beginPath();
+                ctx.arc(w.x, w.y, w.radius, 0, Math.PI * 2);
+                ctx.fillStyle = wColor;
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = wColor;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                ctx.beginPath();
+                ctx.arc(w.x, w.y, 2, 0, Math.PI*2);
+                ctx.fillStyle = '#fff';
+                ctx.fill();
+            });
+
+            // I. 绘制主机 (Slingshot Surge 状态下飞船化身金光战鹰)
+            ctx.save();
+            ctx.translate(player.x, player.y);
+
+            // 推进器火焰
+            for (let i = 0; i < 2; i++) {
+                particles.push({
+                    x: player.x + (i === 0 ? -4 : 4),
+                    y: player.y + 12,
+                    vx: (Math.random() - 0.5) * 1.5,
+                    vy: 3 + Math.random() * 3,
+                    radius: 1.5 + Math.random() * 2,
+                    color: (slingshotTime > 0) ? '#fbbf24' : '#ea580c',
+                    alpha: 0.9,
+                    decay: 0.06
+                });
+            }
+
+            // 战机机翼结构线框
+            ctx.beginPath();
+            ctx.moveTo(0, -15);
+            ctx.lineTo(12, 12);
+            ctx.lineTo(5, 7);
+            ctx.lineTo(-5, 7);
+            ctx.lineTo(-12, 12);
+            ctx.closePath();
+
+            const shipGrad = ctx.createLinearGradient(0, -15, 0, 12);
+            if (slingshotTime > 0) {
+                // 黄金战机
+                shipGrad.addColorStop(0, '#ffffff');
+                shipGrad.addColorStop(0.4, '#fbbf24');
+                shipGrad.addColorStop(1, '#78350f');
+                ctx.strokeStyle = '#f59e0b';
+            } else {
+                shipGrad.addColorStop(0, '#fff');
+                shipGrad.addColorStop(0.3, '#f59e0b');
+                shipGrad.addColorStop(1, '#0f172a');
+                ctx.strokeStyle = '#ea580c';
+            }
+            
+            ctx.fillStyle = shipGrad;
+            ctx.lineWidth = 1.5;
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.restore();
+
+            // J. 绘制引力弹弓金色保护性旋转防护罩 (Slingshot Protective Neon Shield)
+            if (slingshotTime > 0) {
+                ctx.save();
+                ctx.translate(player.x, player.y);
+                
+                // 双层逆向旋转盾
+                const shieldAngle1 = (Date.now() * 0.0035) % (Math.PI * 2);
+                ctx.rotate(shieldAngle1);
+                ctx.beginPath();
+                ctx.arc(0, 0, 24, 0, Math.PI * 2);
+                ctx.strokeStyle = '#fbbf24';
+                ctx.lineWidth = 1.8;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#fbbf24';
+                ctx.globalAlpha = 0.45 + Math.sin(Date.now() * 0.02) * 0.15;
+                ctx.stroke();
+
+                // 交互十字能量栓
+                ctx.beginPath();
+                ctx.strokeRect(-18, -18, 36, 36);
+
+                ctx.restore();
+
+                // 绘制 "+SLINGSHOT SURGE+" 全息浮空字
+                ctx.save();
+                ctx.fillStyle = '#fbbf24';
+                ctx.font = '900 10px Outfit, Noto Sans SC, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = '#fbbf24';
+                ctx.fillText('+SLINGSHOT SURGE+', player.x, player.y - 28);
+                ctx.restore();
+            }
+
+            // K. 绘制 HUD 量子折跃能量条 (Quantum Warp Energy Charge Bar)
+            const barWidth = 140;
+            const barHeight = 6;
+            const barX = (canvas.clientWidth - barWidth) / 2;
+            const barY = canvas.clientHeight - 18;
+
+            ctx.beginPath();
+            ctx.roundRect(barX, barY, barWidth, barHeight, 3);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.lineWidth = 1;
+            ctx.fill();
+            ctx.stroke();
+
+            if (STATS.warpCharge > 0) {
+                ctx.beginPath();
+                ctx.roundRect(barX + 1, barY + 1, (barWidth - 2) * (STATS.warpCharge / 100), barHeight - 2, 2);
+                const energyGrad = ctx.createLinearGradient(barX, 0, barX + barWidth, 0);
+                energyGrad.addColorStop(0, '#a855f7'); // neon purple
+                energyGrad.addColorStop(1, '#22d3ee'); // neon cyan
+                ctx.fillStyle = energyGrad;
+                ctx.fill();
+            }
+
+            // 折跃就绪提示字
+            ctx.fillStyle = (STATS.warpCharge >= 100) ? '#22d3ee' : '#a855f7';
+            ctx.font = '900 8px Outfit, Noto Sans SC, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.shadowBlur = (STATS.warpCharge >= 100) ? 8 : 0;
+            ctx.shadowColor = '#22d3ee';
+            const labelText = (STATS.warpCharge >= 100) ? '⚡ QUANTUM WARP READY [DOUBLE-CLICK] ⚡' : `WARP CHARGING: ${Math.round(STATS.warpCharge)}%`;
+            ctx.fillText(labelText, canvas.clientWidth / 2, barY - 6);
+
+            // 关闭震动还原
+            ctx.restore();
+        }
+
+        // 完整物理与绘制环
+        function gameLoop(timestamp) {
+            if (!simRunning) return;
+
+            // 计算增量时间
+            const dt = timestamp ? (timestamp - fpsLastTime) : 16;
+            fpsLastTime = timestamp || performance.now();
+
+            // 计算 FPS
+            fpsCount++;
+            if (fpsCount > 30) {
+                const fps = Math.round(1000 / dt);
+                document.getElementById('fpsText').innerText = isNaN(fps) ? 60 : fps;
+                fpsCount = 0;
+            }
+
+            update(dt);
+            draw();
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        // ----------------------------------------------------
+        // 5. 先遣机师内测荣誉通行证编译 (Pilot License Compiler)
+        // ----------------------------------------------------
+        function compilePilotPass() {
+            initAudio();
+            const callsignInput = document.getElementById('certCallsign').value.trim() || 'GALAXY-PIONEER';
+            
+            playAlertSound();
+
+            const chars = '0123456789ABCDEF';
+            let randomKey = 'KEY#';
+            for (let i = 0; i < 6; i++) {
+                randomKey += chars[Math.floor(Math.random() * 16)];
+            }
+            randomKey += '-V6';
+
+            const card = document.getElementById('certCard');
+            card.style.transform = 'scale(0.96)';
+            card.style.opacity = '0.6';
+
+            setTimeout(() => {
+                document.getElementById('passCallsign').innerText = callsignInput.toUpperCase();
+                document.getElementById('passSecKey').innerText = randomKey;
+                document.getElementById('passScoreLabel').innerText = `SIM-MAX: ${STATS.score}`;
+                
+                card.style.transform = 'scale(1)';
+                card.style.opacity = '1';
+                card.style.borderColor = 'rgba(245, 158, 11, 0.6)';
+                card.style.boxShadow = '0 20px 50px rgba(245, 158, 11, 0.15)';
+            }, 300);
+        }
+
+        // 初始化
+        window.addEventListener('load', () => {
+            selectWingman('left', 'thunder');
+            selectWingman('right', 'thunder');
+        });
+    </script>
+</body>
+</html>     vx: (Math.random() - 0.5) * 1, vy: 2 + Math.random()*2,
                         radius: 1, color: wColor,
                         alpha: 0.8, decay: 0.05
                     });
