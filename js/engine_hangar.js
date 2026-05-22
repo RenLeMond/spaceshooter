@@ -49,39 +49,37 @@ Object.assign(GameEngine.prototype, {
             buyWingsBtn.disabled = this.scrap < 60;
         }
 
-        // --- V6 皮肤 UI 更新 ---
+        // --- V6 皮肤 UI 更新 (v2 涂装卡：status chip + action button + is-equipped 三件套) ---
         const skins = [
-            { id: 'void', cost: 80, textId: 'skinVoidText', btnId: 'buySkinVoidBtn', name: '星渊幻影' },
-            { id: 'thunder', cost: 100, textId: 'skinThunderText', btnId: 'buySkinThunderBtn', name: '超维雷霆' },
-            { id: 'imperial', cost: 120, textId: 'skinImperialText', btnId: 'buySkinImperialBtn', name: '帝皇余晖' }
+            { id: 'void',     cost: 80,  cardId: 'skinCardVoid',     textId: 'skinVoidText',     btnId: 'buySkinVoidBtn' },
+            { id: 'thunder',  cost: 100, cardId: 'skinCardThunder',  textId: 'skinThunderText',  btnId: 'buySkinThunderBtn' },
+            { id: 'imperial', cost: 120, cardId: 'skinCardImperial', textId: 'skinImperialText', btnId: 'buySkinImperialBtn' }
         ];
 
         skins.forEach(s => {
-            const txt = document.getElementById(s.textId);
+            const card = document.getElementById(s.cardId);
+            const chip = document.getElementById(s.textId);
             const btn = document.getElementById(s.btnId);
-            if (!txt || !btn) return;
+            if (!card || !chip || !btn) return;
 
             if (this.currentSkin === s.id) {
-                txt.innerText = `[使用中 • 极效]`;
-                txt.className = txt.className.replace('text-gray-500', '').trim() + ' text-emerald-400 font-bold';
-                btn.innerText = "使用中";
+                card.classList.add('is-equipped');
+                chip.className = 'status-chip status-equipped';
+                chip.innerHTML = '<i class="fa-solid fa-circle-radiation text-[8px]"></i> EQUIPPED';
                 btn.disabled = true;
-                btn.className = btn.className.replace(/bg-\w+-600/, 'bg-emerald-600');
+                btn.innerHTML = '<i class="fa-solid fa-check-double text-[10px] mr-2"></i> 使用中';
             } else if (this.unlockedSkins.includes(s.id)) {
-                txt.innerText = `[已解锁]`;
-                txt.className = txt.className.replace('text-emerald-400', '').trim() + ' text-gray-400';
-                btn.innerText = "装配";
+                card.classList.remove('is-equipped');
+                chip.className = 'status-chip status-unlocked';
+                chip.innerHTML = '<i class="fa-solid fa-circle-check text-[8px]"></i> Unlocked';
                 btn.disabled = false;
-                // restore base colors based on skin type
-                const color = s.id === 'void' ? 'fuchsia' : (s.id === 'thunder' ? 'yellow' : 'amber');
-                btn.className = btn.className.replace(/bg-\w+-600/, `bg-${color}-600`);
+                btn.innerHTML = '<i class="fa-solid fa-rocket text-[10px] mr-2"></i> 装配涂装';
             } else {
-                txt.innerText = "未解锁";
-                txt.className = txt.className.replace('text-emerald-400', '').trim() + ' text-gray-500';
-                btn.innerText = `解锁: ${s.cost} 废料`;
+                card.classList.remove('is-equipped');
+                chip.className = 'status-chip status-locked';
+                chip.innerHTML = '<i class="fa-solid fa-lock text-[8px]"></i> Locked';
                 btn.disabled = this.scrap < s.cost;
-                const color = s.id === 'void' ? 'fuchsia' : (s.id === 'thunder' ? 'yellow' : 'amber');
-                btn.className = btn.className.replace(/bg-\w+-600/, `bg-${color}-600`);
+                btn.innerHTML = `<span class="cost"><i class="fa-solid fa-cube text-amber-300"></i> ${s.cost}</span> 解锁涂装`;
             }
         });
     },

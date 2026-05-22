@@ -11,8 +11,8 @@
     <meta name="keywords" content="星海猎手, space shooter, 弹幕游戏, 空战游戏, 0-GC, 粒子渲染, 吞噬蠕虫, 量子折跃, H5游戏">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Noto+Sans+SC:wght@300;500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=6.2.3">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Noto+Sans+SC:wght@300;500;700;900&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=6.2.4">
 </head>
 <body class="flex items-center justify-center min-h-screen">
 
@@ -279,46 +279,163 @@
                     </button>
                 </div>
 
-                <!-- V6 Cosmic Skin: Void Phantom -->
-                <div class="p-3 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-fuchsia-500/10 rounded-xl flex items-center justify-center text-fuchsia-400 text-lg border border-fuchsia-500/20"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
-                        <div>
-                            <span class="text-xs font-bold text-white block">🌌 星渊幻影 (Void Phantom)</span>
-                            <span class="text-[9px] text-gray-500 block">霓虹紫幻影涂装，附送双螺旋紫光尾焰与重力海啸波 <span id="skinVoidText" class="text-fuchsia-400">未解锁</span></span>
-                        </div>
-                    </div>
-                    <button id="buySkinVoidBtn" class="px-3 py-1.5 bg-fuchsia-600 disabled:opacity-30 disabled:pointer-events-none hover:bg-fuchsia-500 text-white text-[10px] font-black rounded-lg transition shrink-0">
-                        需 80 废料
-                    </button>
+                <!-- V6 Cosmic Skins · 超维涂装区 -->
+                <div class="skin-divider">
+                    <span>🎨 Cosmic Skins · 超维涂装</span>
                 </div>
 
-                <!-- V6 Cosmic Skin: Hyper-Dimension Thunder -->
-                <div class="p-3 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-yellow-500/10 rounded-xl flex items-center justify-center text-yellow-400 text-lg border border-yellow-500/20"><i class="fa-solid fa-bolt"></i></div>
-                        <div>
-                            <span class="text-xs font-bold text-white block">⚡ 超维雷霆 (Dimension Thunder)</span>
-                            <span class="text-[9px] text-gray-500 block">高压电爆轻装，锯齿电弧雷暴尾流，僚机连击链范围+30% <span id="skinThunderText" class="text-yellow-400">未解锁</span></span>
+                <!-- 星渊幻影 Void Phantom -->
+                <div id="skinCardVoid" class="skin-card skin-void">
+                    <div class="tier-strip">
+                        <span>SKIN · 001</span>
+                        <span class="tier-badge">EPIC <span class="tier-stars">★★★★</span></span>
+                    </div>
+                    <div class="ship-stage">
+                        <div class="particle-burst"><span></span><span></span><span></span><span></span><span></span></div>
+                        <svg class="ship-svg" viewBox="0 0 100 100">
+                            <defs>
+                                <radialGradient id="voidCore" cx="50%" cy="40%">
+                                    <stop offset="0%" stop-color="#f0abfc"/>
+                                    <stop offset="100%" stop-color="#a21caf"/>
+                                </radialGradient>
+                            </defs>
+                            <path d="M 28 70 L 6 92 L 36 78 Z" fill="#a21caf" opacity="0.5"/>
+                            <path d="M 72 70 L 94 92 L 64 78 Z" fill="#a21caf" opacity="0.5"/>
+                            <path d="M 50 10 L 22 64 L 38 56 L 50 62 L 62 56 L 78 64 Z" fill="#170b24" stroke="#d946ef" stroke-width="2"/>
+                            <circle cx="50" cy="38" r="9" fill="url(#voidCore)"/>
+                            <path d="M 50 20 L 44 38 L 56 38 Z" fill="#f472b6" opacity="0.9"/>
+                        </svg>
+                    </div>
+                    <div class="text-center px-3 mt-1">
+                        <div class="skin-name">星渊幻影</div>
+                        <div class="skin-subtitle">VOID  PHANTOM</div>
+                    </div>
+                    <div class="passive-list">
+                        <div class="passive-row">
+                            <i class="fa-solid fa-water"></i>
+                            <span>引力弹弓触发 <strong>800px</strong> 重力海啸波</span>
+                        </div>
+                        <div class="passive-row">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>双螺旋紫光尾焰 + 量子残影</span>
                         </div>
                     </div>
-                    <button id="buySkinThunderBtn" class="px-3 py-1.5 bg-yellow-600 disabled:opacity-30 disabled:pointer-events-none hover:bg-yellow-500 text-white text-[10px] font-black rounded-lg transition shrink-0">
-                        需 100 废料
-                    </button>
+                    <div class="px-3 pt-2 pb-1 flex items-center justify-between">
+                        <span id="skinVoidText" class="status-chip status-locked">
+                            <i class="fa-solid fa-lock text-[8px]"></i> Locked
+                        </span>
+                        <div class="text-[9px] text-gray-500 tracking-widest font-bold">SLOT · 001</div>
+                    </div>
+                    <div class="px-3 pb-3">
+                        <button id="buySkinVoidBtn" class="action-btn">
+                            <span class="cost"><i class="fa-solid fa-cube text-amber-300"></i> 80</span>
+                            解锁涂装
+                        </button>
+                    </div>
                 </div>
 
-                <!-- V6 Cosmic Skin: Imperial Afterglow -->
-                <div class="p-3 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-400 text-lg border border-amber-500/20"><i class="fa-solid fa-crown"></i></div>
-                        <div>
-                            <span class="text-xs font-bold text-white block">✨ 帝皇余晖 (Imperial Afterglow)</span>
-                            <span class="text-[9px] text-gray-500 block">暗金恒星装甲，喷射耀斑粒子，废料吸引距+50px，暴击字样 <span id="skinImperialText" class="text-amber-400">未解锁</span></span>
+                <!-- 超维雷霆 Dimension Thunder -->
+                <div id="skinCardThunder" class="skin-card skin-thunder">
+                    <div class="tier-strip">
+                        <span>SKIN · 002</span>
+                        <span class="tier-badge">EPIC <span class="tier-stars">★★★★</span></span>
+                    </div>
+                    <div class="ship-stage">
+                        <div class="particle-burst"><span></span><span></span><span></span><span></span><span></span></div>
+                        <svg class="ship-svg" viewBox="0 0 100 100">
+                            <defs>
+                                <radialGradient id="thunderCore" cx="50%" cy="40%">
+                                    <stop offset="0%" stop-color="#fef9c3"/>
+                                    <stop offset="100%" stop-color="#0891b2"/>
+                                </radialGradient>
+                            </defs>
+                            <path d="M 28 68 L 12 88 L 36 76 Z" fill="#ca8a04" opacity="0.6"/>
+                            <path d="M 72 68 L 88 88 L 64 76 Z" fill="#ca8a04" opacity="0.6"/>
+                            <path d="M 50 12 L 18 56 L 34 56 L 30 68 L 70 68 L 66 56 L 82 56 Z" fill="#0f172a" stroke="#facc15" stroke-width="2"/>
+                            <path d="M 38 32 L 32 44 L 38 44 L 34 56" stroke="#facc15" stroke-width="1.5" fill="none" opacity="0.7"/>
+                            <path d="M 62 32 L 68 44 L 62 44 L 66 56" stroke="#facc15" stroke-width="1.5" fill="none" opacity="0.7"/>
+                            <circle cx="50" cy="38" r="9" fill="url(#thunderCore)"/>
+                        </svg>
+                    </div>
+                    <div class="text-center px-3 mt-1">
+                        <div class="skin-name">超维雷霆</div>
+                        <div class="skin-subtitle">DIMENSION  THUNDER</div>
+                    </div>
+                    <div class="passive-list">
+                        <div class="passive-row">
+                            <i class="fa-solid fa-bolt-lightning"></i>
+                            <span>EM+Fire 雷电链索敌 <strong>+30%</strong> 至 520px</span>
+                        </div>
+                        <div class="passive-row">
+                            <i class="fa-solid fa-wave-square"></i>
+                            <span>蓝黄锯齿电弧雷暴尾流</span>
                         </div>
                     </div>
-                    <button id="buySkinImperialBtn" class="px-3 py-1.5 bg-amber-600 disabled:opacity-30 disabled:pointer-events-none hover:bg-amber-500 text-white text-[10px] font-black rounded-lg transition shrink-0">
-                        需 120 废料
-                    </button>
+                    <div class="px-3 pt-2 pb-1 flex items-center justify-between">
+                        <span id="skinThunderText" class="status-chip status-locked">
+                            <i class="fa-solid fa-lock text-[8px]"></i> Locked
+                        </span>
+                        <div class="text-[9px] text-gray-500 tracking-widest font-bold">SLOT · 002</div>
+                    </div>
+                    <div class="px-3 pb-3">
+                        <button id="buySkinThunderBtn" class="action-btn">
+                            <span class="cost"><i class="fa-solid fa-cube text-amber-300"></i> 100</span>
+                            解锁涂装
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 帝皇余晖 Imperial Afterglow -->
+                <div id="skinCardImperial" class="skin-card skin-imperial">
+                    <div class="tier-strip">
+                        <span>SKIN · 003</span>
+                        <span class="tier-badge">LEGEND <span class="tier-stars">★★★★★</span></span>
+                    </div>
+                    <div class="ship-stage">
+                        <div class="particle-burst"><span></span><span></span><span></span><span></span><span></span></div>
+                        <svg class="ship-svg" viewBox="0 0 100 100">
+                            <defs>
+                                <radialGradient id="impCore" cx="50%" cy="40%">
+                                    <stop offset="0%" stop-color="#fde68a"/>
+                                    <stop offset="100%" stop-color="#b91c1c"/>
+                                </radialGradient>
+                            </defs>
+                            <path d="M 28 70 L 8 88 L 36 78 Z" fill="#b45309" opacity="0.7"/>
+                            <path d="M 72 70 L 92 88 L 64 78 Z" fill="#b45309" opacity="0.7"/>
+                            <path d="M 50 8 L 22 60 L 26 70 L 50 62 L 74 70 L 78 60 Z" fill="#1a1005" stroke="#fbbf24" stroke-width="2"/>
+                            <path d="M 50 6 L 50 20" stroke="#fde047" stroke-width="2"/>
+                            <path d="M 38 14 L 42 22" stroke="#fde047" stroke-width="1.5"/>
+                            <path d="M 62 14 L 58 22" stroke="#fde047" stroke-width="1.5"/>
+                            <circle cx="50" cy="38" r="9" fill="url(#impCore)"/>
+                            <circle cx="50" cy="38" r="3" fill="#fef9c3"/>
+                        </svg>
+                    </div>
+                    <div class="text-center px-3 mt-1">
+                        <div class="skin-name">帝皇余晖</div>
+                        <div class="skin-subtitle">IMPERIAL  AFTERGLOW</div>
+                    </div>
+                    <div class="passive-list">
+                        <div class="passive-row">
+                            <i class="fa-solid fa-magnet"></i>
+                            <span>磁力吸引范围 <strong>180→230px</strong></span>
+                        </div>
+                        <div class="passive-row">
+                            <i class="fa-solid fa-coins"></i>
+                            <span>废料拾取 <strong>CRIT +2</strong> 暴击双倍增益</span>
+                        </div>
+                    </div>
+                    <div class="px-3 pt-2 pb-1 flex items-center justify-between">
+                        <span id="skinImperialText" class="status-chip status-locked">
+                            <i class="fa-solid fa-lock text-[8px]"></i> Locked
+                        </span>
+                        <div class="text-[9px] text-gray-500 tracking-widest font-bold">SLOT · 003</div>
+                    </div>
+                    <div class="px-3 pb-3">
+                        <button id="buySkinImperialBtn" class="action-btn">
+                            <span class="cost"><i class="fa-solid fa-cube text-amber-300"></i> 120</span>
+                            解锁涂装
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -457,13 +574,13 @@
     </div>
 
     <!-- Scripts using global script tags for CORS-free local execution -->
-    <script charset="utf-8" src="js/sound.js?v=6.2.3"></script>
-    <script charset="utf-8" src="js/engine_base.js?v=6.2.3"></script>
-    <script charset="utf-8" src="js/engine_physics.js?v=6.2.3"></script>
-    <script charset="utf-8" src="js/engine_entities.js?v=6.2.3"></script>
-    <script charset="utf-8" src="js/engine_boss.js?v=6.2.3"></script>
-    <script charset="utf-8" src="js/engine_renderer.js?v=6.2.3"></script>
-    <script charset="utf-8" src="js/engine_hangar.js?v=6.2.3"></script>
-    <script charset="utf-8" src="js/main.js?v=6.2.3"></script>
+    <script charset="utf-8" src="js/sound.js?v=6.2.4"></script>
+    <script charset="utf-8" src="js/engine_base.js?v=6.2.4"></script>
+    <script charset="utf-8" src="js/engine_physics.js?v=6.2.4"></script>
+    <script charset="utf-8" src="js/engine_entities.js?v=6.2.4"></script>
+    <script charset="utf-8" src="js/engine_boss.js?v=6.2.4"></script>
+    <script charset="utf-8" src="js/engine_renderer.js?v=6.2.4"></script>
+    <script charset="utf-8" src="js/engine_hangar.js?v=6.2.4"></script>
+    <script charset="utf-8" src="js/main.js?v=6.2.4"></script>
 </body>
 </html>

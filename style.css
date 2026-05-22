@@ -246,3 +246,320 @@ canvas {
     background: rgba(34, 211, 238, 0.35);
     display: inline-block;
 }
+
+/* ============ Cosmic Skin Cards (机舱涂装卡) ============ */
+
+.skin-card {
+    position: relative;
+    background: rgba(8, 12, 24, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 18px;
+    overflow: hidden;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.skin-card:hover {
+    transform: translateY(-2px);
+}
+.skin-card::before,
+.skin-card::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--skin-accent, #22d3ee);
+    opacity: 0.85;
+    pointer-events: none;
+}
+.skin-card::before {
+    top: 5px; left: 5px;
+    border-right: none; border-bottom: none;
+}
+.skin-card::after {
+    bottom: 5px; right: 5px;
+    border-left: none; border-top: none;
+}
+
+.skin-card .tier-strip {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 24px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.03) 30%,
+        rgba(255, 255, 255, 0.03) 70%,
+        transparent 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+}
+.skin-card .tier-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--skin-accent, #22d3ee);
+}
+.skin-card .tier-stars {
+    letter-spacing: 0;
+    font-size: 10px;
+}
+
+.skin-card .ship-stage {
+    position: relative;
+    margin-top: 24px;
+    padding: 12px 12px 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 120px;
+    background: radial-gradient(ellipse at center, var(--skin-glow-soft, rgba(34, 211, 238, 0.22)) 0%, transparent 65%);
+}
+.skin-card .ship-stage::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 108px; height: 108px;
+    border: 1px dashed var(--skin-accent, #22d3ee);
+    border-radius: 50%;
+    opacity: 0.3;
+    animation: ring-rotate 16s linear infinite;
+}
+.skin-card .ship-stage::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 78px; height: 78px;
+    border: 1px solid var(--skin-accent, #22d3ee);
+    border-radius: 50%;
+    opacity: 0.18;
+    animation: ring-rotate 10s linear infinite reverse;
+}
+@keyframes ring-rotate {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to   { transform: translate(-50%, -50%) rotate(360deg); }
+}
+.skin-card .ship-svg {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    filter: drop-shadow(0 0 14px var(--skin-glow, rgba(34, 211, 238, 0.7)));
+    animation: ship-float 4s ease-in-out infinite;
+}
+@keyframes ship-float {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50%      { transform: translateY(-5px) rotate(2deg); }
+}
+
+.skin-card .particle-burst {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+.skin-card .particle-burst span {
+    position: absolute;
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: var(--skin-accent, #22d3ee);
+    box-shadow: 0 0 5px var(--skin-accent, #22d3ee);
+    animation: particle-rise 3s linear infinite;
+    opacity: 0;
+}
+.skin-card .particle-burst span:nth-child(1) { left: 20%; animation-delay: 0s;   }
+.skin-card .particle-burst span:nth-child(2) { left: 38%; animation-delay: 0.5s; }
+.skin-card .particle-burst span:nth-child(3) { left: 55%; animation-delay: 1.2s; }
+.skin-card .particle-burst span:nth-child(4) { left: 70%; animation-delay: 1.8s; }
+.skin-card .particle-burst span:nth-child(5) { left: 85%; animation-delay: 2.4s; }
+@keyframes particle-rise {
+    0%   { bottom: 10px;  opacity: 0; }
+    20%  { opacity: 1; }
+    100% { bottom: 105px; opacity: 0; }
+}
+
+.skin-card .skin-name {
+    font-family: 'Orbitron', 'Noto Sans SC', sans-serif;
+    font-weight: 900;
+    font-size: 18px;
+    letter-spacing: 0.04em;
+    background: linear-gradient(120deg, var(--skin-name-from), var(--skin-name-to));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 20px var(--skin-glow-soft, rgba(34, 211, 238, 0.3));
+}
+.skin-card .skin-subtitle {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    letter-spacing: 0.35em;
+    color: rgba(255, 255, 255, 0.42);
+    margin-top: 2px;
+}
+
+.skin-card .passive-list {
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(2, 4, 10, 0.4);
+}
+.skin-card .passive-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10.5px;
+    line-height: 1.4;
+    padding: 2px 0;
+}
+.skin-card .passive-row i {
+    color: var(--skin-accent, #22d3ee);
+    font-size: 10px;
+    width: 14px;
+    text-align: center;
+}
+.skin-card .passive-row strong {
+    color: var(--skin-accent, #22d3ee);
+    font-weight: 700;
+}
+.skin-card .passive-row span {
+    color: rgba(255, 255, 255, 0.78);
+}
+
+/* 状态徽章 */
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+.status-chip.status-locked {
+    background: rgba(100, 116, 139, 0.15);
+    color: rgba(148, 163, 184, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+}
+.status-chip.status-unlocked {
+    background: rgba(16, 185, 129, 0.12);
+    color: rgb(110, 231, 183);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+}
+.status-chip.status-equipped {
+    background: var(--skin-glow-soft);
+    color: var(--skin-accent);
+    border: 1px solid var(--skin-accent);
+    box-shadow: 0 0 10px var(--skin-glow-soft);
+}
+
+/* 行动按钮 */
+.skin-card .action-btn {
+    position: relative;
+    width: 100%;
+    padding: 10px 12px;
+    margin-top: 8px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: white;
+    border-radius: 10px;
+    border: 1px solid var(--skin-accent);
+    background:
+        linear-gradient(120deg, var(--skin-btn-from), var(--skin-btn-to)),
+        rgba(2, 4, 10, 0.3);
+    background-size: 200% 100%;
+    box-shadow:
+        0 0 0 1px var(--skin-glow-soft),
+        0 4px 18px var(--skin-glow-soft);
+    transition: transform 0.15s ease, background-position 0.4s ease, opacity 0.2s ease;
+    animation: btn-shimmer 5s linear infinite;
+    cursor: pointer;
+}
+@keyframes btn-shimmer {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+}
+.skin-card .action-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.skin-card .action-btn:active:not(:disabled) { transform: translateY(1px); }
+.skin-card .action-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    animation: none;
+}
+.skin-card .action-btn .cost {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-right: 8px;
+    padding-right: 8px;
+    border-right: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+/* equipped 状态卡：底色发光 */
+.skin-card.is-equipped {
+    box-shadow:
+        0 0 0 1px var(--skin-accent),
+        0 0 22px var(--skin-glow-soft),
+        inset 0 0 50px var(--skin-glow-soft);
+}
+
+/* 三套主题色 */
+.skin-void {
+    --skin-accent: #d946ef;
+    --skin-glow:   rgba(217, 70, 239, 0.75);
+    --skin-glow-soft: rgba(217, 70, 239, 0.16);
+    --skin-name-from: #f0abfc;
+    --skin-name-to:   #c084fc;
+    --skin-btn-from: #a21caf;
+    --skin-btn-to:   #7c3aed;
+}
+.skin-thunder {
+    --skin-accent: #facc15;
+    --skin-glow:   rgba(250, 204, 21, 0.75);
+    --skin-glow-soft: rgba(250, 204, 21, 0.16);
+    --skin-name-from: #fde68a;
+    --skin-name-to:   #67e8f9;
+    --skin-btn-from: #ca8a04;
+    --skin-btn-to:   #0891b2;
+}
+.skin-imperial {
+    --skin-accent: #fbbf24;
+    --skin-glow:   rgba(251, 191, 36, 0.75);
+    --skin-glow-soft: rgba(251, 191, 36, 0.18);
+    --skin-name-from: #fde047;
+    --skin-name-to:   #ef4444;
+    --skin-btn-from: #b45309;
+    --skin-btn-to:   #b91c1c;
+}
+
+/* 涂装区分隔标题 */
+.skin-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 4px 4px;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: rgba(167, 139, 250, 0.85);
+}
+.skin-divider::before,
+.skin-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(167, 139, 250, 0.4), transparent);
+}
