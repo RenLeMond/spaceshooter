@@ -219,7 +219,10 @@ class GameEngine {
         this.hud = document.getElementById('hud');
         
         this.scoreText = document.getElementById('scoreText');
-        this.scoreText.addEventListener('dblclick', () => {
+        // 双击监听挂在父级 scoreCell（HUD 父层 pointer-events-none，必须用 scoreCell 上的 pointer-events-auto 接收事件）
+        const scoreCell = document.getElementById('scoreCell') || this.scoreText;
+        scoreCell.addEventListener('dblclick', (e) => {
+            if (e.stopPropagation) e.stopPropagation();
             if (this.isRunning && !this.isPaused) {
                 this.score += 1000;
                 this.scrap += 10;

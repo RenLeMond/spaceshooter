@@ -269,10 +269,11 @@ window.onload = function() {
             });
         }
         
-        // 双击得分作弊器桥接 (Cheat Button)
-        const scoreText = document.getElementById('scoreText');
-        if (scoreText) {
-            scoreText.addEventListener('dblclick', () => {
+        // 双击得分作弊器桥接 (Cheat Button) — 挂在整个 scoreCell 上，SCORE 标签和数字都能触发
+        const scoreCell = document.getElementById('scoreCell') || document.getElementById('scoreText');
+        if (scoreCell) {
+            scoreCell.addEventListener('dblclick', (e) => {
+                e.stopPropagation(); // 避免冒泡到 canvas 触发 warp
                 worker.postMessage({ type: 'keydown', code: 'KeyK' });
                 setTimeout(() => worker.postMessage({ type: 'keyup', code: 'KeyK' }), 50);
             });
