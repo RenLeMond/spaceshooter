@@ -76,7 +76,16 @@ const sfxProxy = new Proxy({}, {
 self.sfx = sfxProxy;
 
 // 导入星海猎手所有核心引擎文件 (不加载 sound.js，直接使用上面的 Proxy 代理，规避 AudioContext 报错)
-importScripts('engine_base.js', 'engine_physics.js', 'engine_entities.js', 'engine_boss.js', 'engine_renderer.js', 'engine_hangar.js');
+// 继承 main.js 注入到 Worker URL 的 ?v=ASSET_VERSION，保证引擎文件与主线程一起失效旧缓存
+const __ENGINE_VER = self.location.search || '';
+importScripts(
+    'engine_base.js' + __ENGINE_VER,
+    'engine_physics.js' + __ENGINE_VER,
+    'engine_entities.js' + __ENGINE_VER,
+    'engine_boss.js' + __ENGINE_VER,
+    'engine_renderer.js' + __ENGINE_VER,
+    'engine_hangar.js' + __ENGINE_VER
+);
 
 // 继承 GameEngine 类并重写 DOM 依赖的方法
 class GameEngineWorker extends GameEngine {
