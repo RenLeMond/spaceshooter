@@ -71,3 +71,178 @@ canvas {
     color: #22d3ee;
     box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
 }
+
+/* ============ Start Screen Cyberpunk Theme ============ */
+
+/* 网格背板 — 双向 1px 青线 + 中央透明聚焦 */
+.cyber-grid {
+    position: relative;
+    background-color: #02040a;
+    background-image:
+        linear-gradient(rgba(6, 182, 212, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(6, 182, 212, 0.08) 1px, transparent 1px);
+    background-size: 28px 28px;
+    overflow: hidden;
+}
+.cyber-grid::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 20%, rgba(2, 4, 10, 0.85) 75%);
+    pointer-events: none;
+    z-index: 0;
+}
+.cyber-grid > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* 全屏扫描线动画 */
+.scan-line {
+    position: absolute;
+    top: -10%;
+    left: 0;
+    right: 0;
+    height: 120px;
+    background: linear-gradient(to bottom,
+        transparent 0%,
+        rgba(34, 211, 238, 0.05) 30%,
+        rgba(34, 211, 238, 0.12) 50%,
+        rgba(34, 211, 238, 0.05) 70%,
+        transparent 100%);
+    pointer-events: none;
+    animation: scan-sweep 7s linear infinite;
+    z-index: 1;
+}
+@keyframes scan-sweep {
+    0% { transform: translateY(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(120vh); opacity: 0; }
+}
+
+/* 全息面板：L 型角标 */
+.holo-frame {
+    position: relative;
+    background: rgba(8, 12, 24, 0.65);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(34, 211, 238, 0.22);
+}
+.holo-frame::before,
+.holo-frame::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-color: #22d3ee;
+    border-style: solid;
+}
+.holo-frame::before {
+    top: -1px;
+    left: -1px;
+    border-width: 2px 0 0 2px;
+}
+.holo-frame::after {
+    bottom: -1px;
+    right: -1px;
+    border-width: 0 2px 2px 0;
+}
+
+/* 按钮：四角斜切剪裁 — 那种"军用终端 OK"按键 */
+.tech-cut {
+    clip-path: polygon(
+        14px 0,
+        100% 0,
+        100% calc(100% - 14px),
+        calc(100% - 14px) 100%,
+        0 100%,
+        0 14px
+    );
+}
+
+/* 色散偏移文字 — 青/品红 1.5px 偏移 */
+.chromatic {
+    position: relative;
+    color: #ffffff;
+}
+.chromatic::before,
+.chromatic::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    opacity: 0.7;
+}
+.chromatic::before {
+    color: #22d3ee;
+    transform: translateX(-1.5px);
+    animation: chrom-jitter-1 4s ease-in-out infinite;
+}
+.chromatic::after {
+    color: #f472b6;
+    transform: translateX(1.5px);
+    animation: chrom-jitter-2 4s ease-in-out infinite;
+}
+@keyframes chrom-jitter-1 {
+    0%, 100% { transform: translateX(-1.5px); }
+    47%, 49% { transform: translate(-3px, 0); }
+    52% { transform: translate(-1.5px, 0); }
+}
+@keyframes chrom-jitter-2 {
+    0%, 100% { transform: translateX(1.5px); }
+    47%, 49% { transform: translate(3px, 0); }
+    52% { transform: translate(1.5px, 0); }
+}
+
+/* 状态指示点：心跳脉冲 */
+.pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981, 0 0 16px rgba(16, 185, 129, 0.4);
+    animation: pulse-dot 1.4s ease-in-out infinite;
+    display: inline-block;
+}
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.7); }
+}
+
+/* CTA 主按键霓虹脉动边框 */
+.cta-neon {
+    position: relative;
+    background:
+        linear-gradient(120deg, rgba(6, 182, 212, 0.95) 0%, rgba(124, 58, 237, 0.95) 50%, rgba(217, 70, 239, 0.95) 100%);
+    background-size: 200% 100%;
+    animation: cta-shimmer 4s linear infinite;
+    box-shadow:
+        0 0 0 1px rgba(34, 211, 238, 0.5),
+        0 0 24px rgba(34, 211, 238, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+@keyframes cta-shimmer {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+}
+.cta-neon::after {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    background: linear-gradient(120deg, rgba(2, 4, 10, 0.0), rgba(2, 4, 10, 0.25));
+    pointer-events: none;
+    clip-path: inherit;
+}
+
+/* 顶部状态栏分隔点 */
+.dot-sep {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: rgba(34, 211, 238, 0.35);
+    display: inline-block;
+}
