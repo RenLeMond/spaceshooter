@@ -219,16 +219,29 @@ class GameEngine {
         this.hud = document.getElementById('hud');
         
         this.scoreText = document.getElementById('scoreText');
-        // 双击监听挂在父级 scoreCell（HUD 父层 pointer-events-none，必须用 scoreCell 上的 pointer-events-auto 接收事件）
+        // 监听挂在父级 scoreCell（HUD 父层 pointer-events-none，必须用 scoreCell 的 pointer-events-auto 接事件）
+        // 用 click 计数器替代 dblclick，desktop/touch 都生效
         const scoreCell = document.getElementById('scoreCell') || this.scoreText;
-        scoreCell.addEventListener('dblclick', (e) => {
-            if (e.stopPropagation) e.stopPropagation();
-            if (this.isRunning && !this.isPaused) {
-                this.score += 1000;
-                this.scrap += 10;
-                this.player.hp = Math.min(this.player.maxHp, this.player.hp + 20);
-                this.showToast(`🧪 极客双击调试：积分 +1000 (当前: ${this.score})`);
+        let lastScoreTap = 0;
+        const fireCheat = (e) => {
+            if (e && e.stopPropagation) e.stopPropagation();
+            const now = performance.now();
+            if (now - lastScoreTap < 400) {
+                if (this.isRunning && !this.isPaused) {
+                    this.score += 1000;
+                    this.scrap += 10;
+                    this.player.hp = Math.min(this.player.maxHp, this.player.hp + 20);
+                    this.showToast(`🧪 极客双击调试：积分 +1000 (当前: ${this.score})`);
+                }
+                lastScoreTap = 0;
+            } else {
+                lastScoreTap = now;
             }
+        };
+        scoreCell.addEventListener('click', fireCheat);
+        scoreCell.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            fireCheat(e);
         });
         this.scrapText = document.getElementById('scrapText');
         this.bestScoreText = document.getElementById('bestScoreText');

@@ -269,13 +269,25 @@ window.onload = function() {
             });
         }
         
-        // 双击得分作弊器桥接 (Cheat Button) — 挂在整个 scoreCell 上，SCORE 标签和数字都能触发
+        // 双击得分作弊器桥接 — 用 click 计数器（400ms 内连点两次），desktop/touch 都生效，比 dblclick 在移动端更可靠
         const scoreCell = document.getElementById('scoreCell') || document.getElementById('scoreText');
         if (scoreCell) {
-            scoreCell.addEventListener('dblclick', (e) => {
-                e.stopPropagation(); // 避免冒泡到 canvas 触发 warp
-                worker.postMessage({ type: 'keydown', code: 'KeyK' });
-                setTimeout(() => worker.postMessage({ type: 'keyup', code: 'KeyK' }), 50);
+            let lastScoreTap = 0;
+            const fireCheat = (e) => {
+                if (e && e.stopPropagation) e.stopPropagation();
+                const now = performance.now();
+                if (now - lastScoreTap < 400) {
+                    worker.postMessage({ type: 'keydown', code: 'KeyK' });
+                    setTimeout(() => worker.postMessage({ type: 'keyup', code: 'KeyK' }), 50);
+                    lastScoreTap = 0;
+                } else {
+                    lastScoreTap = now;
+                }
+            };
+            scoreCell.addEventListener('click', fireCheat);
+            scoreCell.addEventListener('touchend', (e) => {
+                e.preventDefault(); // 防止触屏 ghost click 重复触发
+                fireCheat(e);
             });
         }
         
