@@ -9,45 +9,70 @@ Object.assign(GameEngine.prototype, {
         this.updateHangarUI();
     },
 
+    _renderUpgradeCard(cardId, progressId, tagId, btnId, level, maxLevel, cost, labels) {
+        const card = document.getElementById(cardId);
+        const progress = document.getElementById(progressId);
+        const tag = document.getElementById(tagId);
+        const btn = document.getElementById(btnId);
+        if (!card || !progress || !tag || !btn) return;
+
+        const dots = progress.querySelectorAll('.dot');
+        for (let i = 0; i < dots.length; i++) {
+            if (i < level) dots[i].classList.add('active');
+            else dots[i].classList.remove('active');
+        }
+
+        if (level >= maxLevel) {
+            card.classList.add('is-maxed');
+            tag.innerText = labels.maxed;
+            btn.innerText = labels.btnMaxed;
+            btn.disabled = true;
+        } else {
+            card.classList.remove('is-maxed');
+            tag.innerText = level > 0 ? labels.leveled(level) : labels.locked;
+            btn.innerText = labels.btnCost(cost);
+            btn.disabled = this.scrap < cost;
+        }
+    },
+
     updateHangarUI() {
         document.getElementById('shopScrapText').innerText = this.scrap;
-        const buyTurretBtn = document.getElementById('buyTurretBtn');
-        const turretLevelText = document.getElementById('turretLevelText');
-        if (this.hangar.turretLevel >= 3) {
-            turretLevelText.innerText = `[MAX • 级3]`;
-            buyTurretBtn.innerText = "已满级";
-            buyTurretBtn.disabled = true;
-        } else {
-            const cost = 50 + this.hangar.turretLevel * 30;
-            turretLevelText.innerText = this.hangar.turretLevel > 0 ? `[级${this.hangar.turretLevel}]` : "未装备";
-            buyTurretBtn.innerText = `升级: ${cost} 废料`;
-            buyTurretBtn.disabled = this.scrap < cost;
-        }
 
-        const buyEngineBtn = document.getElementById('buyEngineBtn');
-        const engineLevelText = document.getElementById('engineLevelText');
-        if (this.hangar.engineLevel >= 3) {
-            engineLevelText.innerText = `[MAX • 级3]`;
-            buyEngineBtn.innerText = "已满级";
-            buyEngineBtn.disabled = true;
-        } else {
-            const cost = 40 + this.hangar.engineLevel * 25;
-            engineLevelText.innerText = this.hangar.engineLevel > 0 ? `[级${this.hangar.engineLevel}]` : "未装备";
-            buyEngineBtn.innerText = `升级: ${cost} 废料`;
-            buyEngineBtn.disabled = this.scrap < cost;
-        }
+        this._renderUpgradeCard(
+            'upgradeCardTurret', 'turretProgress', 'turretLevelText', 'buyTurretBtn',
+            this.hangar.turretLevel, 3, 50 + this.hangar.turretLevel * 30,
+            {
+                maxed: 'MAX · LV.3',
+                btnMaxed: '已满级',
+                leveled: (lv) => `LV.${lv}`,
+                locked: '未装备',
+                btnCost: (c) => `升级 · ${c}`
+            }
+        );
 
-        const buyWingsBtn = document.getElementById('buyWingsBtn');
-        const wingsLevelText = document.getElementById('wingsLevelText');
-        if (this.hangar.wingsLevel >= 1) {
-            wingsLevelText.innerText = `[MAX • 已激活]`;
-            buyWingsBtn.innerText = "已装配";
-            buyWingsBtn.disabled = true;
-        } else {
-            wingsLevelText.innerText = "未装备";
-            buyWingsBtn.innerText = `购买: 60 废料`;
-            buyWingsBtn.disabled = this.scrap < 60;
-        }
+        this._renderUpgradeCard(
+            'upgradeCardEngine', 'engineProgress', 'engineLevelText', 'buyEngineBtn',
+            this.hangar.engineLevel, 3, 40 + this.hangar.engineLevel * 25,
+            {
+                maxed: 'MAX · LV.3',
+                btnMaxed: '已满级',
+                leveled: (lv) => `LV.${lv}`,
+                locked: '未装备',
+                btnCost: (c) => `升级 · ${c}`
+            }
+        );
+
+        this._renderUpgradeCard(
+            'upgradeCardWings', 'wingsProgress', 'wingsLevelText', 'buyWingsBtn',
+            this.hangar.wingsLevel, 1, 60,
+            {
+                maxed: 'EQUIPPED',
+                btnMaxed: '已装配',
+                leveled: (lv) => `LV.${lv}`,
+                locked: '未装备',
+                btnCost: (c) => `购买 · ${c}`
+            }
+        );
 
         // --- V6 皮肤 UI 更新 (v2 涂装卡：status chip + action button + is-equipped 三件套) ---
         const skins = [

@@ -12,7 +12,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Noto+Sans+SC:wght@300;500;700;900&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=6.2.4">
+    <link rel="stylesheet" href="style.css?v=6.2.5">
 </head>
 <body class="flex items-center justify-center min-h-screen">
 
@@ -237,46 +237,69 @@
             </div>
 
             <div class="space-y-3 my-auto max-h-[50vh] overflow-y-auto px-1">
+                <!-- Modules · 战机模块升级区 -->
+                <div class="upgrade-divider">
+                    <span>⚙️ Modules · 战机模块</span>
+                </div>
+
                 <!-- Drone Turret Upgrade -->
-                <div class="p-3 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-cyan-500/10 rounded-xl flex items-center justify-center text-cyan-400 text-lg border border-cyan-500/20"><i class="fa-solid fa-gun"></i></div>
+                <div id="upgradeCardTurret" class="upgrade-card upgrade-cyan">
+                    <div class="upg-scan"></div>
+                    <div class="upgrade-icon"><i class="fa-solid fa-gun"></i></div>
+                    <div class="upgrade-body">
                         <div>
-                            <span class="text-xs font-bold text-white block">纳米智能伴飞僚机 (Wingman Cluster)</span>
-                            <span class="text-[9px] text-gray-500 block">左/右翼伴飞，共享并配合主机 6 大晶核共鸣大招 <span id="turretLevelText" class="text-cyan-400">未装备</span></span>
+                            <span class="upgrade-name">纳米智能伴飞僚机</span>
+                            <span class="upgrade-en">WINGMAN  CLUSTER</span>
+                        </div>
+                        <div class="upgrade-desc">左/右翼伴飞，共享并配合主机 6 大晶核共鸣大招</div>
+                        <div class="upgrade-meta">
+                            <div id="turretProgress" class="level-dots">
+                                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                            </div>
+                            <span id="turretLevelText" class="upgrade-level-tag">未装备</span>
                         </div>
                     </div>
-                    <button id="buyTurretBtn" class="px-3 py-1.5 bg-cyan-600 disabled:opacity-30 disabled:pointer-events-none hover:bg-cyan-500 text-white text-[10px] font-black rounded-lg transition shrink-0">
-                        需 50 废料
-                    </button>
+                    <button id="buyTurretBtn" class="upgrade-btn">升级 · 50</button>
                 </div>
 
                 <!-- Thrust Plasma Exhaust Upgrade -->
-                <div class="p-3 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-rose-500/10 rounded-xl flex items-center justify-center text-rose-400 text-lg border border-rose-500/20"><i class="fa-solid fa-fire"></i></div>
+                <div id="upgradeCardEngine" class="upgrade-card upgrade-rose">
+                    <div class="upg-scan"></div>
+                    <div class="upgrade-icon"><i class="fa-solid fa-fire"></i></div>
+                    <div class="upgrade-body">
                         <div>
-                            <span class="text-xs font-bold text-white block">超载等离子尾喷 (Plasma Exhaust)</span>
-                            <span class="text-[9px] text-gray-500 block">留下高热热量轨迹灼烧后方陨石 <span id="engineLevelText" class="text-rose-400">未装备</span></span>
+                            <span class="upgrade-name">超载等离子尾喷</span>
+                            <span class="upgrade-en">PLASMA  EXHAUST</span>
+                        </div>
+                        <div class="upgrade-desc">留下高热轨迹灼烧后方陨石，每秒持续掉血</div>
+                        <div class="upgrade-meta">
+                            <div id="engineProgress" class="level-dots">
+                                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                            </div>
+                            <span id="engineLevelText" class="upgrade-level-tag">未装备</span>
                         </div>
                     </div>
-                    <button id="buyEngineBtn" class="px-3 py-1.5 bg-rose-600 disabled:opacity-30 disabled:pointer-events-none hover:bg-rose-500 text-white text-[10px] font-black rounded-lg transition shrink-0">
-                        需 40 废料
-                    </button>
+                    <button id="buyEngineBtn" class="upgrade-btn">升级 · 40</button>
                 </div>
 
                 <!-- Slicing Shield Wings Upgrade -->
-                <div class="p-3 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400 text-lg border border-emerald-500/20"><i class="fa-solid fa-angles-up"></i></div>
+                <div id="upgradeCardWings" class="upgrade-card upgrade-emerald">
+                    <div class="upg-scan"></div>
+                    <div class="upgrade-icon"><i class="fa-solid fa-angles-up"></i></div>
+                    <div class="upgrade-body">
                         <div>
-                            <span class="text-xs font-bold text-white block">能盾高速切翼 (Blade Wings)</span>
-                            <span class="text-[9px] text-gray-500 block">无敌防护力场时撞碎陨石产双倍废料 <span id="wingsLevelText" class="text-emerald-400">未装备</span></span>
+                            <span class="upgrade-name">能盾高速切翼</span>
+                            <span class="upgrade-en">BLADE  WINGS</span>
+                        </div>
+                        <div class="upgrade-desc">无敌力场时撞碎陨石产双倍废料 + 切割得分</div>
+                        <div class="upgrade-meta">
+                            <div id="wingsProgress" class="level-dots">
+                                <span class="dot"></span>
+                            </div>
+                            <span id="wingsLevelText" class="upgrade-level-tag">未装备</span>
                         </div>
                     </div>
-                    <button id="buyWingsBtn" class="px-3 py-1.5 bg-emerald-600 disabled:opacity-30 disabled:pointer-events-none hover:bg-emerald-500 text-white text-[10px] font-black rounded-lg transition shrink-0">
-                        需 60 废料
-                    </button>
+                    <button id="buyWingsBtn" class="upgrade-btn">购买 · 60</button>
                 </div>
 
                 <!-- V6 Cosmic Skins · 超维涂装区 -->
@@ -574,13 +597,13 @@
     </div>
 
     <!-- Scripts using global script tags for CORS-free local execution -->
-    <script charset="utf-8" src="js/sound.js?v=6.2.4"></script>
-    <script charset="utf-8" src="js/engine_base.js?v=6.2.4"></script>
-    <script charset="utf-8" src="js/engine_physics.js?v=6.2.4"></script>
-    <script charset="utf-8" src="js/engine_entities.js?v=6.2.4"></script>
-    <script charset="utf-8" src="js/engine_boss.js?v=6.2.4"></script>
-    <script charset="utf-8" src="js/engine_renderer.js?v=6.2.4"></script>
-    <script charset="utf-8" src="js/engine_hangar.js?v=6.2.4"></script>
-    <script charset="utf-8" src="js/main.js?v=6.2.4"></script>
+    <script charset="utf-8" src="js/sound.js?v=6.2.5"></script>
+    <script charset="utf-8" src="js/engine_base.js?v=6.2.5"></script>
+    <script charset="utf-8" src="js/engine_physics.js?v=6.2.5"></script>
+    <script charset="utf-8" src="js/engine_entities.js?v=6.2.5"></script>
+    <script charset="utf-8" src="js/engine_boss.js?v=6.2.5"></script>
+    <script charset="utf-8" src="js/engine_renderer.js?v=6.2.5"></script>
+    <script charset="utf-8" src="js/engine_hangar.js?v=6.2.5"></script>
+    <script charset="utf-8" src="js/main.js?v=6.2.5"></script>
 </body>
 </html>

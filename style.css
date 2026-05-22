@@ -563,3 +563,246 @@ canvas {
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(167, 139, 250, 0.4), transparent);
 }
+
+/* ============ Upgrade Cards (机舱模块升级) ============ */
+
+.upgrade-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 6px 4px 4px;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: rgba(34, 211, 238, 0.85);
+}
+.upgrade-divider::before,
+.upgrade-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.4), transparent);
+}
+
+.upgrade-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: rgba(8, 12, 24, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.upgrade-card:hover {
+    transform: translateY(-1px);
+    border-color: var(--upg-accent);
+}
+/* L 型角标 */
+.upgrade-card::before,
+.upgrade-card::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border: 1.5px solid var(--upg-accent, #22d3ee);
+    opacity: 0.7;
+    pointer-events: none;
+}
+.upgrade-card::before {
+    top: 4px; left: 4px;
+    border-right: none; border-bottom: none;
+}
+.upgrade-card::after {
+    bottom: 4px; right: 4px;
+    border-left: none; border-top: none;
+}
+
+/* 主题色背景渐变流光（顶部一条窄横线） */
+.upgrade-card .upg-scan {
+    position: absolute;
+    top: 0; left: 0;
+    height: 1px;
+    width: 40%;
+    background: linear-gradient(90deg, transparent, var(--upg-accent), transparent);
+    opacity: 0.5;
+    animation: upg-scan-slide 4s linear infinite;
+    pointer-events: none;
+}
+@keyframes upg-scan-slide {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(250%); }
+}
+
+/* 图标块 */
+.upgrade-icon {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background:
+        radial-gradient(circle at center, var(--upg-glow-soft) 0%, transparent 70%),
+        rgba(2, 4, 10, 0.5);
+    border: 1px solid var(--upg-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--upg-accent);
+    font-size: 16px;
+    box-shadow:
+        0 0 10px var(--upg-glow-soft),
+        inset 0 0 12px var(--upg-glow-soft);
+    position: relative;
+}
+.upgrade-icon::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border: 1px dashed var(--upg-accent);
+    border-radius: 12px;
+    opacity: 0.25;
+    animation: upg-ring 12s linear infinite;
+}
+@keyframes upg-ring {
+    from { transform: rotate(0); }
+    to   { transform: rotate(360deg); }
+}
+
+/* 内容主体 */
+.upgrade-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.upgrade-name {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+}
+.upgrade-en {
+    font-family: 'Orbitron', monospace;
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    color: var(--upg-accent);
+    opacity: 0.75;
+    margin-left: 6px;
+}
+.upgrade-desc {
+    font-size: 9.5px;
+    color: rgba(148, 163, 184, 0.85);
+    line-height: 1.35;
+}
+
+/* 等级点进度条 */
+.upgrade-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+}
+.level-dots {
+    display: flex;
+    gap: 4px;
+}
+.level-dots .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    transition: all 0.25s ease;
+}
+.level-dots .dot.active {
+    background: var(--upg-accent);
+    border-color: var(--upg-accent);
+    box-shadow: 0 0 7px var(--upg-glow);
+}
+.upgrade-level-tag {
+    font-family: 'Orbitron', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--upg-accent);
+    text-transform: uppercase;
+}
+
+/* 升级按钮 */
+.upgrade-btn {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: white;
+    border-radius: 8px;
+    border: 1px solid var(--upg-accent);
+    background:
+        linear-gradient(120deg, var(--upg-btn-from), var(--upg-btn-to));
+    background-size: 200% 100%;
+    animation: upg-btn-shimmer 5s linear infinite;
+    box-shadow: 0 3px 12px var(--upg-glow-soft);
+    transition: transform 0.15s ease, opacity 0.2s ease;
+    cursor: pointer;
+    min-width: 84px;
+    text-align: center;
+}
+@keyframes upg-btn-shimmer {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+}
+.upgrade-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.upgrade-btn:active:not(:disabled) { transform: translateY(1px); }
+.upgrade-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    animation: none;
+}
+
+/* 满级态卡：金边发光 + 按钮变绿 */
+.upgrade-card.is-maxed {
+    border-color: var(--upg-accent);
+    box-shadow:
+        0 0 0 1px var(--upg-accent),
+        0 0 16px var(--upg-glow-soft),
+        inset 0 0 30px var(--upg-glow-soft);
+}
+.upgrade-card.is-maxed .upgrade-btn {
+    background: linear-gradient(120deg, #047857, #065f46);
+    border-color: #10b981;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+/* 三套配色：青(僚机) / 红(尾喷) / 绿(切翼) */
+.upgrade-cyan {
+    --upg-accent:    #22d3ee;
+    --upg-glow:      rgba(34, 211, 238, 0.7);
+    --upg-glow-soft: rgba(34, 211, 238, 0.16);
+    --upg-btn-from:  #0891b2;
+    --upg-btn-to:    #4f46e5;
+}
+.upgrade-rose {
+    --upg-accent:    #fb7185;
+    --upg-glow:      rgba(251, 113, 133, 0.7);
+    --upg-glow-soft: rgba(251, 113, 133, 0.16);
+    --upg-btn-from:  #be123c;
+    --upg-btn-to:    #9a3412;
+}
+.upgrade-emerald {
+    --upg-accent:    #34d399;
+    --upg-glow:      rgba(52, 211, 153, 0.7);
+    --upg-glow-soft: rgba(52, 211, 153, 0.16);
+    --upg-btn-from:  #047857;
+    --upg-btn-to:    #115e59;
+}

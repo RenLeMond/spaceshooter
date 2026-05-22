@@ -2,7 +2,7 @@
 // 资源缓存版本号 — 同步于 space_shooter.html 的所有 ?v= 查询参数。
 // Worker 链 (game_worker.js + importScripts 的 6 个引擎文件) 通过 self.location.search 自动继承该版本，
 // 后续 bump 仅需改本常量 + HTML 的 ?v= 两处即可全量失效旧缓存。
-const ASSET_VERSION = '6.2.4';
+const ASSET_VERSION = '6.2.5';
 
 window.onload = function() {
     const canvas = document.getElementById('gameCanvas');
@@ -126,47 +126,73 @@ window.onload = function() {
             }
         }
         
+        // v2 升级卡更新器：联动等级点 / level-tag / button / is-maxed 卡态
+        function renderUpgradeCard(cardId, progressId, tagId, btnId, level, maxLevel, cost, scrap, labels) {
+            const card = document.getElementById(cardId);
+            const progress = document.getElementById(progressId);
+            const tag = document.getElementById(tagId);
+            const btn = document.getElementById(btnId);
+            if (!card || !progress || !tag || !btn) return;
+
+            // 等级点：第 i 个 dot 仅在 i < level 时点亮
+            const dots = progress.querySelectorAll('.dot');
+            for (let i = 0; i < dots.length; i++) {
+                if (i < level) dots[i].classList.add('active');
+                else dots[i].classList.remove('active');
+            }
+
+            if (level >= maxLevel) {
+                card.classList.add('is-maxed');
+                tag.innerText = labels.maxed;
+                btn.innerText = labels.btnMaxed;
+                btn.disabled = true;
+            } else {
+                card.classList.remove('is-maxed');
+                tag.innerText = level > 0 ? labels.leveled(level) : labels.locked;
+                btn.innerText = labels.btnCost(cost);
+                btn.disabled = scrap < cost;
+            }
+        }
+
         // 极客级无缝 Hangar UI 升级函数
         function updateMainHangarUI() {
             document.getElementById('shopScrapText').innerText = mainScrap;
-            
-            const buyTurretBtn = document.getElementById('buyTurretBtn');
-            const turretLevelText = document.getElementById('turretLevelText');
-            if (mainHangar.turretLevel >= 3) {
-                turretLevelText.innerText = `[MAX • 级3]`;
-                buyTurretBtn.innerText = "已满级";
-                buyTurretBtn.disabled = true;
-            } else {
-                const cost = 50 + mainHangar.turretLevel * 30;
-                turretLevelText.innerText = mainHangar.turretLevel > 0 ? `[级${mainHangar.turretLevel}]` : "未装备";
-                buyTurretBtn.innerText = `升级: ${cost} 废料`;
-                buyTurretBtn.disabled = mainScrap < cost;
-            }
 
-            const buyEngineBtn = document.getElementById('buyEngineBtn');
-            const engineLevelText = document.getElementById('engineLevelText');
-            if (mainHangar.engineLevel >= 3) {
-                engineLevelText.innerText = `[MAX • 级3]`;
-                buyEngineBtn.innerText = "已满级";
-                buyEngineBtn.disabled = true;
-            } else {
-                const cost = 40 + mainHangar.engineLevel * 25;
-                engineLevelText.innerText = mainHangar.engineLevel > 0 ? `[级${mainHangar.engineLevel}]` : "未装备";
-                buyEngineBtn.innerText = `升级: ${cost} 废料`;
-                buyEngineBtn.disabled = mainScrap < cost;
-            }
+            renderUpgradeCard(
+                'upgradeCardTurret', 'turretProgress', 'turretLevelText', 'buyTurretBtn',
+                mainHangar.turretLevel, 3, 50 + mainHangar.turretLevel * 30, mainScrap,
+                {
+                    maxed: 'MAX · LV.3',
+                    btnMaxed: '已满级',
+                    leveled: (lv) => `LV.${lv}`,
+                    locked: '未装备',
+                    btnCost: (c) => `升级 · ${c}`
+                }
+            );
 
-            const buyWingsBtn = document.getElementById('buyWingsBtn');
-            const wingsLevelText = document.getElementById('wingsLevelText');
-            if (mainHangar.wingsLevel >= 1) {
-                wingsLevelText.innerText = `[MAX • 已激活]`;
-                buyWingsBtn.innerText = "已装配";
-                buyWingsBtn.disabled = true;
-            } else {
-                wingsLevelText.innerText = "未装备";
-                buyWingsBtn.innerText = `购买: 60 废料`;
-                buyWingsBtn.disabled = mainScrap < 60;
-            }
+            renderUpgradeCard(
+                'upgradeCardEngine', 'engineProgress', 'engineLevelText', 'buyEngineBtn',
+                mainHangar.engineLevel, 3, 40 + mainHangar.engineLevel * 25, mainScrap,
+                {
+                    maxed: 'MAX · LV.3',
+                    btnMaxed: '已满级',
+                    leveled: (lv) => `LV.${lv}`,
+                    locked: '未装备',
+                    btnCost: (c) => `升级 · ${c}`
+                }
+            );
+
+            renderUpgradeCard(
+                'upgradeCardWings', 'wingsProgress', 'wingsLevelText', 'buyWingsBtn',
+                mainHangar.wingsLevel, 1, 60, mainScrap,
+                {
+                    maxed: 'EQUIPPED',
+                    btnMaxed: '已装配',
+                    leveled: (lv) => `LV.${lv}`,
+                    locked: '未装备',
+                    btnCost: (c) => `购买 · ${c}`
+                }
+            );
 
             // v2 涂装卡：每张卡用 status chip + action button + 卡 is-equipped 三件套联动
             const skins = [
