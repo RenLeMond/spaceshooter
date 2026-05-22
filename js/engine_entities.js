@@ -380,9 +380,14 @@ Object.assign(GameEngine.prototype, {
             }
         }
 
-        if (this.boss && this.boss.active) return;
+        // 母舰/titan 通过 bossShoot 持续喷流星弹幕，所以停掉普通生成；
+        // 但吞噬蠕虫没有发射逻辑，靠"吞噬流星回血"作为主玩法，必须保留流星生成给它当口粮
+        const bossActive = this.boss && this.boss.active;
+        if (bossActive && this.boss.type !== 'worm') return;
 
-        const spawnRate = Math.max(400, 1500 - (this.wave * 120)); 
+        // worm 战流星会被持续吃掉，节奏比常规快 1.4×；其他情况按 wave 递进
+        const baseRate = Math.max(400, 1500 - (this.wave * 120));
+        const spawnRate = (bossActive && this.boss.type === 'worm') ? Math.floor(baseRate / 1.4) : baseRate;
         if (this.spawnTimer >= spawnRate) {
             this.spawnTimer = 0;
             this.spawnMeteor();
