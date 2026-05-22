@@ -425,6 +425,13 @@ self.onmessage = function(e) {
                 engineInstance.controlMode = data.mode;
             }
             break;
+
+        case 'hudClearance':
+            // 主线程实测的 HUD 占位（逻辑 y 坐标下沿）— boss 出生时用作避让基线
+            if (engineInstance) {
+                engineInstance.hudClearance = data.y;
+            }
+            break;
             
         case 'startGame':
             if (engineInstance) {
@@ -453,17 +460,17 @@ self.onmessage = function(e) {
                 // 强力装备改装！直接拉满！
                 engineInstance.hangar.turretLevel = 2; // 伴飞僚机开启
                 engineInstance.hangar.engineLevel = 2; // 等离子尾喷开启
-                engineInstance.hangar.wingsLevel = 2; // 能盾切翼开启
+                engineInstance.hangar.wingsLevel = 1; // 能盾切翼开启（上限为1）
 
                 // 给玩家加上无敌和晶核，让跑分场面更酷炫
                 engineInstance.shieldTime = 8000; // 8秒无敌护盾
                 engineInstance.player.elementSlots = ['Fire', 'Rad']; // 坍缩黑洞星云爆 (Fire+Rad)
                 engineInstance._recomputeComboKey();
-                
-                // 强制初始化僚机
+
+                // 强制初始化僚机 — side 必须显式设置，否则 updateWingmen 因 length 已匹配不会重建，wingmanFire 计算 w.side*x 会得 NaN
                 engineInstance.wingmen = [
-                    { x: engineInstance.player.x - 45, y: engineInstance.player.y + 15, bankAngle: 0, lastShotTime: 0 },
-                    { x: engineInstance.player.x + 45, y: engineInstance.player.y + 15, bankAngle: 0, lastShotTime: 0 }
+                    { x: engineInstance.player.x - 45, y: engineInstance.player.y + 15, bankAngle: 0, side: -1, lastShotTime: 0 },
+                    { x: engineInstance.player.x + 45, y: engineInstance.player.y + 15, bankAngle: 0, side:  1, lastShotTime: 0 }
                 ];
                 
                 engineInstance.startLoop();
@@ -533,11 +540,11 @@ self.onmessage = function(e) {
                 engineInstance.unlockedSkins = data.unlockedSkins;
                 engineInstance.currentSkin = data.currentSkin;
                 
-                // 强制更新僚机对象，如果升级了僚机的话
+                // 强制更新僚机对象，如果升级了僚机的话 — side 必须显式设置（见 wingmanFire 对 w.side 的使用）
                 if (engineInstance.hangar.turretLevel > 0 && engineInstance.wingmen.length === 0) {
                     engineInstance.wingmen = [
-                        { x: engineInstance.player.x - 45, y: engineInstance.player.y + 15, bankAngle: 0, lastShotTime: 0 },
-                        { x: engineInstance.player.x + 45, y: engineInstance.player.y + 15, bankAngle: 0, lastShotTime: 0 }
+                        { x: engineInstance.player.x - 45, y: engineInstance.player.y + 15, bankAngle: 0, side: -1, lastShotTime: 0 },
+                        { x: engineInstance.player.x + 45, y: engineInstance.player.y + 15, bankAngle: 0, side:  1, lastShotTime: 0 }
                     ];
                 }
                 engineInstance.updateHUD();

@@ -54,12 +54,35 @@ window.onload = function() {
             
             scaleX = renderWidth / 540; // 逻辑宽度 = 540
             scaleY = renderHeight / 960; // 逻辑高度 = 960
-            
+
             worker.postMessage({
                 type: 'resize',
                 width: renderWidth,
                 height: renderHeight
             });
+
+            sendHudClearance();
+        }
+
+        // 测算 HUD 在 canvas 上的实际占位高度（逻辑坐标），上报给 Worker 让 boss 位置自适应让位
+        // 关键：临时展开 bossHpGroup 以保证测得的是 BOSS 战时的最大 HUD 高度
+        const hudEl = document.getElementById('hud');
+        const bossHpGroupEl = document.getElementById('bossHpGroup');
+        function sendHudClearance() {
+            if (!hudEl || !bossHpGroupEl) return;
+            const canvasRect = canvas.getBoundingClientRect();
+            if (canvasRect.height <= 0) return;
+            const wasHudHidden = hudEl.classList.contains('opacity-0');
+            const wasBossHidden = bossHpGroupEl.classList.contains('hidden');
+            // 临时让 HUD 进入"满高"状态完成一次测量
+            if (wasHudHidden) hudEl.classList.remove('opacity-0');
+            if (wasBossHidden) bossHpGroupEl.classList.remove('hidden');
+            const hudRect = hudEl.getBoundingClientRect();
+            if (wasBossHidden) bossHpGroupEl.classList.add('hidden');
+            if (wasHudHidden) hudEl.classList.add('opacity-0');
+            const hudBottomCss = hudRect.bottom - canvasRect.top;
+            const hudLogicalBottom = hudBottomCss * (960 / canvasRect.height);
+            worker.postMessage({ type: 'hudClearance', y: hudLogicalBottom });
         }
         
         // 从 localStorage 中读取本地持久化状态数据

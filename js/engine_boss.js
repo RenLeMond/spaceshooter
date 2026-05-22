@@ -41,6 +41,14 @@ Object.assign(GameEngine.prototype, {
         this.showToast(`🚨 第 ${tier} 阶首领降临！(${this.getBossSpawnThreshold(tier)} 分)`);
     },
 
+    // 母舰阶段 boss 半径上界（盾光环最大半径 115 + 安全 15）
+    // titan 阶段碎石环最大半径 135 + 安全 15
+    // 用主线程实测的 HUD 下沿做避让基线，HUD 占不到时 fallback 到设计值
+    _bossTargetY(designed, topExtent) {
+        const clearance = this.hudClearance || 0;
+        return Math.max(designed, clearance + topExtent);
+    },
+
     spawnTitanBoss(tier) {
         const hpScale = this.getBossHpScale(tier);
         const radiusBonus = (tier - 1) * 2;
@@ -54,7 +62,7 @@ Object.assign(GameEngine.prototype, {
             state: 'mothership',
             x: this.logicalWidth / 2,
             y: -150,
-            targetY: 160,
+            targetY: this._bossTargetY(160, 130),
             width: 220,
             height: 100,
             vx: 1.5 + (tier - 1) * 0.12,
@@ -266,7 +274,9 @@ Object.assign(GameEngine.prototype, {
             const trackSpeed = 1.0 + (tier - 1) * 0.08;
             this._bossTrackPlayerX(b, dtClamped, trackSpeed, 150);
 
-            b.y = b.targetY + Math.sin(Date.now() * 0.0025) * 15;
+            // dt 累积相位（原: Date.now()*0.0025）保证暂停后不会突跳
+            b.titanWobblePhase = (b.titanWobblePhase || 0) + 0.0025 * 16.666 * dtClamped;
+            b.y = b.targetY + Math.sin(b.titanWobblePhase) * 15;
 
             const rockInterval = Math.max(1600, 2200 - (tier - 1) * 120);
             const rippleInterval = Math.max(2800, 4000 - (tier - 1) * 150);
@@ -297,7 +307,9 @@ Object.assign(GameEngine.prototype, {
                 if (b.laserSweepTimer <= 0) {
                     b.laserActive = false;
                 } else {
-                    b.laserAngle = 0.5 * Math.sin(Date.now() * 0.005);
+                    // dt 累积相位（原: Date.now()*0.005）保证暂停后角度不跳
+                    b.laserAnglePhase = (b.laserAnglePhase || 0) + 0.005 * 16.666 * dtClamped;
+                    b.laserAngle = 0.5 * Math.sin(b.laserAnglePhase);
                     this.checkTitanLaserCollision(dtClamped);
                 }
             }
@@ -466,8 +478,11 @@ Object.assign(GameEngine.prototype, {
         const titanCoreHp = this._scaledBossHp(800, tier);
 
         b.state = 'titan';
-        b.targetY = 180;
+        // titan 形态碎石环外径 135 + 15 安全裕量；加上 ±15 的 wobble 在内
+        b.targetY = this._bossTargetY(180, 150);
         b.titanAngle = 0;
+        b.titanWobblePhase = 0; // y 抖动相位，dt 累积以免暂停跳变
+        b.laserAnglePhase = 0;  // 死光横扫角度相位，同上
         b.vx = 1.2 + (tier - 1) * 0.08;
 
         b.parts.core.active = true;
@@ -555,6 +570,7 @@ Object.assign(GameEngine.prototype, {
         b.laserActive = true;
         b.laserSweepTimer = 1800;
         b.laserAngle = 0;
+        b.laserAnglePhase = 0; // 每次起手都从 0 相位开始
         sfx.playTitanLaser();
         this.addFloatText(b.x, b.y + 50, "💥 OVERLOAD DEATH LASER!", "#ef4444", 22);
         this.showToast("⚠️ 警报：巨神兵正在积蓄能量释放横扫切割死光！");

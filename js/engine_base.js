@@ -307,6 +307,26 @@ class GameEngine {
 
         this.scaleX = renderWidth / this.logicalWidth;
         this.scaleY = renderHeight / this.logicalHeight;
+
+        this.updateHudClearance();
+    }
+
+    // 测量 HUD 在 canvas 上的实际占位（逻辑坐标下沿）— boss 出生用作避让基线
+    // 临时展开 bossHpGroup 以拿到 BOSS 战满高布局
+    updateHudClearance() {
+        if (!this.hud) return;
+        const canvasRect = this.canvas.getBoundingClientRect();
+        if (canvasRect.height <= 0) return;
+        const bossHpGroup = document.getElementById('bossHpGroup');
+        const wasHudHidden = this.hud.classList.contains('opacity-0');
+        const wasBossHidden = bossHpGroup && bossHpGroup.classList.contains('hidden');
+        if (wasHudHidden) this.hud.classList.remove('opacity-0');
+        if (wasBossHidden) bossHpGroup.classList.remove('hidden');
+        const hudRect = this.hud.getBoundingClientRect();
+        if (wasBossHidden) bossHpGroup.classList.add('hidden');
+        if (wasHudHidden) this.hud.classList.add('opacity-0');
+        const hudBottomCss = hudRect.bottom - canvasRect.top;
+        this.hudClearance = hudBottomCss * (this.logicalHeight / canvasRect.height);
     }
 
     initStars() {
@@ -1173,7 +1193,7 @@ class GameEngine {
         // 强力装备改装！直接拉满！
         this.hangar.turretLevel = 2; // 伴飞僚机开启
         this.hangar.engineLevel = 2; // 等离子尾喷开启
-        this.hangar.wingsLevel = 2; // 能盾切翼开启
+        this.hangar.wingsLevel = 1; // 能盾切翼开启（上限为1）
 
         // 给玩家加上无敌和晶核，让跑分场面更酷炫
         this.shieldTime = 8000; // 8秒无敌护盾
@@ -1181,10 +1201,10 @@ class GameEngine {
         this._recomputeComboKey();
 
 
-        // 强制初始化僚机
+        // 强制初始化僚机 — side 必须显式设置，否则 updateWingmen 因 length 已匹配不会重建，wingmanFire 计算 w.side*x 会得 NaN
         this.wingmen = [
-            { x: this.player.x - 45, y: this.player.y + 15, bankAngle: 0, lastShotTime: 0 },
-            { x: this.player.x + 45, y: this.player.y + 15, bankAngle: 0, lastShotTime: 0 }
+            { x: this.player.x - 45, y: this.player.y + 15, bankAngle: 0, side: -1, lastShotTime: 0 },
+            { x: this.player.x + 45, y: this.player.y + 15, bankAngle: 0, side:  1, lastShotTime: 0 }
         ];
 
         this.showToast("⚡ 极客超频压力测试 (Benchmark) 启动...");
