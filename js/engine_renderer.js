@@ -2,7 +2,11 @@
 // 星海猎手 V6: GameEngine - RENDERER 模块
 // =============================================
 
-Object.assign(GameEngine.prototype, {
+// 微信小游戏 CommonJS 模块隔离下，本模块作用域看不到 engine_base.js 顶层 class GameEngine。
+// H5 下 typeof === 'function'（lexical 全局），微信下从 GameGlobal 取。
+var __GE = (typeof GameEngine !== 'undefined') ? GameEngine : GameGlobal.GameEngine;
+
+Object.assign(__GE.prototype, {
     drawWingmen() {
         // P1: 0-GC for loop + cached flame gradient lookup
         for (let wi = 0; wi < this.wingmen.length; wi++) {

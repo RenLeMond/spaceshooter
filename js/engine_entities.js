@@ -53,7 +53,13 @@ const WEAPONS_NAMES = {
     'Fire+Rad': '【坍缩黑洞星云爆】'
 };
 
-Object.assign(GameEngine.prototype, {
+// 微信小游戏 CommonJS 模块隔离下，本模块作用域看不到 engine_base.js 顶层 class GameEngine。
+// H5 classic-script 下 GameEngine 是 lexical 全局，typeof === 'function'，仍取本地引用；
+// 微信下 typeof === 'undefined'，从 GameGlobal 拿回来。
+var __GE = (typeof GameEngine !== 'undefined') ? GameEngine : GameGlobal.GameEngine;
+function __sfx() { return (typeof sfx !== 'undefined') ? sfx : GameGlobal.sfx; }
+
+Object.assign(__GE.prototype, {
     updateWingmen(dtClamped) {
         const wingmenCount = Math.min(2, this.hangar.turretLevel);
         if (this.wingmen.length !== wingmenCount) {
@@ -135,7 +141,7 @@ Object.assign(GameEngine.prototype, {
 
                         target.hp -= 20;
                         this.createHitParticles(target.x, target.y, '#fbbf24');
-                        sfx.playHit();
+                        __sfx().playHit();
                         if (target.hp <= 0) {
                             this.explodeMeteor(target);
                             target.active = false;
@@ -193,7 +199,7 @@ Object.assign(GameEngine.prototype, {
         this.player.elementSlots.push(elementName);
         this._recomputeComboKey();
 
-        sfx.playPowerup();
+        __sfx().playPowerup();
         this.updateElementsHUD();
 
         const comboKey = this.player.comboKey;
@@ -255,7 +261,7 @@ Object.assign(GameEngine.prototype, {
         const now = Date.now();
         if (now - this.player.lastShotTime >= this.player.fireInterval) {
             this.player.lastShotTime = now;
-            sfx.playShoot();
+            __sfx().playShoot();
 
             const p = this.player;
             const slots = p.elementSlots || [];
@@ -372,7 +378,7 @@ Object.assign(GameEngine.prototype, {
         if (!this.boss && this.score >= threshold) {
             this.wave++;
             this.addFloatText(this.logicalWidth / 2, this.logicalHeight / 2 - 50, `WAVE ${this.wave} COMPLETED!`, '#10b981', 22);
-            sfx.playPowerup();
+            __sfx().playPowerup();
             const now = performance.now();
             if (now - this.lastHangarTime >= this.hangarMinInterval) {
                 this.lastHangarTime = now;
@@ -475,7 +481,7 @@ Object.assign(GameEngine.prototype, {
     },
 
     pickupPowerup(type) {
-        sfx.playPowerup();
+        __sfx().playPowerup();
 
         if (['EM', 'Frost', 'Fire', 'Rad'].includes(type)) {
             this.pickupElement(type);
@@ -501,7 +507,7 @@ Object.assign(GameEngine.prototype, {
 
     explodeMeteor(m) {
         this.createExplosionParticles(m.x, m.y, m.size, m.color);
-        sfx.playExplosion(m.size > 50);
+        __sfx().playExplosion(m.size > 50);
 
         let scoreGain = Math.floor(m.size);
         let textColor = '#fcd34d';
@@ -547,7 +553,7 @@ Object.assign(GameEngine.prototype, {
     triggerEomBomb() {
         if (!this.isRunning || this.isPaused || this.bombCharge < 100) return;
         
-        sfx.playBomb();
+        __sfx().playBomb();
         this.createScreenShake(25);
         this.bombCharge = 0;
         this.createExplosionParticles(this.logicalWidth / 2, this.logicalHeight / 2, 400, '#fbbf24');
@@ -643,3 +649,13 @@ Object.assign(GameEngine.prototype, {
     }
 
 });
+
+// 微信小游戏环境：把顶层常量/工具函数注入全局，供后续 engine_*.js 与 wechat_main.js 自由引用
+if (typeof GameGlobal !== 'undefined') {
+    GameGlobal.ELEMENT_CHIP_LABELS = ELEMENT_CHIP_LABELS;
+    GameGlobal.formatElementChipLabel = formatElementChipLabel;
+    GameGlobal.safeReadJSON = safeReadJSON;
+    GameGlobal.safeReadInt = safeReadInt;
+    GameGlobal.safeReadString = safeReadString;
+    GameGlobal.WEAPONS_NAMES = WEAPONS_NAMES;
+}

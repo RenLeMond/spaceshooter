@@ -330,3 +330,8 @@ class SoundFX {
 }
 
 const sfx = new SoundFX();
+
+if (typeof GameGlobal !== 'undefined') {
+    GameGlobal.SoundFX = SoundFX;
+    GameGlobal.sfx = sfx;
+}

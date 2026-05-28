@@ -1,0 +1,7 @@
+# 微信开发者工具本机偏好
+project.private.config.json
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.log

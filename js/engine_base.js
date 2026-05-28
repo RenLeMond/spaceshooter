@@ -1,18 +1,28 @@
+// 微信小游戏 CommonJS 严格模式下，本模块作用域看不到 engine_entities.js 顶层的 safeReadInt 等 helper。
+// H5 classic-script 下它们是 lexical 全局，typeof === 'function'，直接走原引用；
+// 微信下 typeof === 'undefined'，从 GameGlobal 拿（engine_entities.js 末尾已导出）。
+function __safeReadInt(k, f)    { return (typeof safeReadInt    !== 'undefined') ? safeReadInt(k, f)    : GameGlobal.safeReadInt(k, f); }
+function __safeReadString(k, f) { return (typeof safeReadString !== 'undefined') ? safeReadString(k, f) : GameGlobal.safeReadString(k, f); }
+function __safeReadJSON(k, f)   { return (typeof safeReadJSON   !== 'undefined') ? safeReadJSON(k, f)   : GameGlobal.safeReadJSON(k, f); }
+// 同理 sfx：sound.js 顶层 const，H5 下走全局；微信下走 GameGlobal.sfx（sound_wx.js 已替换为 wx 版）。
+// 用函数延迟解析，避免捕获时机问题
+function __sfx() { return (typeof sfx !== 'undefined') ? sfx : GameGlobal.sfx; }
+
 class GameEngine {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
-        
+
         this.logicalWidth = 540;
         this.logicalHeight = 960;
-        
+
         this.isRunning = false;
         this.isPaused = false;
-        this.controlMode = 'touch'; 
-        
+        this.controlMode = 'touch';
+
         this.score = 0;
-        this.scrap = 0; 
-        this.bestScore = safeReadInt('space_best_score', 0);
+        this.scrap = 0;
+        this.bestScore = __safeReadInt('space_best_score', 0);
         this.wave = 1;
         this.shieldTime = 0;
         this.bombCharge = 100;
@@ -104,8 +114,8 @@ class GameEngine {
             wingsLevel: 0,  
         };
         
-        this.currentSkin = safeReadString('space_current_skin', 'default');
-        this.unlockedSkins = safeReadJSON('space_unlocked_skins', ['default']);
+        this.currentSkin = __safeReadString('space_current_skin', 'default');
+        this.unlockedSkins = __safeReadJSON('space_unlocked_skins', ['default']);
         if (!Array.isArray(this.unlockedSkins)) this.unlockedSkins = ['default'];
         
         this.bulletSearchIndex = 0;
@@ -420,14 +430,14 @@ class GameEngine {
     }
 
     toggleSound(e) {
-        const muted = sfx.toggleMute();
+        const muted = __sfx().toggleMute();
         const icon = e.currentTarget.querySelector('i');
         if (muted) {
             icon.className = 'fa-solid fa-volume-xmark';
             this.showToast("音效已静音");
         } else {
             icon.className = 'fa-solid fa-volume-high';
-            sfx.playShoot();
+            __sfx().playShoot();
             this.showToast("音效已开启");
         }
     }
@@ -621,7 +631,7 @@ class GameEngine {
                     this.damagePlayer(Math.floor(meteor.size * 0.3));
                     this.createScreenShake(8);
                 } else {
-                    sfx.playHit();
+                    __sfx().playHit();
                 }
             }
         }
@@ -781,7 +791,7 @@ class GameEngine {
 
 
     startGame() {
-        sfx.init();
+        __sfx().init();
         this.startScreen.classList.add('hidden');
         this.hud.classList.remove('opacity-0');
         
@@ -868,7 +878,7 @@ class GameEngine {
         this.isRunning = true;
 
         this.setupControls();
-        sfx.playPowerup();
+        __sfx().playPowerup();
     }
 
     showMenu() {
@@ -890,7 +900,7 @@ class GameEngine {
     damagePlayer(amount) {
         this.player.hp -= amount;
         // P1: 仅当一次性伤害 ≥5 时播放大爆炸，避免激光持续掉血每帧触发声效 spam
-        sfx.playExplosion(amount >= 5);
+        __sfx().playExplosion(amount >= 5);
         this.addFloatText(this.player.x, this.player.y - 30, `-${amount} HP`, '#f43f5e', 18);
 
         if (this.player.hp <= 0) {
@@ -901,7 +911,7 @@ class GameEngine {
 
     triggerGameOver() {
         this.isRunning = false;
-        sfx.playGameOver();
+        __sfx().playGameOver();
         
         if (this.score > this.bestScore) {
             this.bestScore = this.score;
@@ -929,7 +939,7 @@ class GameEngine {
         // 2. Quantum Boom at End Position
         this.createExplosionParticles(tx, ty, 60, "#22d3ee");
         this.createScreenShake(15);
-        sfx.playWarp();
+        __sfx().playWarp();
 
         // 3. Calculate physics push and damage for meteors
         for (let i = 0; i < this.maxMeteors; i++) {
@@ -1260,7 +1270,7 @@ class GameEngine {
         if (benchDrawVal) benchDrawVal.innerText = `${avgDraw.toFixed(2)} ms`;
 
         if (benchModal) benchModal.classList.remove('hidden');
-        sfx.playPowerup();
+        __sfx().playPowerup();
     }
 
     closeBenchmarkReport() {
@@ -1268,4 +1278,9 @@ class GameEngine {
         if (benchModal) benchModal.classList.add('hidden');
         this.showMenu();
     }
+}
+
+// 微信小游戏环境下把 GameEngine 暴露到全局，便于后续 engine_*.js 文件按需扩展 prototype
+if (typeof GameGlobal !== 'undefined') {
+    GameGlobal.GameEngine = GameEngine;
 }

@@ -2,7 +2,12 @@
 // 星海猎手 V6: GameEngine - PHYSICS 模块
 // =============================================
 
-Object.assign(GameEngine.prototype, {
+// 微信小游戏 CommonJS 模块隔离下，本模块作用域看不到 engine_base.js 顶层 class GameEngine。
+// H5 下 typeof === 'function'（lexical 全局），微信下从 GameGlobal 取。
+var __GE = (typeof GameEngine !== 'undefined') ? GameEngine : GameGlobal.GameEngine;
+function __sfx() { return (typeof sfx !== 'undefined') ? sfx : GameGlobal.sfx; }
+
+Object.assign(__GE.prototype, {
     spawnBulletInPool(props) {
         let bullet = null;
         for (let i = 0; i < this.maxBullets; i++) {
@@ -158,7 +163,7 @@ Object.assign(GameEngine.prototype, {
                     bh.mass += m.size * 0.4;
                     this.createExplosionParticles(m.x, m.y, m.size * 0.5, m.color);
                     m.active = false;
-                    sfx.playHit();
+                    __sfx().playHit();
                     this.addFloatText(bh.x, bh.y - 30, "MASS++", "#ec4899", 11);
 
                     if (bh.mass >= bh.maxMass) {
@@ -264,7 +269,7 @@ Object.assign(GameEngine.prototype, {
     triggerSlingshotSurge() {
         this.slingshotTime = 1500;
         this.slingshotActivated = true;
-        sfx.playSlingshot();
+        __sfx().playSlingshot();
         this.createScreenShake(20);
         
         this.addFloatText(this.player.x, this.player.y - 50, "⚡ 引力弹弓爆发 SLINGSHOT SURGE! ⚡", "#fbbf24", 18);
@@ -291,7 +296,7 @@ Object.assign(GameEngine.prototype, {
         if (!this.blackHole) return;
         const bh = this.blackHole;
         this.createScreenShake(30);
-        sfx.playBomb();
+        __sfx().playBomb();
         
         this.createExplosionParticles(bh.x, bh.y, 250, "#f43f5e");
         this.addFloatText(bh.x, bh.y, "CRITICAL DETONATION!", "#f43f5e", 20);
@@ -337,11 +342,11 @@ Object.assign(GameEngine.prototype, {
                     if (dx * dx + dy * dy < radSum * radSum) {
                         this.createHitParticles(bullet.x, bullet.y, bullet.color);
                         part.hp -= bullet.damage;
-                        sfx.playHit();
+                        __sfx().playHit();
 
                         if (part.hp <= 0) {
                             part.active = false;
-                            sfx.playExplosion(true);
+                            __sfx().playExplosion(true);
                             this.createExplosionParticles(pX, pY, 80, bullet.color);
                             this.addFloatText(pX, pY, `💥 ${part.label} 歼灭!`, "#f43f5e", 15);
                             this.scrap += 30;
@@ -378,7 +383,7 @@ Object.assign(GameEngine.prototype, {
                 if (dx * dx + dy * dy < radSum * radSum) {
                     this.createHitParticles(bullet.x, bullet.y, bullet.color);
                     m.hp -= bullet.damage;
-                    sfx.playHit();
+                    __sfx().playHit();
 
                     if (bullet.comboEffect) {
                         this.applySynergyBulletReaction(bullet, m);
@@ -417,7 +422,7 @@ Object.assign(GameEngine.prototype, {
                 if (this.shieldTime > 0 && this.hangar.wingsLevel > 0) {
                     this.createExplosionParticles(m.x, m.y, m.size, m.color);
                     m.active = false;
-                    sfx.playExplosion(false);
+                    __sfx().playExplosion(false);
                     this.scrap += 4; 
                     this.score += Math.floor(m.size * 1.5);
                     this.addFloatText(m.x, m.y, "⚔️ SLICED! +4", "#10b981", 12);
@@ -431,7 +436,7 @@ Object.assign(GameEngine.prototype, {
                     this.damagePlayer(Math.floor(m.size * 0.5));
                     this.createScreenShake(15);
                 } else {
-                    sfx.playHit();
+                    __sfx().playHit();
                     this.addFloatText(this.player.x, this.player.y - 30, "BLOCK!", "#06b6d4", 14);
                 }
             }
@@ -451,7 +456,7 @@ Object.assign(GameEngine.prototype, {
                     } else {
                         this.scrap += 1;
                     }
-                    sfx.playHit();
+                    __sfx().playHit();
                 } else {
                     this.pickupPowerup(item.type);
                 }

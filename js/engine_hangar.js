@@ -2,7 +2,12 @@
 // 星海猎手 V6: GameEngine - HANGAR 模块
 // =============================================
 
-Object.assign(GameEngine.prototype, {
+// 微信小游戏 CommonJS 模块隔离下，本模块作用域看不到 engine_base.js 顶层 class GameEngine。
+// H5 下 typeof === 'function'（lexical 全局），微信下从 GameGlobal 取。
+var __GE = (typeof GameEngine !== 'undefined') ? GameEngine : GameGlobal.GameEngine;
+function __sfx() { return (typeof sfx !== 'undefined') ? sfx : GameGlobal.sfx; }
+
+Object.assign(__GE.prototype, {
     openHangar() {
         this.isPaused = true;
         this.workshopScreen.classList.remove('hidden');
@@ -116,7 +121,7 @@ Object.assign(GameEngine.prototype, {
             if (this.scrap >= cost && this.hangar.turretLevel < 3) {
                 this.scrap -= cost;
                 this.hangar.turretLevel++;
-                sfx.playPowerup();
+                __sfx().playPowerup();
                 this.showToast(`🛠 纳米伴飞僚机装配成功！当前僚机等级/数量: ${this.hangar.turretLevel}`);
             }
         } else if (type === 'engine') {
@@ -124,14 +129,14 @@ Object.assign(GameEngine.prototype, {
             if (this.scrap >= cost && this.hangar.engineLevel < 3) {
                 this.scrap -= cost;
                 this.hangar.engineLevel++;
-                sfx.playPowerup();
+                __sfx().playPowerup();
                 this.showToast(`🛠 等离子尾喷升级成功！当前等级: ${this.hangar.engineLevel}`);
             }
         } else if (type === 'wings') {
             if (this.scrap >= 60 && this.hangar.wingsLevel < 1) {
                 this.scrap -= 60;
                 this.hangar.wingsLevel = 1;
-                sfx.playPowerup();
+                __sfx().playPowerup();
                 this.showToast("🛠 切割能盾翼配置成功！");
             }
         }
@@ -144,7 +149,7 @@ Object.assign(GameEngine.prototype, {
             // Equip skin
             this.currentSkin = skinId;
             localStorage.setItem('space_current_skin', skinId);
-            sfx.playSkinSwitch();
+            __sfx().playSkinSwitch();
             const names = { void: '🌌 星渊幻影', thunder: '⚡ 超维雷霆', imperial: '✨ 帝皇余晖' };
             this.showToast(`🎨 成功切换机体涂装为: ${names[skinId] || skinId}`);
         } else {
@@ -155,7 +160,7 @@ Object.assign(GameEngine.prototype, {
                 localStorage.setItem('space_unlocked_skins', JSON.stringify(this.unlockedSkins));
                 this.currentSkin = skinId;
                 localStorage.setItem('space_current_skin', skinId);
-                sfx.playPowerup();
+                __sfx().playPowerup();
                 const names = { void: '🌌 星渊幻影', thunder: '⚡ 超维雷霆', imperial: '✨ 帝皇余晖' };
                 this.showToast(`✨ 成功解锁并装配超维机体: ${names[skinId] || skinId}`);
             } else {

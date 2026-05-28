@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GitHub 开源项目升星雷达</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080a10;
+      --panel: rgba(255, 255, 255, .07);
+      --panel-strong: rgba(255, 255, 255, .12);
+      --text: #f5f7fb;
+      --muted: #aab4c4;
+      --line: rgba(255, 255, 255, .13);
+      --hot: #ff5f7e;
+      --gold: #ffd166;
+      --mint: #4ee6a5;
+      --cyan: #56ccf2;
+      --violet: #b98cff;
+      --shadow: 0 24px 80px rgba(0, 0, 0, .42);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 14%, rgba(255, 95, 126, .22), transparent 28rem),
+        radial-gradient(circle at 85% 5%, rgba(86, 204, 242, .16), transparent 26rem),
+        radial-gradient(circle at 75% 90%, rgba(78, 230, 165, .12), transparent 24rem),
+        linear-gradient(135deg, #080a10 0%, #111827 52%, #07080d 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .28;
+      background-image:
+        linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(to bottom, #000, transparent 88%);
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .page {
+      position: relative;
+      width: min(1220px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 38px 0 54px;
+    }
+
+    .hero {
+      min-height: 278px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(280px, .75fr);
+      gap: 24px;
+      align-items: end;
+      padding-bottom: 28px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--gold);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 42px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--hot), var(--gold), var(--mint));
+      border-radius: 10px;
+    }
+
+    h1 {
+      margin: 16px 0 16px;
+      max-width: 850px;
+      font-size: clamp(40px, 7vw, 86px);
+      line-height: .92;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      max-width: 760px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.75;
+    }
+
+    .source-panel {
+      border: 1px solid var(--line);
+      background: linear-gradient(145deg, rgba(255,255,255,.13), rgba(255,255,255,.045));
+      box-shadow: var(--shadow);
+      border-radius: 8px;
+      padding: 18px;
+      backdrop-filter: blur(18px);
+    }
+
+    .source-panel b {
+      display: block;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: var(--gold);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .source-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .source-stat {
+      min-height: 86px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.11);
+      background: rgba(0,0,0,.18);
+      border-radius: 8px;
+    }
+
+    .source-stat strong {
+      display: block;
+      font-size: 26px;
+      line-height: 1;
+    }
+
+    .source-stat span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 0 18px;
+      backdrop-filter: blur(18px);
+    }
+
+    .tabs {
+      display: inline-grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      background: rgba(9, 12, 20, .78);
+      border-radius: 8px;
+      box-shadow: 0 12px 45px rgba(0,0,0,.24);
+    }
+
+    .tab {
+      min-width: 110px;
+      border: 0;
+      border-radius: 6px;
+      padding: 11px 16px;
+      cursor: pointer;
+      color: var(--muted);
+      background: transparent;
+      font: inherit;
+      font-weight: 800;
+    }
+
+    .tab.active {
+      color: #10141d;
+      background: linear-gradient(135deg, var(--gold), var(--mint));
+      box-shadow: 0 10px 30px rgba(78, 230, 165, .16);
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: right;
+      line-height: 1.55;
+    }
+
+    .meta a {
+      color: var(--cyan);
+      border-bottom: 1px solid rgba(86, 204, 242, .45);
+    }
+
+    .notice {
+      display: none;
+      margin: 0 0 18px;
+      padding: 12px 14px;
+      border: 1px solid rgba(255, 209, 102, .28);
+      background: rgba(255, 209, 102, .09);
+      color: #ffe6a5;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .notice.show { display: block; }
+
+    .ranking {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .repo-card {
+      position: relative;
+      min-height: 212px;
+      display: grid;
+      grid-template-columns: 76px minmax(0, 1fr);
+      gap: 16px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.055)),
+        rgba(10, 14, 24, .72);
+      box-shadow: 0 16px 50px rgba(0,0,0,.28);
+      overflow: hidden;
+      transition: transform .2s ease, border-color .2s ease, background .2s ease;
+    }
+
+    .repo-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 209, 102, .46);
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,.065)),
+        rgba(10, 14, 24, .84);
+    }
+
+    .repo-card::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--hot), var(--gold), var(--mint), var(--cyan), var(--violet));
+      transform: scaleX(var(--heat));
+      transform-origin: left;
+    }
+
+    .rank {
+      display: grid;
+      place-items: center;
+      width: 58px;
+      height: 58px;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 8px;
+      font-size: 25px;
+      font-weight: 950;
+      background: rgba(255,255,255,.08);
+    }
+
+    .avatar {
+      width: 58px;
+      height: 58px;
+      margin-top: 12px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid rgba(255,255,255,.18);
+      background: #151a24;
+    }
+
+    .repo-main {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .repo-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .repo-name {
+      min-width: 0;
+    }
+
+    .repo-name h2 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.2;
+      word-break: break-word;
+    }
+
+    .repo-name span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .gain {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      border-radius: 8px;
+      color: #10141d;
+      background: linear-gradient(135deg, var(--gold), var(--hot));
+      font-size: 13px;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .summary {
+      margin: 0;
+      color: #d9e0ec;
+      line-height: 1.65;
+      font-size: 14px;
+    }
+
+    .desc {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 13px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: auto;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 28px;
+      padding: 5px 9px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 999px;
+      background: rgba(0,0,0,.18);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .lang-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--cyan);
+    }
+
+    .open {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 7px 12px;
+      border-radius: 8px;
+      color: #10141d;
+      background: linear-gradient(135deg, var(--mint), var(--cyan));
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; min-height: auto; }
+      .toolbar { position: relative; align-items: stretch; flex-direction: column; }
+      .meta { text-align: left; }
+      .ranking { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .page { width: min(100% - 20px, 1220px); padding-top: 24px; }
+      .source-grid { grid-template-columns: 1fr; }
+      .tabs { width: 100%; }
+      .tab { min-width: 0; padding-inline: 8px; }
+      .repo-card { grid-template-columns: 54px minmax(0, 1fr); padding: 14px; }
+      .rank, .avatar { width: 46px; height: 46px; }
+      .rank { font-size: 20px; }
+      .repo-top { flex-direction: column; }
+      .gain { align-self: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div>
+        <div class="eyebrow">GitHub Star Velocity</div>
+        <h1>开源项目升星雷达</h1>
+        <p class="lead">按 GitHub Trending 页面中“本周期新增 stars”重排，切换查看近一天、近一周、近一月最受关注的开源项目，并附上简短中文说明。</p>
+      </div>
+      <aside class="source-panel">
+        <b>2026-05-27 抓取快照</b>
+        <div class="source-grid" id="stats"></div>
+      </aside>
+    </section>
+
+    <section class="toolbar" aria-label="榜单切换">
+      <div class="tabs" role="tablist">
+        <button class="tab active" type="button" data-period="daily" role="tab">近一天</button>
+        <button class="tab" type="button" data-period="weekly" role="tab">近一周</button>
+        <button class="tab" type="button" data-period="monthly" role="tab">近一月</button>
+      </div>
+      <div class="meta">
+        数据源：<a href="https://github.com/trending" target="_blank" rel="noreferrer">GitHub Trending</a><br>
+        口径：按页面展示的 period stars 降序
+      </div>
+    </section>
+
+    <p class="notice" id="notice"></p>
+    <section class="ranking" id="ranking" aria-live="polite"></section>
+  </main>
+
+  <script>
+    const periods = {
+      daily: { label: "近一天", phrase: "stars today", limit: 20, items: [
+        { repo: "Lum1104/Understand-Anything", url: "https://github.com/Lum1104/Understand-Anything", lang: "TypeScript", stars: "37,030", forks: "2,968", gained: 4697, summary: "把代码库转换成交互式知识图谱，方便搜索、探索并向 AI 提问。", desc: "Graphs that teach > graphs that impress. Turn any code into an interactive knowledge graph you can explore, search, and ask questions about. Works with Claude Code, Codex, Cursor, Copilot, Gemini CLI, and more." },
+        { repo: "rohitg00/ai-engineering-from-scratch", url: "https://github.com/rohitg00/ai-engineering-from-scratch", lang: "Python", stars: "21,193", forks: "3,506", gained: 2155, summary: "面向 AI 工程的从零学习与实战材料，强调学会、构建并交付。", desc: "Learn it. Build it. Ship it for others." },
+        { repo: "affaan-m/ECC", url: "https://github.com/affaan-m/ECC", lang: "JavaScript", stars: "194,913", forks: "30,022", gained: 1915, summary: "面向编码代理的性能优化工具集，覆盖技能、记忆、安全和研究式开发。", desc: "The agent harness performance optimization system. Skills, instincts, memory, security, and research-first development for Claude Code, Codex, Opencode, Cursor and beyond." },
+        { repo: "anthropics/knowledge-work-plugins", url: "https://github.com/anthropics/knowledge-work-plugins", lang: "Python", stars: "16,842", forks: "1,974", gained: 1718, summary: "Anthropic 面向知识工作者的 Claude Cowork 插件开源集合。", desc: "Open source repository of plugins primarily intended for knowledge workers to use in Claude Cowork." },
+        { repo: "Leonxlnx/taste-skill", url: "https://github.com/Leonxlnx/taste-skill", lang: "Shell", stars: "22,610", forks: "1,784", gained: 1430, summary: "给 AI 写作与生成加上审美约束，减少模板化、无聊的输出。", desc: "Taste-Skill gives your AI good taste and stops the AI from generating boring, generic slop." },
+        { repo: "DigitalPlatDev/FreeDomain", url: "https://github.com/DigitalPlatDev/FreeDomain", lang: "HTML", stars: "167,893", forks: "3,116", gained: 1219, summary: "提供免费域名申请与管理相关资源的开源项目。", desc: "DigitalPlat FreeDomain: Free Domain For Everyone." },
+        { repo: "mukul975/Anthropic-Cybersecurity-Skills", url: "https://github.com/mukul975/Anthropic-Cybersecurity-Skills", lang: "Python", stars: "10,321", forks: "1,206", gained: 880, summary: "为 AI 代理整理的 754 个网络安全技能，映射 MITRE、NIST 等框架。", desc: "754 structured cybersecurity skills for AI agents, mapped to MITRE ATT&CK, NIST CSF 2.0, MITRE ATLAS, D3FEND and NIST AI RMF." },
+        { repo: "Axorax/awesome-free-apps", url: "https://github.com/Axorax/awesome-free-apps", lang: "JavaScript", stars: "5,455", forks: "277", gained: 731, summary: "精选 PC 和移动端免费应用的 awesome 清单。", desc: "Curated list of the best free apps for PC and mobile." },
+        { repo: "hardikpandya/stop-slop", url: "https://github.com/hardikpandya/stop-slop", lang: "Text", stars: "5,181", forks: "410", gained: 539, summary: "用于清理文章中 AI 味道和常见生成痕迹的 skill 文件。", desc: "A skill file for removing AI tells from prose." },
+        { repo: "thedotmack/claude-mem", url: "https://github.com/thedotmack/claude-mem", lang: "TypeScript", stars: "78,864", forks: "6,779", gained: 352, summary: "为 Claude Code、Codex 等代理提供跨会话持久上下文记忆。", desc: "Persistent context across sessions for every agent. Captures sessions, compresses them with AI, and injects relevant context into future sessions." },
+        { repo: "twentyhq/twenty", url: "https://github.com/twentyhq/twenty", lang: "TypeScript", stars: "47,003", forks: "6,670", gained: 216, summary: "开源 CRM，定位为面向 AI 时代的 Salesforce 替代品。", desc: "The open alternative to Salesforce, designed for AI." },
+        { repo: "st-tech/ppf-contact-solver", url: "https://github.com/st-tech/ppf-contact-solver", lang: "Python", stars: "3,588", forks: "257", gained: 170, summary: "用于布料、实体和杆状物等物理仿真的接触求解器。", desc: "A contact solver for physics-based simulations involving shells, solids and rods." },
+        { repo: "Open-Dev-Society/OpenStock", url: "https://github.com/Open-Dev-Society/OpenStock", lang: "TypeScript", stars: "12,294", forks: "1,639", gained: 156, summary: "免费开源的市场行情平台，可跟踪实时价格、提醒和公司信息。", desc: "Open-source alternative to expensive market platforms. Track real-time prices, set alerts, and explore company insights." },
+        { repo: "jellyfin/jellyfin", url: "https://github.com/jellyfin/jellyfin", lang: "C#", stars: "52,459", forks: "4,877", gained: 83, summary: "Jellyfin 媒体系统的服务器后端与 API，面向自托管影音库。", desc: "The Free Software Media System - Server Backend and API." }
+      ] },
+      weekly: { label: "近一周", phrase: "stars this week", limit: 20, items: [
+        { repo: "colbymchenry/codegraph", url: "https://github.com/colbymchenry/codegraph", lang: "TypeScript", stars: "28,546", forks: "1,612", gained: 21211, summary: "本地预索引代码知识图谱，帮助 AI 编码代理减少 token 和工具调用。", desc: "Pre-indexed code knowledge graph for Claude Code, Codex, Gemini, Cursor, OpenCode, AntiGravity, Kiro, and Hermes Agent." },
+        { repo: "Lum1104/Understand-Anything", url: "https://github.com/Lum1104/Understand-Anything", lang: "TypeScript", stars: "37,030", forks: "2,968", gained: 19191, summary: "把代码库转换为可探索、可搜索、可提问的交互式知识图谱。", desc: "Turn any code into an interactive knowledge graph you can explore, search, and ask questions about." },
+        { repo: "rohitg00/ai-engineering-from-scratch", url: "https://github.com/rohitg00/ai-engineering-from-scratch", lang: "Python", stars: "21,193", forks: "3,506", gained: 11840, summary: "AI 工程从零到交付的学习与构建路线。", desc: "Learn it. Build it. Ship it for others." },
+        { repo: "tinyhumansai/openhuman", url: "https://github.com/tinyhumansai/openhuman", lang: "Rust", stars: "28,532", forks: "2,662", gained: 8542, summary: "强调私有、简单、强大的个人 AI 超级智能项目。", desc: "Your Personal AI super intelligence. Private, Simple and extremely powerful." },
+        { repo: "Imbad0202/academic-research-skills", url: "https://github.com/Imbad0202/academic-research-skills", lang: "Python", stars: "22,357", forks: "1,894", gained: 8422, summary: "为 Claude Code 准备的学术研究技能，覆盖研究、写作、审稿和修订。", desc: "Academic Research Skills for Claude Code: research, write, review, revise, finalize." },
+        { repo: "ruvnet/RuView", url: "https://github.com/ruvnet/RuView", lang: "Rust", stars: "66,421", forks: "8,807", gained: 5986, summary: "利用普通 WiFi 信号做空间感知、生命体征监测和存在检测。", desc: "RuView turns commodity WiFi signals into real-time spatial intelligence, vital sign monitoring, and presence detection." },
+        { repo: "rohitg00/agentmemory", url: "https://github.com/rohitg00/agentmemory", lang: "TypeScript", stars: "18,349", forks: "1,518", gained: 4444, summary: "面向 AI 编码代理的持久记忆系统，并以基准测试作为卖点。", desc: "Persistent memory for AI coding agents based on real-world benchmarks." },
+        { repo: "anthropics/knowledge-work-plugins", url: "https://github.com/anthropics/knowledge-work-plugins", lang: "Python", stars: "16,842", forks: "1,974", gained: 4086, summary: "Claude Cowork 知识工作插件集合。", desc: "Open source repository of plugins primarily intended for knowledge workers to use in Claude Cowork." },
+        { repo: "HKUDS/CLI-Anything", url: "https://github.com/HKUDS/CLI-Anything", lang: "Python", stars: "40,710", forks: "3,850", gained: 3203, summary: "把各类软件改造成 agent-native 的 CLI 工具生态。", desc: "CLI-Anything: Making ALL Software Agent-Native." },
+        { repo: "can1357/oh-my-pi", url: "https://github.com/can1357/oh-my-pi", lang: "TypeScript", stars: "7,605", forks: "615", gained: 2508, summary: "终端里的 AI 编码代理，集成编辑、LSP、浏览器和子代理能力。", desc: "AI Coding agent for the terminal with hash-anchored edits, optimized tool harness, LSP, Python, browser, subagents, and more." },
+        { repo: "HKUDS/ViMax", url: "https://github.com/HKUDS/ViMax", lang: "Python", stars: "7,680", forks: "1,199", gained: 2466, summary: "一体化 agentic 视频生成系统，覆盖导演、编剧、制片和生成。", desc: "Agentic Video Generation: Director, Screenwriter, Producer, and Video Generator All-in-One." },
+        { repo: "presenton/presenton", url: "https://github.com/presenton/presenton", lang: "TypeScript", stars: "7,139", forks: "1,176", gained: 1981, summary: "开源 AI 演示文稿生成器和 API，可替代 Gamma、Beautiful AI 等。", desc: "Open-Source AI Presentation Generator and API." },
+        { repo: "supertone-inc/supertonic", url: "https://github.com/supertone-inc/supertonic", lang: "Swift", stars: "10,694", forks: "1,106", gained: 1944, summary: "基于 ONNX 的本地多语言高速文本转语音系统。", desc: "Lightning-Fast, On-Device, Multilingual TTS running natively via ONNX." },
+        { repo: "humanlayer/12-factor-agents", url: "https://github.com/humanlayer/12-factor-agents", lang: "TypeScript", stars: "22,462", forks: "1,695", gained: 1393, summary: "总结构建可用于生产环境的 LLM 软件与代理系统原则。", desc: "Principles for building LLM-powered software good enough for production customers." },
+        { repo: "dotnet/skills", url: "https://github.com/dotnet/skills", lang: "C#", stars: "3,129", forks: "228", gained: 1292, summary: ".NET 和 C# AI 编码代理辅助技能仓库。", desc: "Repository for skills to assist AI coding agents with .NET and C#." },
+        { repo: "dograh-hq/dograh", url: "https://github.com/dograh-hq/dograh", lang: "Python", stars: "3,299", forks: "709", gained: 881, summary: "开源语音 AI 平台，支持自托管、可视化工作流和电话集成。", desc: "Open source voice AI platform. Self-hosted alternative to Vapi and Retell." },
+        { repo: "NVlabs/Sana", url: "https://github.com/NVlabs/Sana", lang: "Python", stars: "7,728", forks: "593", gained: 780, summary: "NVIDIA Labs 的高效高分辨率图像生成线性扩散 Transformer。", desc: "SANA: Efficient High-Resolution Image Synthesis with Linear Diffusion Transformer." },
+        { repo: "Chachamaru127/claude-code-harness", url: "https://github.com/Chachamaru127/claude-code-harness", lang: "Shell", stars: "1,721", forks: "191", gained: 704, summary: "Claude Code 专用开发 harness，强调计划、工作、评审的自治循环。", desc: "Claude Code Dedicated Development Harness for an autonomous Plan -> Work -> Review cycle." },
+        { repo: "cursor/plugins", url: "https://github.com/cursor/plugins", lang: "TypeScript", stars: "935", forks: "91", gained: 464, summary: "Cursor 插件规范与官方插件仓库。", desc: "Cursor plugin specification and official plugins." }
+      ] },
+      monthly: { label: "近一月", phrase: "stars this month", limit: 20, items: [
+        { repo: "mattpocock/skills", url: "https://github.com/mattpocock/skills", lang: "Shell", stars: "107,344", forks: "9,472", gained: 85195, summary: "Matt Pocock 从个人 Claude 配置中整理出的工程技能集合。", desc: "Skills for Real Engineers. Straight from my .claude directory." },
+        { repo: "multica-ai/andrej-karpathy-skills", url: "https://github.com/multica-ai/andrej-karpathy-skills", lang: "Text", stars: "157,712", forks: "16,154", gained: 68097, summary: "一个 CLAUDE.md 文件，吸收 Andrej Karpathy 对 LLM 编码问题的观察。", desc: "A single CLAUDE.md file to improve Claude Code behavior, derived from Andrej Karpathy's observations on LLM coding pitfalls." },
+        { repo: "TauricResearch/TradingAgents", url: "https://github.com/TauricResearch/TradingAgents", lang: "Python", stars: "79,945", forks: "15,575", gained: 27088, summary: "基于多智能体和 LLM 的金融交易研究框架。", desc: "TradingAgents: Multi-Agents LLM Financial Trading Framework." },
+        { repo: "colbymchenry/codegraph", url: "https://github.com/colbymchenry/codegraph", lang: "TypeScript", stars: "28,546", forks: "1,612", gained: 26518, summary: "本地代码知识图谱，让 AI 编码代理更省 token、更少工具调用。", desc: "Pre-indexed code knowledge graph for AI coding agents." },
+        { repo: "Lum1104/Understand-Anything", url: "https://github.com/Lum1104/Understand-Anything", lang: "TypeScript", stars: "37,031", forks: "2,968", gained: 25394, summary: "将代码库变成可探索、可搜索、可对话的知识图谱。", desc: "Turn any code into an interactive knowledge graph you can explore, search, and ask questions about." },
+        { repo: "ruvnet/ruflo", url: "https://github.com/ruvnet/ruflo", lang: "TypeScript", stars: "55,556", forks: "6,315", gained: 22289, summary: "面向 Claude 的多代理编排平台，支持自治工作流和 RAG 集成。", desc: "Agent orchestration platform for Claude with multi-agent swarms, autonomous workflows, RAG integration, and Claude Code / Codex integration." },
+        { repo: "anthropics/financial-services", url: "https://github.com/anthropics/financial-services", lang: "Python", stars: "27,877", forks: "3,913", gained: 20088, summary: "Anthropic 面向金融服务场景的开源资源仓库。", desc: "Financial-services focused resources from Anthropic." },
+        { repo: "CloakHQ/CloakBrowser", url: "https://github.com/CloakHQ/CloakBrowser", lang: "Python", stars: "21,531", forks: "1,716", gained: 19976, summary: "带源码级指纹补丁的隐身 Chromium，可作为 Playwright 替代。", desc: "Stealth Chromium that passes bot detection tests. Drop-in Playwright replacement with source-level fingerprint patches." },
+        { repo: "Imbad0202/academic-research-skills", url: "https://github.com/Imbad0202/academic-research-skills", lang: "Python", stars: "22,357", forks: "1,894", gained: 18500, summary: "面向学术研究工作流的 Claude Code 技能集合。", desc: "Academic Research Skills for Claude Code: research, write, review, revise, finalize." },
+        { repo: "Alishahryar1/free-claude-code", url: "https://github.com/Alishahryar1/free-claude-code", lang: "Python", stars: "30,123", forks: "4,542", gained: 17716, summary: "让用户在终端、VS Code 扩展或 Discord 中免费使用 claude-code。", desc: "Use claude-code for free in the terminal, VSCode extension or discord like OpenClaw." },
+        { repo: "rohitg00/agentmemory", url: "https://github.com/rohitg00/agentmemory", lang: "TypeScript", stars: "18,349", forks: "1,518", gained: 16176, summary: "AI 编码代理持久记忆系统。", desc: "Persistent memory for AI coding agents based on real-world benchmarks." },
+        { repo: "rohitg00/ai-engineering-from-scratch", url: "https://github.com/rohitg00/ai-engineering-from-scratch", lang: "Python", stars: "21,194", forks: "3,506", gained: 14997, summary: "AI 工程从学习、构建到交付的实践项目。", desc: "Learn it. Build it. Ship it for others." },
+        { repo: "AIDC-AI/Pixelle-Video", url: "https://github.com/AIDC-AI/Pixelle-Video", lang: "Python", stars: "20,019", forks: "2,817", gained: 13230, summary: "AI 全自动短视频引擎，用于自动化生成短视频内容。", desc: "AI Fully Automated Short Video Engine." },
+        { repo: "decolua/9router", url: "https://github.com/decolua/9router", lang: "JavaScript", stars: "14,600", forks: "2,185", gained: 11432, summary: "连接多个免费 AI 提供方的编码代理路由器，带自动 fallback 和省 token 能力。", desc: "Connect Claude Code, Codex, Cursor, Cline, Copilot, Antigravity to free Claude/GPT/Gemini via 40+ providers." },
+        { repo: "soxoj/maigret", url: "https://github.com/soxoj/maigret", lang: "Python", stars: "30,572", forks: "2,183", gained: 10987, summary: "通过用户名在 3000 多个网站上收集公开画像信息的 OSINT 工具。", desc: "Collect a dossier on a person by username from 3000+ sites." },
+        { repo: "ComposioHQ/awesome-codex-skills", url: "https://github.com/ComposioHQ/awesome-codex-skills", lang: "Python", stars: "11,950", forks: "1,134", gained: 10072, summary: "Codex CLI 和 API 自动化工作流的实用 skill 精选清单。", desc: "A curated list of practical Codex skills for automating workflows across the Codex CLI and API." },
+        { repo: "yikart/AiToEarn", url: "https://github.com/yikart/AiToEarn", lang: "TypeScript", stars: "16,682", forks: "2,677", gained: 7702, summary: "围绕“用 AI 赚钱”的工具与资源项目。", desc: "Let's use AI to Earn!" },
+        { repo: "bytedance/UI-TARS-desktop", url: "https://github.com/bytedance/UI-TARS-desktop", lang: "TypeScript", stars: "35,415", forks: "3,559", gained: 5915, summary: "字节开源的多模态 AI Agent 桌面栈，连接模型与代理基础设施。", desc: "The Open-Source Multimodal AI Agent Stack: Connecting Cutting-Edge AI Models and Agent Infra." },
+        { repo: "mattpocock/sandcastle", url: "https://github.com/mattpocock/sandcastle", lang: "TypeScript", stars: "5,181", forks: "535", gained: 4159, summary: "用 TypeScript 编排沙箱化编码代理的工具。", desc: "Orchestrate sandboxed coding agents in TypeScript with sandcastle.run()." },
+        { repo: "LearningCircuit/local-deep-research", url: "https://github.com/LearningCircuit/local-deep-research", lang: "Python", stars: "8,012", forks: "696", gained: 3637, summary: "本地加密的深度研究工具，支持本地和云端 LLM、多种搜索源与私有文档。", desc: "Supports local and cloud LLMs, multiple search engines, private documents, and local encrypted research workflows." }
+      ] }
+    };
+
+    const langColors = {
+      TypeScript: "#56ccf2", Python: "#ffd166", JavaScript: "#f7df1e", Rust: "#ff8a5b",
+      Shell: "#89e051", HTML: "#ff5f7e", "C#": "#b98cff", Swift: "#ff9f43", Text: "#aab4c4"
+    };
+
+    const ranking = document.querySelector("#ranking");
+    const notice = document.querySelector("#notice");
+    const stats = document.querySelector("#stats");
+
+    function format(n) {
+      return new Intl.NumberFormat("en-US").format(n);
+    }
+
+    function avatar(repo) {
+      return `https://github.com/${repo.split("/")[0]}.png?size=120`;
+    }
+
+    function renderStats() {
+      stats.innerHTML = Object.entries(periods).map(([key, data]) => {
+        const total = data.items.reduce((sum, item) => sum + item.gained, 0);
+        return `<div class="source-stat"><strong>${data.items.length}</strong><span>${data.label}条目<br>合计新增 ${format(total)}</span></div>`;
+      }).join("");
+    }
+
+    function render(period) {
+      const data = periods[period];
+      const max = Math.max(...data.items.map(item => item.gained));
+      notice.textContent = data.items.length < data.limit
+        ? `${data.label}官方 Trending 当前只返回 ${data.items.length} 个条目，页面保留全部可用项目。`
+        : "";
+      notice.classList.toggle("show", data.items.length < data.limit);
+
+      ranking.innerHTML = data.items.map((item, index) => {
+        const [owner, name] = item.repo.split("/");
+        const heat = Math.max(.08, item.gained / max).toFixed(3);
+        const color = langColors[item.lang] || "#aab4c4";
+        return `
+          <a class="repo-card" href="${item.url}" target="_blank" rel="noreferrer" style="--heat:${heat}" aria-label="打开 ${item.repo}">
+            <div>
+              <div class="rank">${index + 1}</div>
+              <img class="avatar" src="${avatar(item.repo)}" alt="${owner} avatar" loading="lazy">
+            </div>
+            <div class="repo-main">
+              <div class="repo-top">
+                <div class="repo-name">
+                  <h2>${name}</h2>
+                  <span>${owner}</span>
+                </div>
+                <div class="gain">+${format(item.gained)}</div>
+              </div>
+              <p class="summary">${item.summary}</p>
+              <p class="desc">${item.desc}</p>
+              <div class="chips">
+                <span class="chip"><i class="lang-dot" style="background:${color}"></i>${item.lang || "Unknown"}</span>
+                <span class="chip">Total ★ ${item.stars}</span>
+                <span class="chip">Forks ${item.forks}</span>
+                <span class="open">打开项目</span>
+              </div>
+            </div>
+          </a>`;
+      }).join("");
+    }
+
+    document.querySelectorAll(".tab").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
+        button.classList.add("active");
+        render(button.dataset.period);
+      });
+    });
+
+    renderStats();
+    render("daily");
+  </script>
+</body>
+</html>

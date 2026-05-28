@@ -4,7 +4,12 @@
 
 var BOSS_SPAWN_COOLDOWN_MS = 12000;
 
-Object.assign(GameEngine.prototype, {
+// 微信小游戏 CommonJS 模块隔离下，本模块作用域看不到 engine_base.js 顶层 class GameEngine。
+// H5 下 typeof === 'function'（lexical 全局），微信下从 GameGlobal 取。
+var __GE = (typeof GameEngine !== 'undefined') ? GameEngine : GameGlobal.GameEngine;
+function __sfx() { return (typeof sfx !== 'undefined') ? sfx : GameGlobal.sfx; }
+
+Object.assign(__GE.prototype, {
     // 第 n 阶首领所需累计分数：3500 起，之后每阶间隔 3800 × 1.26^(n-2)
     getBossSpawnThreshold(encounterTier) {
         if (encounterTier <= 1) return 3500;
@@ -414,7 +419,7 @@ Object.assign(GameEngine.prototype, {
                         m.active = false;
                         part.hp = Math.min(part.maxHp, part.hp + m.hp * devourMult);
                         this.createHitParticles(part.x, part.y, "#10b981");
-                        sfx.playHit();
+                        __sfx().playHit();
                         this.addFloatText(part.x, part.y, "DEVOUR +HP", "#10b981", 12);
                     }
                 }
@@ -467,7 +472,7 @@ Object.assign(GameEngine.prototype, {
         b.state = 'implosion';
         b.implosionTimer = 3000;
         this.createScreenShake(30);
-        sfx.playBomb();
+        __sfx().playBomb();
         this.addFloatText(b.x, b.y, "⚠️ 发现高能引力坍缩奇点！", "#ec4899", 20);
         this.showToast("🚨 警告：母舰发生大坍缩！正在吸扯全屏碎石重组！");
     },
@@ -497,7 +502,7 @@ Object.assign(GameEngine.prototype, {
         b.laserActive = false;
         b.laserAngle = 0;
 
-        sfx.playPowerup();
+        __sfx().playPowerup();
         this.createScreenShake(40);
 
         this.createExplosionParticles(b.x, b.y, 160, '#fbbf24');
@@ -512,7 +517,7 @@ Object.assign(GameEngine.prototype, {
         const b = this.boss;
         const tier = b.encounterTier || 1;
         const rockCount = Math.min(6 + Math.floor(tier / 2), 10);
-        sfx.playHit();
+        __sfx().playHit();
         this.addFloatText(b.x, b.y + 40, "✨ 陨岩狂飙！", "#fb923c", 14);
         for (let n = 0; n < rockCount; n++) {
             const angle = (n / rockCount) * Math.PI * 2;
@@ -537,7 +542,7 @@ Object.assign(GameEngine.prototype, {
     titanGravityRipple() {
         const b = this.boss;
         const tier = b.encounterTier || 1;
-        sfx.playGravityRipple();
+        __sfx().playGravityRipple();
         this.addFloatText(b.x, b.y + 45, "🌀 重力涟漪！", "#a78bfa", 16);
         this.createScreenShake(20);
 
@@ -571,7 +576,7 @@ Object.assign(GameEngine.prototype, {
         b.laserSweepTimer = 1800;
         b.laserAngle = 0;
         b.laserAnglePhase = 0; // 每次起手都从 0 相位开始
-        sfx.playTitanLaser();
+        __sfx().playTitanLaser();
         this.addFloatText(b.x, b.y + 50, "💥 OVERLOAD DEATH LASER!", "#ef4444", 22);
         this.showToast("⚠️ 警报：巨神兵正在积蓄能量释放横扫切割死光！");
     },
@@ -702,7 +707,7 @@ Object.assign(GameEngine.prototype, {
         const tier = this.boss.encounterTier || 1;
         this.boss.active = false;
         this.createScreenShake(45);
-        sfx.playExplosion(true);
+        __sfx().playExplosion(true);
         const bX = this.boss.x !== undefined ? this.boss.x : this.logicalWidth / 2;
         const bY = this.boss.y !== undefined ? this.boss.y : this.logicalHeight / 3;
         this.addFloatText(bX, bY, `🏆 第${tier}阶 BOSS 歼灭！`, "#10b981", 24);
