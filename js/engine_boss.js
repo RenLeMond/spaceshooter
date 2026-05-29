@@ -1,5 +1,5 @@
 // =============================================
-// 星海猎手 V6: GameEngine - BOSS 模块
+// 星海猎手 V7: GameEngine - BOSS 模块
 // =============================================
 
 var BOSS_SPAWN_COOLDOWN_MS = 12000;
@@ -94,7 +94,7 @@ Object.assign(GameEngine.prototype, {
     },
 
     spawnAsteroidWorm(tier) {
-        const segmentCount = Math.min(10 + Math.floor((tier - 1) / 2), 14);
+        const segmentCount = Math.min(12 + Math.floor((tier - 1) / 2), 16);
         const headHp = this._scaledBossHp(1500, tier);
         const segHp = this._scaledBossHp(400, tier);
         const headRadius = 40 + (tier - 1) * 2;
@@ -307,9 +307,9 @@ Object.assign(GameEngine.prototype, {
                 if (b.laserSweepTimer <= 0) {
                     b.laserActive = false;
                 } else {
-                    // dt 累积相位（原: Date.now()*0.005）保证暂停后角度不跳
-                    b.laserAnglePhase = (b.laserAnglePhase || 0) + 0.005 * 16.666 * dtClamped;
-                    b.laserAngle = 0.5 * Math.sin(b.laserAnglePhase);
+                    // V7: 360-degree sweep continuous linear angle accumulation (modulo 2π to prevent float precision loss)
+                    b.laserAnglePhase = ((b.laserAnglePhase || 0) + 0.0035 * 16.666 * dtClamped) % (Math.PI * 2);
+                    b.laserAngle = b.laserAnglePhase;
                     this.checkTitanLaserCollision(dtClamped);
                 }
             }
@@ -384,7 +384,7 @@ Object.assign(GameEngine.prototype, {
         }
 
         if (activeCount === 0) {
-            this.destroyBossEpic();
+            this.triggerWormPhase2();
             return;
         }
 
@@ -470,6 +470,52 @@ Object.assign(GameEngine.prototype, {
         sfx.playBomb();
         this.addFloatText(b.x, b.y, "⚠️ 发现高能引力坍缩奇点！", "#ec4899", 20);
         this.showToast("🚨 警告：母舰发生大坍缩！正在吸扯全屏碎石重组！");
+    },
+
+    triggerWormPhase2() {
+        const b = this.boss;
+        const tier = b.encounterTier || 1;
+        
+        // V7: 清理蠕虫残留体节数据，释放内存
+        b.segments = null;
+        b.wormSegmentCount = 0;
+
+        // Transform the boss type and state into the titan implosion sequence
+        b.type = 'titan';
+        b.state = 'implosion';
+        b.implosionTimer = 3000;
+        b.x = this.logicalWidth / 2;
+        b.y = this.logicalHeight / 3;
+        b.targetY = this._bossTargetY(180, 150);
+        b.titanAngle = 0;
+        b.titanWobblePhase = 0;
+        b.laserAnglePhase = 0;
+        b.vx = 1.2 + (tier - 1) * 0.08;
+
+        const titanCoreHp = this._scaledBossHp(800, tier);
+        const shieldHp = this._scaledBossHp(200, tier);
+        const wingHp = this._scaledBossHp(150, tier);
+        const radiusBonus = (tier - 1) * 2;
+        
+        b.parts = {
+            shieldCore: { hp: shieldHp, maxHp: shieldHp, active: true, offset: { x: 0, y: -25 }, radius: 25 + radiusBonus, label: "防护罩发生器" },
+            leftWing: { hp: wingHp, maxHp: wingHp, active: true, offset: { x: -85, y: 15 }, radius: 25 + radiusBonus, label: "左排炮翼" },
+            rightWing: { hp: wingHp, maxHp: wingHp, active: true, offset: { x: 85, y: 15 }, radius: 25 + radiusBonus, label: "右排炮翼" },
+            core: { hp: titanCoreHp, maxHp: titanCoreHp, active: true, offset: { x: 0, y: 20 }, radius: 45 + radiusBonus, label: "巨神兵心脏" }
+        };
+        
+        b.rockTimer = 0;
+        b.rippleTimer = 0;
+        b.laserTimer = 0;
+        b.laserActive = false;
+        b.laserAngle = 0;
+
+        this.createScreenShake(35);
+        sfx.playBomb();
+        this.addFloatText(b.x, b.y, "⚠️ 吞噬颚颅碎裂！引力星轨聚能！", "#ef4444", 20);
+        this.showToast("🚨 绝境警告：吞噬蠕虫头部蜕变为星云奇点核心！开始重构碎岩星环！");
+        this._setBossTitle(`💀 星云星环吞噬者${this._bossTierLabel(tier)}`);
+        this._showBossHpGroup();
     },
 
     triggerNebulaTitanEvolution() {

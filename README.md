@@ -102,8 +102,8 @@ spaceshooter/
 │   ├── engine_hangar.js    # 改装整备舱本地存储数据持久化与升级逻辑
 │   ├── game_worker.js      # Web Worker 子线程 Mock 代理及数据序列化桥梁
 │   └── main.js             # 主线程 Loader、Worker 消息调度与 fallback 挂载
-├── space_shooter.html      # V6 极客风格战术 HUD 主游戏入口
-├── v6_hangar.html          # 超维整备舱 (机载改装、超维涂装激活)
+├── space_shooter.html      # V7 极客风格战术 HUD 主游戏入口
+├── v7_hangar.html          # 先驱者核心矩阵天赋星盘机库 (局外改装、永久天赋星盘、物理沙盒)
 ├── game_design.html        # 极客底盘白皮书 (物理公式与数学推导，集成 LaTeX)
 ├── game_manual.html        # 终极战略手册 (操作指南与蠕虫对决秘诀)
 ├── version_history.html    # V1.0 - V6.0 编年史历史记录

@@ -1,8 +1,15 @@
+// =============================================
+// 星海猎手 V7: GameEngine - SOUND 音效节流模块
+// =============================================
+
 class SoundFX {
     constructor() {
         this.ctx = null;
         this.muted = false;
         this.lastPlayTime = {};
+        this.recentPlaysBuffer = new Float64Array(8); // V7: 固定长度环形缓冲区 (0-GC)
+        this.recentPlaysHead = 0;
+        this.recentPlaysCount = 0;
     }
 
     init() {
@@ -19,12 +26,44 @@ class SoundFX {
         return this.muted;
     }
 
-    playShoot() {
-        if (this.muted) return;
+    /**
+     * V7 Global sound concurrency thottling & safety gate to prevent Safari audio thread freeze/overload
+     * Limits total sound triggers to 6 within a 50ms window.
+     */
+    checkThrottle(key, cooldown = 0) {
+        if (this.muted) return false;
         this.init();
+        if (!this.ctx) return false;
+
         const now = this.ctx.currentTime;
-        if (now - (this.lastPlayTime['shoot'] || 0) < 0.05) return;
-        this.lastPlayTime['shoot'] = now;
+
+        // 1. Key-specific cooldown
+        if (cooldown > 0 && now - (this.lastPlayTime[key] || 0) < cooldown) {
+            return false;
+        }
+
+        // 2. Global concurrency throttle (max 6 active schedules per 50ms) — 0-GC ring buffer
+        let activeCount = 0;
+        for (let i = 0; i < this.recentPlaysCount; i++) {
+            const idx = (this.recentPlaysHead - this.recentPlaysCount + i + 8) % 8;
+            if (now - this.recentPlaysBuffer[idx] < 0.05) {
+                activeCount++;
+            }
+        }
+        if (activeCount >= 6) {
+            return false;
+        }
+
+        this.recentPlaysBuffer[this.recentPlaysHead] = now;
+        this.recentPlaysHead = (this.recentPlaysHead + 1) % 8;
+        if (this.recentPlaysCount < 8) this.recentPlaysCount++;
+        this.lastPlayTime[key] = now;
+        return true;
+    }
+
+    playShoot() {
+        if (!this.checkThrottle('shoot', 0.05)) return;
+        const now = this.ctx.currentTime;
 
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
@@ -43,11 +82,8 @@ class SoundFX {
     }
 
     playHit() {
-        if (this.muted) return;
-        this.init();
+        if (!this.checkThrottle('hit', 0.04)) return;
         const now = this.ctx.currentTime;
-        if (now - (this.lastPlayTime['hit'] || 0) < 0.04) return;
-        this.lastPlayTime['hit'] = now;
 
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
@@ -66,12 +102,9 @@ class SoundFX {
     }
 
     playExplosion(isLarge = false) {
-        if (this.muted) return;
-        this.init();
-        const now = this.ctx.currentTime;
         const key = isLarge ? 'expl_L' : 'expl_S';
-        if (now - (this.lastPlayTime[key] || 0) < 0.06) return;
-        this.lastPlayTime[key] = now;
+        if (!this.checkThrottle(key, 0.06)) return;
+        const now = this.ctx.currentTime;
 
         const duration = isLarge ? 0.4 : 0.25;
         const bufferSize = this.ctx.sampleRate * duration;
@@ -101,8 +134,7 @@ class SoundFX {
     }
 
     playPowerup() {
-        if (this.muted) return;
-        this.init();
+        if (!this.checkThrottle('powerup', 0.15)) return;
         const now = this.ctx.currentTime;
         const freqs = [330, 440, 554, 660];
         freqs.forEach((freq, idx) => {
@@ -121,8 +153,7 @@ class SoundFX {
     }
 
     playBomb() {
-        if (this.muted) return;
-        this.init();
+        if (!this.checkThrottle('bomb', 0.5)) return;
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
@@ -138,8 +169,7 @@ class SoundFX {
     }
 
     playGameOver() {
-        if (this.muted) return;
-        this.init();
+        if (!this.checkThrottle('gameover', 1.0)) return;
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
@@ -155,8 +185,7 @@ class SoundFX {
     }
 
     playSlingshot() {
-        if (this.muted) return;
-        this.init();
+        if (!this.checkThrottle('slingshot', 0.3)) return;
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const osc2 = this.ctx.createOscillator();
@@ -188,8 +217,7 @@ class SoundFX {
     }
 
     playTitanLaser() {
-        if (this.muted) return;
-        this.init();
+        if (!this.checkThrottle('titanlaser', 0.2)) return;
         const now = this.ctx.currentTime;
         const duration = 0.8;
         const bufferSize = this.ctx.sampleRate * duration;
@@ -228,8 +256,7 @@ class SoundFX {
     }
 
     playGravityRipple() {
-        if (this.muted) return;
-        this.init();
+        if (!this.checkThrottle('gravityripple', 0.3)) return;
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gainNode = this.ctx.createGain();
@@ -260,8 +287,7 @@ class SoundFX {
     }
 
     playWarp() {
-        if (this.muted) return;
-        this.init();
+        if (!this.checkThrottle('warp', 0.25)) return;
         const now = this.ctx.currentTime;
         
         const osc = this.ctx.createOscillator();
@@ -299,8 +325,7 @@ class SoundFX {
     }
 
     playSkinSwitch() {
-        if (this.muted) return;
-        this.init();
+        if (!this.checkThrottle('skinswitch', 0.15)) return;
         const now = this.ctx.currentTime;
         
         const osc1 = this.ctx.createOscillator();

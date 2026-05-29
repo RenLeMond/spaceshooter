@@ -1,5 +1,5 @@
 // =============================================
-// 星海猎手 V6: GameEngine - HANGAR 模块
+// 星海猎手 V7: GameEngine - HANGAR 模块
 // =============================================
 
 Object.assign(GameEngine.prototype, {
@@ -74,7 +74,7 @@ Object.assign(GameEngine.prototype, {
             }
         );
 
-        // --- V6 皮肤 UI 更新 (v2 涂装卡：status chip + action button + is-equipped 三件套) ---
+        // --- V7 皮肤 UI 更新 (v2 涂装卡：status chip + action button + is-equipped 三件套) ---
         const skins = [
             { id: 'void',     cost: 80,  cardId: 'skinCardVoid',     textId: 'skinVoidText',     btnId: 'buySkinVoidBtn' },
             { id: 'thunder',  cost: 100, cardId: 'skinCardThunder',  textId: 'skinThunderText',  btnId: 'buySkinThunderBtn' },
@@ -107,6 +107,47 @@ Object.assign(GameEngine.prototype, {
                 btn.innerHTML = `<span class="cost"><i class="fa-solid fa-cube text-amber-300"></i> ${s.cost}</span> 解锁涂装`;
             }
         });
+
+        // --- V7 先驱者永久天赋矩阵 ---
+        this.renderTalentCards();
+    },
+
+    renderTalentCards() {
+        if (typeof TALENT_DEFINITIONS === 'undefined') return;
+        const labels = {
+            maxed: 'MAX',
+            btnMaxed: '已点满',
+            leveled: (lv) => `LV.${lv}`,
+            locked: '未点亮',
+            btnCost: (c) => `点亮 · ${c}`
+        };
+        for (let i = 0; i < TALENT_DEFINITIONS.length; i++) {
+            const def = TALENT_DEFINITIONS[i];
+            this._renderUpgradeCard(
+                `talentCard${def.id}`, `talentProgress${def.id}`, `talentLevelText${def.id}`, `buyTalent${def.id}Btn`,
+                (this.talents && this.talents[def.id]) || 0, def.maxLevel, def.cost, labels
+            );
+        }
+    },
+
+    buyTalent(id) {
+        if (typeof TALENT_DEFINITIONS === 'undefined') return;
+        const def = TALENT_DEFINITIONS.find(t => t.id === id);
+        if (!def) return;
+        if (!this.talents) this.talents = defaultTalents();
+        const lv = this.talents[id] || 0;
+        if (lv >= def.maxLevel) return;
+        if (this.scrap < def.cost) {
+            this.showToast("❌ 合金废料不足，无法点亮永久天赋！");
+            return;
+        }
+        this.scrap -= def.cost;
+        this.talents[id] = lv + 1;
+        localStorage.setItem('space_v7_talents', JSON.stringify(this.talents));
+        sfx.playPowerup();
+        this.showToast(`🧬 永久天赋【${def.name}】已强化至 LV.${this.talents[id]}！`);
+        this.updateHangarUI();
+        this.updateHUD();
     },
 
     buyModule(type, baseCost) {

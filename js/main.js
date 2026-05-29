@@ -1,8 +1,8 @@
-// ⚡ 《星海猎手 V6：星能折跃与超维涂装》主线程桥接与加载入口
+// ⚡ 《星海猎手 V7：机载超维构装与深空天象》主线程桥接与加载入口
 // 资源缓存版本号 — 同步于 space_shooter.html 的所有 ?v= 查询参数。
 // Worker 链 (game_worker.js + importScripts 的 6 个引擎文件) 通过 self.location.search 自动继承该版本，
 // 后续 bump 仅需改本常量 + HTML 的 ?v= 两处即可全量失效旧缓存。
-const ASSET_VERSION = '6.2.5';
+const ASSET_VERSION = '7.0.7';
 
 window.onload = function() {
     const canvas = document.getElementById('gameCanvas');
@@ -97,6 +97,7 @@ window.onload = function() {
         let mainBestScore = safeReadInt('space_best_score', 0);
         let mainScrap = 0;
         let mainHangar = { turretLevel: 0, engineLevel: 0, wingsLevel: 0 };
+        let mainTalents = (typeof loadTalents === 'function') ? loadTalents() : { A: 0, B: 0, C: 0, D: 0, E: 0 };
         
         // 发送 init 初始化消息给 Worker 线程并转移 Canvas
         worker.postMessage({
@@ -106,7 +107,8 @@ window.onload = function() {
             height: canvas.height,
             unlockedSkins: mainUnlockedSkins,
             currentSkin: mainCurrentSkin,
-            bestScore: mainBestScore
+            bestScore: mainBestScore,
+            talents: mainTalents
         }, [offscreen]);
         
         window.addEventListener('resize', updateMainScale);
@@ -227,6 +229,50 @@ window.onload = function() {
                     btn.innerHTML = `<span class="cost"><i class="fa-solid fa-cube text-amber-300"></i> ${s.cost}</span> 解锁涂装`;
                 }
             });
+
+            // V7 先驱者永久天赋矩阵渲染
+            if (typeof TALENT_DEFINITIONS !== 'undefined') {
+                const talentLabels = {
+                    maxed: 'MAX',
+                    btnMaxed: '已点满',
+                    leveled: (lv) => `LV.${lv}`,
+                    locked: '未点亮',
+                    btnCost: (c) => `点亮 · ${c}`
+                };
+                TALENT_DEFINITIONS.forEach(def => {
+                    renderUpgradeCard(
+                        `talentCard${def.id}`, `talentProgress${def.id}`, `talentLevelText${def.id}`, `buyTalent${def.id}Btn`,
+                        mainTalents[def.id] || 0, def.maxLevel, def.cost, mainScrap, talentLabels
+                    );
+                });
+            }
+        }
+
+        function buyMainTalent(id) {
+            if (typeof TALENT_DEFINITIONS === 'undefined') return;
+            const def = TALENT_DEFINITIONS.find(t => t.id === id);
+            if (!def) return;
+            const lv = mainTalents[id] || 0;
+            if (lv >= def.maxLevel) return;
+            if (mainScrap < def.cost) {
+                mainShowToast("❌ 合金废料不足，无法点亮永久天赋！");
+                return;
+            }
+            mainScrap -= def.cost;
+            mainTalents[id] = lv + 1;
+            localStorage.setItem('space_v7_talents', JSON.stringify(mainTalents));
+            sfx.playPowerup();
+            mainShowToast(`🧬 永久天赋【${def.name}】已强化至 LV.${mainTalents[id]}！`);
+            updateMainHangarUI();
+
+            worker.postMessage({
+                type: 'upgrade',
+                scrap: mainScrap,
+                hangar: mainHangar,
+                unlockedSkins: mainUnlockedSkins,
+                currentSkin: mainCurrentSkin,
+                talents: mainTalents
+            });
         }
 
         function buyMainModule(type) {
@@ -262,7 +308,8 @@ window.onload = function() {
                 scrap: mainScrap,
                 hangar: mainHangar,
                 unlockedSkins: mainUnlockedSkins,
-                currentSkin: mainCurrentSkin
+                currentSkin: mainCurrentSkin,
+                talents: mainTalents
             });
         }
 
@@ -296,7 +343,8 @@ window.onload = function() {
                 scrap: mainScrap,
                 hangar: mainHangar,
                 unlockedSkins: mainUnlockedSkins,
-                currentSkin: mainCurrentSkin
+                currentSkin: mainCurrentSkin,
+                talents: mainTalents
             });
         }
         
@@ -341,7 +389,23 @@ window.onload = function() {
                     document.getElementById('bombChargeBar').style.width = `${msg.bombCharge}%`;
                     const warpBarEl = document.getElementById('warpBar');
                     if (warpBarEl) warpBarEl.style.width = `${msg.warpCharge || 0}%`;
-                    
+
+                    // V7: 同步局内等级与经验进度条
+                    const hudLevelTextEl = document.getElementById('hudLevelText');
+                    const expBarEl = document.getElementById('expBar');
+                    const expPercentTextEl = document.getElementById('expPercentText');
+                    if (hudLevelTextEl) hudLevelTextEl.innerText = msg.level || 1;
+                    const expPercent = (msg.nextLevelExp > 0) ? (msg.exp / msg.nextLevelExp) * 100 : 0;
+                    if (expBarEl) expBarEl.style.width = `${expPercent}%`;
+                    if (expPercentTextEl) expPercentTextEl.innerText = `${Math.floor(expPercent)}%`;
+
+                    // V7: 同步机载构装总览（快捷条 + 面板，若打开）
+                    updateLoadoutUI(
+                        msg.equippedMods || [],
+                        [msg.slot1, msg.slot2].filter(Boolean),
+                        msg.comboKey || ''
+                    );
+
                     // 同步废料字段
                     mainScrap = msg.scrap;
                     
@@ -455,6 +519,9 @@ window.onload = function() {
                         const skins = safeReadJSON('space_unlocked_skins', ['default']);
                         mainUnlockedSkins = Array.isArray(skins) ? skins : ['default'];
                     }
+                    if (msg.key === 'space_v7_talents' && typeof loadTalents === 'function') {
+                        mainTalents = loadTalents();
+                    }
                     break;
                     
                 case 'gameOver':
@@ -500,6 +567,42 @@ window.onload = function() {
                     if (benchModal) benchModal.classList.remove('hidden');
                     sfx.playPowerup();
                     break;
+
+                case 'levelUpTrigger':
+                    const rogueUpgradeScreen = document.getElementById('rogueUpgradeScreen');
+                    const rogueLevelVal = document.getElementById('rogueLevelVal');
+                    const rogueCardsContainer = document.getElementById('rogueCardsContainer');
+                    
+                    if (rogueUpgradeScreen && rogueCardsContainer && rogueLevelVal) {
+                        rogueLevelVal.innerText = msg.level;
+                        rogueUpgradeScreen.classList.remove('hidden');
+                        renderMainRogueUpgradeCards(rogueCardsContainer, msg.elementSlots || [], msg.comboKey || '', msg.equippedMods || []);
+                    }
+                    break;
+
+                case 'hazardOverlay':
+                    const hazardOverlayEl = document.getElementById('hazardOverlay');
+                    const hazardAlertBoxEl = document.getElementById('hazardAlertBox');
+                    if (hazardOverlayEl) {
+                        if (msg.active) {
+                            hazardOverlayEl.classList.remove('hidden');
+                            hazardOverlayEl.classList.add('flex');
+                            hazardOverlayEl.style.backgroundColor = 'rgba(127, 29, 29, 0.45)';
+                            if (hazardAlertBoxEl) {
+                                hazardAlertBoxEl.classList.remove('opacity-0', 'scale-90');
+                                hazardAlertBoxEl.classList.add('opacity-100', 'scale-100');
+                            }
+                        } else {
+                            hazardOverlayEl.classList.add('hidden');
+                            hazardOverlayEl.classList.remove('flex');
+                            hazardOverlayEl.style.backgroundColor = 'rgba(127, 29, 29, 0)';
+                            if (hazardAlertBoxEl) {
+                                hazardAlertBoxEl.classList.add('opacity-0', 'scale-90');
+                                hazardAlertBoxEl.classList.remove('opacity-100', 'scale-100');
+                            }
+                        }
+                    }
+                    break;
             }
         };
         
@@ -523,9 +626,37 @@ window.onload = function() {
             mainShowToast(mode === 'touch' ? "已选择：指尖滑动连发模式" : "已选择：键盘虚拟按键模式");
         }
         
+        // V7: 经典 / 无尽深空 战役模式桥接（Worker 模式下必须显式 postMessage 给子线程引擎）
+        let mainEndlessMode = false;
+        function setMainCampaignMode(isEndless) {
+            mainEndlessMode = isEndless;
+            worker.postMessage({ type: 'campaignMode', isEndless: isEndless });
+
+            const classicBtn = document.getElementById('selectClassicBtn');
+            const endlessBtn = document.getElementById('selectEndlessBtn');
+            if (classicBtn && endlessBtn) {
+                if (isEndless) {
+                    endlessBtn.classList.add('neon-border-rose', 'border-rose-500/50', 'bg-rose-950/20', 'text-white');
+                    endlessBtn.classList.remove('text-gray-400');
+                    classicBtn.classList.remove('neon-border-cyan', 'border-cyan-500/50', 'bg-cyan-950/20', 'text-white');
+                    classicBtn.classList.add('text-gray-400');
+                } else {
+                    classicBtn.classList.add('neon-border-cyan', 'border-cyan-500/50', 'bg-cyan-950/20', 'text-white');
+                    classicBtn.classList.remove('text-gray-400');
+                    endlessBtn.classList.remove('neon-border-rose', 'border-rose-500/50', 'bg-rose-950/20', 'text-white');
+                    endlessBtn.classList.add('text-gray-400');
+                }
+            }
+            mainShowToast(isEndless ? "已选择：无尽深空突变模式" : "已选择：经典星域防守模式");
+        }
+
         // 绑定大厅与菜单按钮
         document.getElementById('selectTouchBtn').addEventListener('click', () => setMainControlMode('touch'));
         document.getElementById('selectKeyBtn').addEventListener('click', () => setMainControlMode('keyboard'));
+        const selectClassicBtn = document.getElementById('selectClassicBtn');
+        const selectEndlessBtn = document.getElementById('selectEndlessBtn');
+        if (selectClassicBtn) selectClassicBtn.addEventListener('click', () => setMainCampaignMode(false));
+        if (selectEndlessBtn) selectEndlessBtn.addEventListener('click', () => setMainCampaignMode(true));
         document.getElementById('startPlayBtn').addEventListener('click', () => {
             sfx.init();
             document.getElementById('startScreen').classList.add('hidden');
@@ -592,6 +723,12 @@ window.onload = function() {
         document.getElementById('buySkinVoidBtn').addEventListener('click', () => interactMainSkin('void'));
         document.getElementById('buySkinThunderBtn').addEventListener('click', () => interactMainSkin('thunder'));
         document.getElementById('buySkinImperialBtn').addEventListener('click', () => interactMainSkin('imperial'));
+        if (typeof TALENT_DEFINITIONS !== 'undefined') {
+            TALENT_DEFINITIONS.forEach(def => {
+                const tb = document.getElementById(`buyTalent${def.id}Btn`);
+                if (tb) tb.addEventListener('click', () => buyMainTalent(def.id));
+            });
+        }
         document.getElementById('exitWorkshopBtn').addEventListener('click', () => {
             document.getElementById('workshopScreen').classList.add('hidden');
             worker.postMessage({ type: 'exitHangar' });
@@ -779,3 +916,225 @@ window.onload = function() {
 
     requestAnimationFrame(gameLoop);
 };
+
+function renderMainRogueUpgradeCards(container, elementSlots, comboKey, equippedMods) {
+    container.innerHTML = '';
+    
+    const equipped = equippedMods || [];
+    const hasEM = elementSlots.includes('EM') || comboKey.includes('EM');
+    
+    // 优先复用全局定义的模组列表，保证描述和属性完全一致，并移除重复定义
+    const poolSource = typeof ROGUE_MOD_DEFINITIONS !== 'undefined' ? ROGUE_MOD_DEFINITIONS : [
+        { id: 'split', title: '多重散射 (Split Shot)', class: '通用', icon: 'fa-cubes', color: 'cyan', desc: '主炮额外向左右两翼扇形发射 +2 侧向子弹，但基础主炮单发伤害削减 15%。' },
+        { id: 'heavy', title: '重力巨弹 (Heavy Mag)', class: '通用', icon: 'fa-compress', color: 'purple', desc: '子弹体积物理增大 40%，且穿透（Pierce）+1，但主炮开火频率降低 10%。' },
+        { id: 'drone', title: '先驱无人机 (Vanguard Drone)', class: '通用', icon: 'fa-shield-halved', color: 'rose', desc: '加挂一架独立的智能索敌巡航能盾僚机，自动对附近流星释放 15 点的电浆能量打击。' },
+        { id: 'tesla', title: '特斯拉雷电 (Tesla Arc)', class: '超维共鸣', icon: 'fa-bolt', color: 'amber', desc: '前置需拥有电磁 EM 晶核。所有子弹物理碰撞瞬间有 40% 概率触发 350px 链式高频雷暴。' },
+        { id: 'implosion', title: '折跃重力星轨 (Warp Singularity)', class: '超维共鸣', icon: 'fa-circle-notch', color: 'cyan', desc: '战术折跃(Shift)在起点与终点残留轨迹上施加引力聚能拉扯流星。' },
+        { id: 'antimatter', title: '反物质过载 (Antimatter Overload)', class: '混沌魔改', icon: 'fa-radiation', color: 'rose', desc: '主武器基础伤害疯狂暴涨 80%，但飞船最大 HP 永久缩减 30%，极限火力输出。' }
+    ];
+
+    // 过滤：前置条件 + 去重已装备模组
+    const availablePool = poolSource.filter(mod => {
+        if (mod.id === 'tesla' && !hasEM) return false;
+        if (equipped.includes(mod.id)) return false; // 去重
+        return true;
+    });
+
+    // 使用 Fisher-Yates 洗牌算法，避免原地 sort 污染，保证纯随机概率
+    const shuffled = typeof shuffleArray === 'function' ? shuffleArray([...availablePool]) : (function(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+        }
+        return arr;
+    })([...availablePool]);
+    
+    const selected = shuffled.slice(0, 3);
+
+    // 兜底防软锁：若无任何可选模组，直接关闭弹窗并恢复战斗（引擎侧通常已拦截，此处为双保险）
+    if (selected.length === 0) {
+        const screen = document.getElementById('rogueUpgradeScreen');
+        if (screen) screen.classList.add('hidden');
+        if (window.gameWorker) window.gameWorker.postMessage({ type: 'resumeGame' });
+        return;
+    }
+
+    selected.forEach(mod => {
+        const card = document.createElement('div');
+        const themeClass = mod.class === '超维共鸣' ? 'rogue-amber' : (mod.class === '混沌魔改' ? 'rogue-rose' : 'rogue-cyan');
+        card.className = `rogue-card ${themeClass}`;
+
+        card.innerHTML = `
+            <div class="rogue-scan"></div>
+            <div class="rogue-icon"><i class="fa-solid ${mod.icon}"></i></div>
+            <div class="rogue-body pointer-events-none">
+                <div class="flex items-center justify-between">
+                    <span class="rogue-name">${mod.title}</span>
+                    <span class="rogue-class-tag">${mod.class}</span>
+                </div>
+                <p class="rogue-desc mt-1">${mod.desc}</p>
+            </div>
+            <div class="rogue-action-hint pointer-events-none">
+                <i class="fa-solid fa-circle-chevron-right animate-pulse"></i>
+            </div>
+        `;
+        
+        card.addEventListener('click', () => {
+            if (window.gameWorker) {
+                window.gameWorker.postMessage({ type: 'modSelected', modId: mod.id });
+            }
+            document.getElementById('rogueUpgradeScreen').classList.add('hidden');
+            sfx.playPowerup();
+        });
+        container.appendChild(card);
+    });
+}
+
+// ============================================================
+// V7 机载量子构装总览 (Loadout Overview)
+// 同时服务 Worker 模式（hud 消息驱动）与单线程降级模式（engine.updateHUD 直接回调）。
+// 数据源：equippedMods + 当前晶核槽 + comboKey；渲染 HUD 快捷条与全屏总览面板。
+// ============================================================
+const LOADOUT_MOD_POOL = (typeof ROGUE_MOD_DEFINITIONS !== 'undefined') ? ROGUE_MOD_DEFINITIONS : [
+    { id: 'split', title: '多重散射 (Split Shot)', class: '通用', icon: 'fa-cubes', desc: '主炮额外向左右两翼扇形发射 +2 侧向子弹，但基础主炮单发伤害削减 15%。' },
+    { id: 'heavy', title: '重力巨弹 (Heavy Mag)', class: '通用', icon: 'fa-compress', desc: '子弹体积物理增大 40%，且穿透（Pierce）+1，但主炮开火频率降低 10%。' },
+    { id: 'drone', title: '先驱无人机 (Vanguard Drone)', class: '通用', icon: 'fa-shield-halved', desc: '加挂一架独立的智能索敌巡航能盾僚机，自动对附近流星释放 15 点的电浆能量打击。' },
+    { id: 'tesla', title: '特斯拉雷电 (Tesla Arc)', class: '超维共鸣', icon: 'fa-bolt', desc: '前置需拥有电磁 EM 晶核。所有子弹物理碰撞瞬间有 40% 概率触发 350px 链式高频雷暴。' },
+    { id: 'implosion', title: '折跃重力星轨 (Warp Singularity)', class: '超维共鸣', icon: 'fa-circle-notch', desc: '战术折跃(Shift)在起点与终点残留轨迹上施加引力聚能拉扯流星。' },
+    { id: 'antimatter', title: '反物质过载 (Antimatter Overload)', class: '混沌魔改', icon: 'fa-radiation', desc: '主武器基础伤害疯狂暴涨 80%，但飞船最大 HP 永久缩减 30%，极限火力输出。' }
+];
+
+let loadoutState = { equipped: [], slots: [], comboKey: '' };
+let _lastStripSig = null;
+
+function loadoutThemeColor(mod) {
+    return mod.class === '超维共鸣' ? 'amber' : (mod.class === '混沌魔改' ? 'rose' : 'cyan');
+}
+
+function updateLoadoutUI(equipped, slots, comboKey) {
+    loadoutState.equipped = Array.isArray(equipped) ? equipped : [];
+    loadoutState.slots = Array.isArray(slots) ? slots : [];
+    loadoutState.comboKey = comboKey || '';
+    renderLoadoutStrip();
+    const panel = document.getElementById('loadoutPanel');
+    if (panel && !panel.classList.contains('hidden')) renderLoadoutPanel();
+}
+window.updateLoadoutUI = updateLoadoutUI;
+
+function renderLoadoutStrip() {
+    const strip = document.getElementById('loadoutStrip');
+    const iconsWrap = document.getElementById('loadoutStripIcons');
+    if (!strip || !iconsWrap) return;
+
+    const equipped = loadoutState.equipped;
+    // 仅在装配集合变化时重建 DOM，避免每帧 innerHTML 刷新
+    const sig = equipped.join(',');
+    if (sig === _lastStripSig) return;
+    _lastStripSig = sig;
+
+    if (!equipped || equipped.length === 0) {
+        strip.classList.add('hidden');
+        strip.classList.remove('flex');
+        return;
+    }
+    strip.classList.remove('hidden');
+    strip.classList.add('flex');
+
+    const colorBy = {
+        cyan: 'text-cyan-300 border-cyan-500/40 bg-cyan-950/40',
+        amber: 'text-amber-300 border-amber-500/40 bg-amber-950/40',
+        rose: 'text-rose-300 border-rose-500/40 bg-rose-950/40'
+    };
+    let html = '';
+    equipped.forEach(id => {
+        const mod = LOADOUT_MOD_POOL.find(m => m.id === id);
+        if (!mod) return;
+        const c = colorBy[loadoutThemeColor(mod)] || colorBy.cyan;
+        html += `<span class="w-5 h-5 rounded-md border flex items-center justify-center text-[9px] ${c}" title="${mod.title}"><i class="fa-solid ${mod.icon}"></i></span>`;
+    });
+    iconsWrap.innerHTML = html;
+}
+
+function renderLoadoutPanel() {
+    const list = document.getElementById('loadoutList');
+    const countEl = document.getElementById('loadoutCount');
+    if (!list) return;
+
+    const equipped = loadoutState.equipped || [];
+    const slots = loadoutState.slots || [];
+    const hasEM = slots.includes('EM') || (loadoutState.comboKey || '').includes('EM');
+    if (countEl) countEl.innerText = equipped.length;
+
+    const colorBy = {
+        cyan: { tag: 'text-cyan-300 border-cyan-500/40 bg-cyan-500/10', icon: 'text-cyan-300 border-cyan-500/40 bg-cyan-950/40', glow: 'border-cyan-500/40' },
+        amber: { tag: 'text-amber-300 border-amber-500/40 bg-amber-500/10', icon: 'text-amber-300 border-amber-500/40 bg-amber-950/40', glow: 'border-amber-500/40' },
+        rose: { tag: 'text-rose-300 border-rose-500/40 bg-rose-500/10', icon: 'text-rose-300 border-rose-500/40 bg-rose-950/40', glow: 'border-rose-500/40' }
+    };
+
+    let html = '';
+    LOADOUT_MOD_POOL.forEach(mod => {
+        const isEquipped = equipped.includes(mod.id);
+        const locked = (mod.id === 'tesla' && !hasEM && !isEquipped);
+        const theme = colorBy[loadoutThemeColor(mod)] || colorBy.cyan;
+
+        const cardCls = isEquipped
+            ? `bg-gray-900/70 border ${theme.glow} shadow-lg`
+            : 'bg-gray-900/30 border border-white/5 opacity-55';
+        const iconCls = isEquipped ? theme.icon : 'text-gray-600 border-white/10 bg-gray-950/40';
+
+        let statusBadge;
+        if (isEquipped) {
+            statusBadge = `<span class="text-[8px] font-black px-1.5 py-0.5 rounded border uppercase tracking-widest shrink-0 ${theme.tag}"><i class="fa-solid fa-check mr-0.5"></i>已装配</span>`;
+        } else if (locked) {
+            statusBadge = `<span class="text-[8px] font-black px-1.5 py-0.5 rounded text-amber-500/80 border border-amber-500/20 uppercase tracking-widest shrink-0"><i class="fa-solid fa-lock mr-0.5"></i>需 EM 晶核</span>`;
+        } else {
+            statusBadge = `<span class="text-[8px] font-black px-1.5 py-0.5 rounded text-gray-500 border border-white/10 uppercase tracking-widest shrink-0">未装配</span>`;
+        }
+
+        html += `
+            <div class="flex items-start gap-3 p-3 rounded-xl ${cardCls} transition">
+                <div class="w-9 h-9 rounded-lg border flex items-center justify-center text-sm shrink-0 ${iconCls}">
+                    <i class="fa-solid ${mod.icon}"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-sm font-black ${isEquipped ? 'text-white' : 'text-gray-400'} truncate">${mod.title}</span>
+                        ${statusBadge}
+                    </div>
+                    <p class="text-[11px] leading-snug mt-1 ${isEquipped ? 'text-gray-300' : 'text-gray-500'}">${mod.desc}</p>
+                </div>
+            </div>`;
+    });
+    list.innerHTML = html;
+}
+
+function loadoutPause() {
+    if (window.gameWorker) window.gameWorker.postMessage({ type: 'pauseGame' });
+    else if (window.gameEngine) window.gameEngine.isPaused = true;
+}
+function loadoutResume() {
+    if (window.gameWorker) window.gameWorker.postMessage({ type: 'resumeGame' });
+    else if (window.gameEngine) window.gameEngine.isPaused = false;
+}
+
+function openLoadoutPanel() {
+    const panel = document.getElementById('loadoutPanel');
+    if (!panel) return;
+    renderLoadoutPanel();
+    panel.classList.remove('hidden');
+    loadoutPause();
+    if (typeof sfx !== 'undefined' && sfx.playPowerup) sfx.playPowerup();
+}
+function closeLoadoutPanel() {
+    const panel = document.getElementById('loadoutPanel');
+    if (!panel) return;
+    panel.classList.add('hidden');
+    loadoutResume();
+}
+
+(function bindLoadoutUI() {
+    const strip = document.getElementById('loadoutStrip');
+    const closeBtn = document.getElementById('loadoutCloseBtn');
+    if (strip) strip.addEventListener('click', openLoadoutPanel);
+    if (closeBtn) closeBtn.addEventListener('click', closeLoadoutPanel);
+})();

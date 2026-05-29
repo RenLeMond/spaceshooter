@@ -1,5 +1,5 @@
 // =============================================
-// 星海猎手 V6: GameEngine - ENTITIES 模块
+// 星海猎手 V7: GameEngine - ENTITIES 模块
 // =============================================
 
 // 晶核槽 HUD 短标签 — Worker / 主线程共用（var 供 classic script 跨文件访问）
@@ -52,6 +52,53 @@ const WEAPONS_NAMES = {
     'Frost+Rad': '【绝对静止视界】',
     'Fire+Rad': '【坍缩黑洞星云爆】'
 };
+
+// V7: Roguelike 模组定义表 — 模块级常量，engine_entities.js 与 main.js 共用
+var ROGUE_MOD_DEFINITIONS = [
+    { id: 'split', title: '多重散射 (Split Shot)', class: '通用', icon: 'fa-cubes', color: 'cyan', desc: '主炮额外向左右两翼扇形发射 +2 侧向子弹，但基础主炮单发伤害削减 15%。' },
+    { id: 'heavy', title: '重力巨弹 (Heavy Mag)', class: '通用', icon: 'fa-compress', color: 'purple', desc: '子弹体积物理增大 40%，且穿透（Pierce）+1，但主炮开火频率降低 10%。' },
+    { id: 'drone', title: '先驱无人机 (Vanguard Drone)', class: '通用', icon: 'fa-shield-halved', color: 'rose', desc: '加挂一架独立的智能索敌巡航能盾僚机，自动对附近流星释放 15 点的电浆能量打击。' },
+    { id: 'tesla', title: '特斯拉雷电 (Tesla Arc)', class: '超维共鸣', icon: 'fa-bolt', color: 'amber', desc: '前置需拥有电磁 EM 晶核。所有子弹物理碰撞瞬间有 40% 概率触发 350px 链式高频雷暴。' },
+    { id: 'implosion', title: '折跃重力星轨 (Warp Singularity)', class: '超维共鸣', icon: 'fa-circle-notch', color: 'cyan', desc: '战术折跃(Shift)在起点与终点残留轨迹上施加引力聚能拉扯流星。' },
+    { id: 'antimatter', title: '反物质过载 (Antimatter Overload)', class: '混沌魔改', icon: 'fa-radiation', color: 'rose', desc: '主武器基础伤害疯狂暴涨 80%，但飞船最大 HP 永久缩减 30%，极限火力输出。' }
+];
+
+// V7: Fisher-Yates 洗牌工具函数 (0-GC 原地洗牌)
+function shuffleArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+    return arr;
+}
+
+// V7: 先驱者六角星盘「永久天赋矩阵」定义 — Worker / 主线程共用 (var 供跨文件 classic script 访问)
+// 局外 Meta 永久升级：用局内收集的合金废料(scrap)点亮，持久化于 localStorage('space_v7_talents')，开局自动生效。
+var TALENT_DEFINITIONS = [
+    { id: 'A', name: '量子超频催化', en: 'QUANTUM OVERCLOCK', icon: 'fa-gauge-high', color: 'cyan',    cost: 120, maxLevel: 3, desc: '折跃(Shift)充能速度永久 +15% / 级' },
+    { id: 'B', name: '火控晶核增幅', en: 'CORE AMPLIFICATION', icon: 'fa-burst',      color: 'rose',    cost: 150, maxLevel: 3, desc: '所有子弹基础伤害永久 +8% / 级' },
+    { id: 'C', name: '反物质纳米力场', en: 'ANTIMATTER FIELD',  icon: 'fa-shield-halved', color: 'cyan', cost: 100, maxLevel: 3, desc: '受到的一切伤害永久 -10% / 级' },
+    { id: 'D', name: '磁力量子虹吸', en: 'MAGNET SIPHON',      icon: 'fa-magnet',     color: 'emerald', cost: 80,  maxLevel: 3, desc: '废料 / 经验吸附半径永久 +50px / 级' },
+    { id: 'E', name: '僚机副武器齐射', en: 'WINGMAN VOLLEY',    icon: 'fa-angles-up',  color: 'rose',    cost: 180, maxLevel: 2, desc: '开火时 +20% / 级 概率追加侧翼齐射' }
+];
+
+function defaultTalents() {
+    return { A: 0, B: 0, C: 0, D: 0, E: 0 };
+}
+
+// 从 localStorage 容错读取并按各天赋 maxLevel 夹取等级，返回规范化的 {A..E} 对象
+function loadTalents() {
+    const t = defaultTalents();
+    const raw = safeReadJSON('space_v7_talents', null);
+    if (raw && typeof raw === 'object') {
+        for (let i = 0; i < TALENT_DEFINITIONS.length; i++) {
+            const def = TALENT_DEFINITIONS[i];
+            const v = raw[def.id];
+            if (Number.isFinite(v)) t[def.id] = Math.max(0, Math.min(Math.floor(v), def.maxLevel));
+        }
+    }
+    return t;
+}
 
 Object.assign(GameEngine.prototype, {
     updateWingmen(dtClamped) {
@@ -307,6 +354,18 @@ Object.assign(GameEngine.prototype, {
                     this.spawnBulletInPool({ x: p.x, y: p.y - 30, vx: 0, vy: -15, radius: 4, damage: 20, color: '#06b6d4', pierce: 1 });
                 }
             }
+
+            if (p.equippedMods && p.equippedMods.includes('split')) {
+                const baseColor = comboKey ? '#c084fc' : (slots[0] === 'EM' ? '#22d3ee' : (slots[0] === 'Frost' ? '#3b82f6' : (slots[0] === 'Fire' ? '#f43f5e' : (slots[0] === 'Rad' ? '#fbbf24' : '#06b6d4'))));
+                this.spawnBulletInPool({ x: p.x - 16, y: p.y - 20, vx: -2.5, vy: -12.5, radius: 4, damage: 15, color: baseColor, isSplitBullet: true });
+                this.spawnBulletInPool({ x: p.x + 16, y: p.y - 20, vx: 2.5, vy: -12.5, radius: 4, damage: 15, color: baseColor, isSplitBullet: true });
+            }
+
+            // V7 永久天赋 E「僚机副武器齐射」：开火时按概率追加一对侧翼副炮齐射
+            if (this.talents && this.talents.E > 0 && Math.random() < 0.20 * this.talents.E) {
+                this.spawnBulletInPool({ x: p.x - 22, y: p.y - 8, vx: -3, vy: -11, radius: 3.5, damage: 14, color: '#fbbf24', isSplitBullet: true });
+                this.spawnBulletInPool({ x: p.x + 22, y: p.y - 8, vx: 3, vy: -11, radius: 3.5, damage: 14, color: '#fbbf24', isSplitBullet: true });
+            }
         }
     },
 
@@ -422,6 +481,22 @@ Object.assign(GameEngine.prototype, {
             maxHp = Math.ceil(size * 1.1);
         }
 
+        // Endless mode non-linear scaling
+        if (this.endlessMode) {
+            const waveFactor = this.wave - 1;
+            const hpScale = Math.pow(1 + 0.42 * waveFactor, 1.15);
+            const speedScale = Math.pow(1 + 0.12 * waveFactor, 0.85);
+            maxHp = Math.ceil(maxHp * hpScale);
+            vy *= speedScale;
+        }
+
+        // Phase Shield spawning probability (15% chance in endless mode for non-tiny meteors)
+        let shieldCount = 0;
+        if (this.endlessMode && Math.random() < 0.15 && size > 30 && xOverride === null) {
+            type = 'phase_shield';
+            shieldCount = 3;
+        }
+
         const numPoints = Math.floor(Math.random() * 4) + 8;
         const offsets = this.scratchMeteorOffsets;
         for (let i = 0; i < numPoints; i++) {
@@ -442,6 +517,7 @@ Object.assign(GameEngine.prototype, {
             spinSpeed: (Math.random() * 0.04 - 0.02),
             offsets: offsets,
             numPoints: numPoints,
+            shieldCount: shieldCount,
             color: this.getMeteorColor(type)
         });
     },
@@ -450,6 +526,7 @@ Object.assign(GameEngine.prototype, {
         switch(type) {
             case 'splitter': return '#d946ef';
             case 'fast': return '#fb923c';
+            case 'phase_shield': return '#06b6d4';
             default: return '#94a3b8';
         }
     },
@@ -474,7 +551,7 @@ Object.assign(GameEngine.prototype, {
         p.active = true;
     },
 
-    pickupPowerup(type) {
+    pickupPowerup(type, item = null) {
         sfx.playPowerup();
 
         if (['EM', 'Frost', 'Fire', 'Rad'].includes(type)) {
@@ -482,7 +559,9 @@ Object.assign(GameEngine.prototype, {
             return;
         }
 
-        this.addFloatText(this.player.x, this.player.y - 40, `${type.toUpperCase()}!`, '#4ade80', 20);
+        if (type !== 'exp') {
+            this.addFloatText(this.player.x, this.player.y - 40, `${type.toUpperCase()}!`, '#4ade80', 20);
+        }
         switch(type) {
             case 'heal':
                 this.player.hp = Math.min(this.player.maxHp, this.player.hp + 40);
@@ -495,6 +574,10 @@ Object.assign(GameEngine.prototype, {
             case 'score':
                 this.score += 500;
                 this.showToast("获取星空失落密匙 +500分");
+                break;
+            case 'exp':
+                // 经验值由水晶携带（随陨石体积缩放），无值时给保底 5
+                this.gainExp(item && item.expValue ? item.expValue : 5);
                 break;
         }
     },
@@ -531,6 +614,22 @@ Object.assign(GameEngine.prototype, {
             p.vy = 2.2 + Math.random() * 0.8;
             p.pulse = 0;
             p.active = true;
+        }
+
+        // V7: 掉落经验微粒 (EXP Crystals)
+        // 仅中大型陨石掉落，且只掉 1 颗；价值随体积缩放，避免小陨石刷级过快
+        if (m.size >= 30) {
+            const p = this.acquirePoolSlot(this.powerups);
+            if (p) {
+                p.x = m.x + (Math.random() * 30 - 15);
+                p.y = m.y + (Math.random() * 30 - 15);
+                p.type = 'exp';
+                p.vy = 1.8 + Math.random() * 0.8;
+                p.pulse = 0;
+                // size30→5  size50→8  size70→11
+                p.expValue = Math.max(4, Math.round(m.size * 0.16));
+                p.active = true;
+            }
         }
 
         if (Math.random() < 0.12) {
@@ -626,6 +725,7 @@ Object.assign(GameEngine.prototype, {
             case 'Rad': return '#fbbf24';
             case 'shield': return '#06b6d4';
             case 'heal': return '#10b981';
+            case 'exp': return '#22d3ee';
             default: return '#fbbf24';
         }
     },
@@ -638,7 +738,164 @@ Object.assign(GameEngine.prototype, {
             case 'Rad': return 'RA';
             case 'shield': return '🛡️';
             case 'heal': return '❤️';
+            case 'exp': return '⚡';
             default: return '⚙️';
+        }
+    },
+
+    gainExp(amount) {
+        if (!this.player || !this.isRunning || this.isPaused) return;
+        this.player.exp += amount;
+        this.addFloatText(this.player.x + (Math.random() * 40 - 20), this.player.y - 20, `+${amount} XP`, '#22d3ee', 12);
+        
+        if (this.player.exp >= this.player.nextLevelExp) {
+            this.player.exp -= this.player.nextLevelExp;
+            this.player.level++;
+            // 指数量级经验递增：基数 120，倍率 1.45，让满构装需要打满一整局
+            this.player.nextLevelExp = Math.floor(120 * Math.pow(1.45, this.player.level - 1));
+            this.triggerLevelUp();
+        }
+        this.updateHUD();
+    },
+
+    // 返回当前可供 3 选 1 的模组（满足前置条件且未装配），供升级弹窗与"无可选"兜底共用
+    getAvailableMods() {
+        const equipped = (this.player && this.player.equippedMods) || [];
+        const slots = (this.player && this.player.elementSlots) || [];
+        const hasEM = slots.includes('EM') || (this.player && this.player.comboKey && this.player.comboKey.includes('EM'));
+        return ROGUE_MOD_DEFINITIONS.filter(mod => {
+            if (mod.id === 'tesla' && !hasEM) return false;
+            if (equipped.includes(mod.id)) return false;
+            return true;
+        });
+    },
+
+    // 所有超维模组已装配（或暂无满足前置条件的模组）时的替代奖励，避免弹出空白卡牌卡死
+    grantLevelUpFallback() {
+        sfx.playPowerup();
+        let heal = 0;
+        if (this.player) {
+            heal = Math.ceil(this.player.maxHp * 0.25);
+            this.player.hp = Math.min(this.player.maxHp, this.player.hp + heal);
+            this.addFloatText(this.player.x, this.player.y - 45, `LV.${this.player.level} · 满构装 +${heal}HP`, '#22d3ee', 16);
+        }
+        this.score += 800;
+        this.showToast(`🧬 超维模组已全数装配！本次升级转化为 +${heal} HP 与 +800 分奖励`);
+        this.updateHUD();
+    },
+
+    triggerLevelUp() {
+        // 无可选模组时不弹卡，直接发放替代奖励并继续战斗（修复"全选完后空白无法返回"软锁）
+        if (this.getAvailableMods().length === 0) {
+            this.grantLevelUpFallback();
+            return;
+        }
+
+        this.isPaused = true;
+        sfx.playPowerup();
+        this.createScreenShake(12);
+
+        if (!this.isWorkerContext && this.rogueUpgradeScreen && this.rogueCardsContainer && this.rogueLevelVal) {
+            this.rogueLevelVal.innerText = this.player.level;
+            this.rogueUpgradeScreen.classList.remove('hidden');
+            this.renderRogueUpgradeCards();
+        } else {
+            // Worker 模式：DOM 不可用（document mock 无 createElement），交由主线程渲染 3 选 1 卡牌
+            if (typeof self !== 'undefined' && typeof self.postMessage === 'function') {
+                self.postMessage({ 
+                    type: 'levelUpTrigger', 
+                    level: this.player.level,
+                    elementSlots: this.player.elementSlots || [],
+                    comboKey: this.player.comboKey || '',
+                    equippedMods: this.player.equippedMods || []
+                });
+            }
+        }
+    },
+
+    renderRogueUpgradeCards() {
+        this.rogueCardsContainer.innerHTML = '';
+        
+        const equipped = this.player.equippedMods || [];
+        const slots = this.player.elementSlots || [];
+        const hasEM = slots.includes('EM') || (this.player.comboKey && this.player.comboKey.includes('EM'));
+
+        // 过滤：前置条件 + 去重已装备模组
+        const availablePool = ROGUE_MOD_DEFINITIONS.filter(mod => {
+            if (mod.id === 'tesla' && !hasEM) return false;
+            if (equipped.includes(mod.id)) return false; // 去重
+            return true;
+        });
+
+        // Fisher-Yates 洗牌 + 取前 3 张
+        const shuffled = shuffleArray([...availablePool]);
+        const selected = shuffled.slice(0, 3);
+
+        // 兜底防软锁：无可选模组时关闭弹窗并恢复战斗（triggerLevelUp 通常已拦截，此处双保险）
+        if (selected.length === 0) {
+            this.rogueUpgradeScreen.classList.add('hidden');
+            this.isPaused = false;
+            return;
+        }
+
+        selected.forEach(mod => {
+            const card = document.createElement('div');
+            const themeClass = mod.class === '超维共鸣' ? 'rogue-amber' : (mod.class === '混沌魔改' ? 'rogue-rose' : 'rogue-cyan');
+            card.className = `rogue-card ${themeClass}`;
+
+            card.innerHTML = `
+                <div class="rogue-scan"></div>
+                <div class="rogue-icon"><i class="fa-solid ${mod.icon}"></i></div>
+                <div class="rogue-body pointer-events-none">
+                    <div class="flex items-center justify-between">
+                        <span class="rogue-name">${mod.title}</span>
+                        <span class="rogue-class-tag">${mod.class}</span>
+                    </div>
+                    <p class="rogue-desc mt-1">${mod.desc}</p>
+                </div>
+                <div class="rogue-action-hint pointer-events-none">
+                    <i class="fa-solid fa-circle-chevron-right animate-pulse"></i>
+                </div>
+            `;
+            
+            card.addEventListener('click', () => {
+                this.applyModCard(mod.id);
+                this.rogueUpgradeScreen.classList.add('hidden');
+                this.isPaused = false;
+                sfx.playPowerup();
+                this.updateHUD();
+            });
+            this.rogueCardsContainer.appendChild(card);
+        });
+    },
+
+    applyModCard(modId) {
+        if (!this.player.equippedMods) this.player.equippedMods = [];
+        this.player.equippedMods.push(modId);
+
+        const names = {
+            'split': '多重散射弹幕',
+            'heavy': '重力穿透巨弹',
+            'drone': '先驱切割僚机',
+            'tesla': '特斯拉链式雷暴',
+            'implosion': '时空引力星轨',
+            'antimatter': '反物质火力过载'
+        };
+
+        this.addFloatText(this.player.x, this.player.y - 50, `+${names[modId] || modId}`, '#22d3ee', 16);
+        this.showToast(`🧬 成功装配超维模组：${names[modId] || modId}！`);
+
+        // 应用特定属性调节
+        if (modId === 'heavy') {
+            this.player.fireInterval = Math.floor(this.player.fireInterval * 1.12);
+        } else if (modId === 'drone') {
+            this.hangar.turretLevel++;
+            this.updateWingmen(1.0);
+        } else if (modId === 'antimatter') {
+            this.player.maxHp = Math.floor(this.player.maxHp * 0.7);
+            if (this.player.hp > this.player.maxHp) {
+                this.player.hp = this.player.maxHp;
+            }
         }
     }
 

@@ -1,4 +1,4 @@
-// ⚡ 《星海猎手 V6：星能折跃与超维涂装》Web Worker 子线程引擎核心
+// ⚡ 《星海猎手 V7：机载超维构装与深空天象》Web Worker 子线程引擎核心
 // 声明顶层代理与全局 Mock 防线，使得包含 DOM/Audio 依赖的 JS 文件能在 DOM-less Web Worker 中直接执行
 self.document = {
     getElementById: (id) => {
@@ -37,6 +37,7 @@ self.window = {
             if (key === 'space_unlocked_skins') return JSON.stringify(self.unlockedSkins || ["default"]);
             if (key === 'space_current_skin') return self.currentSkin || 'default';
             if (key === 'space_best_score') return String(self.bestScore || 0);
+            if (key === 'space_v7_talents') return JSON.stringify(self.talents || { A: 0, B: 0, C: 0, D: 0, E: 0 });
             return null;
         },
         setItem: (key, val) => {
@@ -50,6 +51,10 @@ self.window = {
             }
             if (key === 'space_unlocked_skins') {
                 self.unlockedSkins = JSON.parse(val);
+                postMessage({ type: 'saveLocalStorage', key, val });
+            }
+            if (key === 'space_v7_talents') {
+                try { self.talents = JSON.parse(val); } catch (e) {}
                 postMessage({ type: 'saveLocalStorage', key, val });
             }
         }
@@ -169,6 +174,15 @@ class GameEngineWorker extends GameEngine {
         if (last.bossType !== payload.bossType) return true;
         if (last.bossTitle !== payload.bossTitle) return true;
         if (last.bossTier !== payload.bossTier) return true;
+        if (last.level !== payload.level) return true;
+        // 经验条量化到 1% — 避免每点 XP 浮动都触发跨线程消息
+        const lastExpPct = last.nextLevelExp > 0 ? (last.exp / last.nextLevelExp * 100 | 0) : 0;
+        const newExpPct = payload.nextLevelExp > 0 ? (payload.exp / payload.nextLevelExp * 100 | 0) : 0;
+        if (lastExpPct !== newExpPct) return true;
+        // 已装配构装数量变化（升级选模组后）需要刷新构装面板
+        const lastMods = last.equippedMods ? last.equippedMods.length : 0;
+        const newMods = payload.equippedMods ? payload.equippedMods.length : 0;
+        if (lastMods !== newMods) return true;
         // bossParts 浅比对（结构稳定时 4 个数字字段）
         const lp = last.bossParts, np = payload.bossParts;
         if ((lp === null) !== (np === null)) return true;
@@ -257,7 +271,13 @@ class GameEngineWorker extends GameEngine {
             bossParts: bossParts,
             bossType: bossType,
             bossTitle: bossTitle,
-            bossTier: this.bossTier
+            bossTier: this.bossTier,
+            level: this.player ? (this.player.level || 1) : 1,
+            exp: this.player ? (this.player.exp || 0) : 0,
+            nextLevelExp: this.player ? (this.player.nextLevelExp || 120) : 120,
+            // V7: 已装配的机载量子构装 + 当前晶核组合，供主线程渲染构装总览面板
+            equippedMods: this.player && this.player.equippedMods ? this.player.equippedMods.slice() : [],
+            comboKey: comboKey
         };
         if (this._hudIsDirty(payload)) {
             postMessage(payload);
@@ -398,6 +418,7 @@ self.onmessage = function(e) {
             self.unlockedSkins = data.unlockedSkins || ["default"];
             self.currentSkin = data.currentSkin || 'default';
             self.bestScore = data.bestScore || 0;
+            self.talents = data.talents || { A: 0, B: 0, C: 0, D: 0, E: 0 };
             
             engineInstance = new GameEngineWorker();
             
@@ -432,6 +453,12 @@ self.onmessage = function(e) {
         case 'controlMode':
             if (engineInstance) {
                 engineInstance.controlMode = data.mode;
+            }
+            break;
+
+        case 'campaignMode':
+            if (engineInstance) {
+                engineInstance.endlessMode = !!data.isEndless;
             }
             break;
 
@@ -548,6 +575,10 @@ self.onmessage = function(e) {
                 engineInstance.hangar = data.hangar;
                 engineInstance.unlockedSkins = data.unlockedSkins;
                 engineInstance.currentSkin = data.currentSkin;
+                if (data.talents) {
+                    engineInstance.talents = data.talents;
+                    self.talents = data.talents;
+                }
                 
                 // 强制更新僚机对象，如果升级了僚机的话 — side 必须显式设置（见 wingmanFire 对 w.side 的使用）
                 if (engineInstance.hangar.turretLevel > 0 && engineInstance.wingmen.length === 0) {
@@ -574,6 +605,13 @@ self.onmessage = function(e) {
             }
             break;
             
+        case 'pauseGame':
+            // 仅暂停模拟（构装总览面板打开时），不弹出暂停菜单
+            if (engineInstance) {
+                engineInstance.isPaused = true;
+            }
+            break;
+
         case 'resumeGame':
             if (engineInstance) {
                 engineInstance.isPaused = false;
@@ -592,6 +630,15 @@ self.onmessage = function(e) {
                 } else {
                     engineInstance.stopLoop();
                 }
+            }
+            break;
+            
+        case 'modSelected':
+            if (engineInstance) {
+                engineInstance.applyModCard(data.modId);
+                engineInstance.isPaused = false;
+                engineInstance.startLoop();
+                engineInstance.updateHUD();
             }
             break;
     }

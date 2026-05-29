@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>《星海猎手 V7：构装晶核与无尽深空》永久先驱者天赋星盘机库</title>
+    <!-- Tailwind CSS & Icons & Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Noto+Sans+SC:wght@300;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --color-bg: #020206;
+            --color-panel: rgba(8, 12, 28, 0.7);
+            --color-border: rgba(255, 255, 255, 0.04);
+            --neon-cyan: hsl(180, 100%, 50%);
+            --neon-purple: hsl(280, 100%, 65%);
+            --neon-gold: hsl(38, 92%, 50%);
+            --neon-rose: hsl(343, 90%, 60%);
+        }
+
+        body {
+            background-color: var(--color-bg);
+            color: #e2e8f0;
+            font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* V7 Nebula Ambient background */
+        .space-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: 
+                radial-gradient(circle at 15% 20%, rgba(6, 182, 212, 0.06) 0%, transparent 45%),
+                radial-gradient(circle at 85% 75%, rgba(139, 92, 246, 0.07) 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(244, 63, 94, 0.03) 0%, transparent 60%),
+                #020205;
+            z-index: -3;
+        }
+
+        /* Rotating cosmic stardust layer */
+        .dust-layer {
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background-image: 
+                radial-gradient(1px 1px at 40px 80px, #ffffff, rgba(0,0,0,0)),
+                radial-gradient(1.5px 1.5px at 180px 240px, rgba(34, 211, 238, 0.5), rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 320px 480px, rgba(168, 85, 247, 0.4), rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 600px 600px;
+            animation: slowRotate 200s linear infinite;
+            opacity: 0.4;
+            z-index: -2;
+        }
+
+        @keyframes slowRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Glassmorphism panel styling */
+        .glass-panel {
+            background: var(--color-panel);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--color-border);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .glass-panel:hover {
+            border-color: rgba(6, 182, 212, 0.25);
+            box-shadow: 0 25px 60px rgba(6, 182, 212, 0.08);
+        }
+
+        .neon-border-cyan { border-color: rgba(6, 182, 212, 0.35); box-shadow: 0 0 25px rgba(6, 182, 212, 0.08); }
+        .neon-border-purple { border-color: rgba(168, 85, 247, 0.35); box-shadow: 0 0 25px rgba(168, 85, 247, 0.08); }
+        .neon-border-gold { border-color: rgba(245, 158, 11, 0.35); box-shadow: 0 0 25px rgba(245, 158, 11, 0.08); }
+
+        .neon-text-cyan { text-shadow: 0 0 10px rgba(6, 182, 212, 0.6), 0 0 20px rgba(6, 182, 212, 0.2); }
+        .neon-text-purple { text-shadow: 0 0 10px rgba(168, 85, 247, 0.6), 0 0 20px rgba(168, 85, 247, 0.2); }
+        .neon-text-gold { text-shadow: 0 0 10px rgba(245, 158, 11, 0.6), 0 0 20px rgba(245, 158, 11, 0.2); }
+
+        /* Talent node SVG animations */
+        .talent-node {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .talent-node.locked {
+            fill: #1e1b4b;
+            stroke: #312e81;
+            filter: drop-shadow(0 0 2px rgba(0,0,0,0.5));
+        }
+        .talent-node.unlocked {
+            fill: #083344;
+            stroke: #0891b2;
+            filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.4));
+        }
+        .talent-node.maxed {
+            fill: #311042;
+            stroke: #d946ef;
+            filter: drop-shadow(0 0 12px rgba(217, 70, 239, 0.5));
+        }
+
+        .radar-line {
+            animation: rotateRadar 12s linear infinite;
+        }
+        @keyframes rotateRadar {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* 3D card tilt effect */
+        .tilt-card {
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        .cursor-blink::after {
+            content: '|';
+            animation: blink 1.2s infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        /* Combat floats */
+        #combatFloatContainer {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            inset: 0;
+        }
+        .float-dmg {
+            position: absolute;
+            font-weight: 900;
+            font-family: 'Outfit', sans-serif;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+            animation: floatDamage 1s ease-out forwards;
+        }
+        @keyframes floatDamage {
+            0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
+            15% { transform: translate(-50%, -100%) scale(1.3); opacity: 1; }
+            100% { transform: translate(-50%, -200%) scale(0.85); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="min-h-screen relative pb-16">
+
+    <!-- Ambient stardust layer -->
+    <div class="space-bg"></div>
+    <div class="dust-layer"></div>
+    
+    <!-- Combat float texts container -->
+    <div id="combatFloatContainer"></div>
+
+    <!-- Navigation Header -->
+    <nav class="sticky top-0 w-full z-50 glass-panel border-t-0 border-x-0 bg-slate-950/75 backdrop-blur-md px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-purple-600 to-rose-500 flex items-center justify-center text-white text-lg font-black shadow-lg shadow-cyan-500/25">
+                <i class="fa-solid fa-compass animate-pulse"></i>
+            </div>
+            <div>
+                <span class="text-base font-black tracking-wider text-white neon-text-cyan">星海猎手 V7</span>
+                <span class="text-[9px] text-cyan-400 font-bold block uppercase tracking-widest -mt-1">PIONEER META-HANGAR</span>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <button onclick="toggleAudioReactor()" id="reactorBtn" class="px-4 py-2 glass-panel border-cyan-500/20 hover:border-cyan-400/50 text-cyan-400 text-[10px] font-black rounded-xl tracking-wider uppercase active:scale-95 flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-atom text-xs animate-spin-slow"></i>
+                <span>核反应堆: <span id="reactorStatus" class="text-rose-500">离线</span></span>
+            </button>
+            <a href="space_shooter.html" class="px-4 py-2 border border-cyan-500/30 hover:border-cyan-400 transition text-cyan-400 text-[10px] font-black rounded-xl tracking-wider uppercase bg-cyan-500/5 active:scale-95">
+                进入折跃战区 <i class="fa-solid fa-plane-departure ml-1.5"></i>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto px-4 mt-8 space-y-12">
+
+        <!-- Banner Title -->
+        <section class="text-center space-y-4 max-w-3xl mx-auto pt-6 relative">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-cyan-500/10 border border-cyan-500/30 rounded-full text-[10px] font-black text-cyan-400 uppercase tracking-widest">
+                <i class="fa-solid fa-circle-nodes text-xs animate-pulse text-cyan-400"></i>先驱者先遣永久核能星盘整备机库
+            </div>
+            <h1 class="text-4xl md:text-6xl font-black tracking-tight leading-none text-white uppercase">
+                先驱者核心矩阵天赋树 <br>
+                <span class="text-2xl md:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-500 to-rose-400 font-extrabold block mt-2">
+                    永久合金改装与全息物理流星沙盒
+                </span>
+            </h1>
+            <p class="text-xs text-gray-400 leading-relaxed max-w-xl mx-auto">
+                欢迎来到 V7 先遣级永久整备机库。通过收集战区所获的<b>合金废料 (Scrap)</b>，在此点亮激活永久六角星盘天赋点，加固装甲，重组晶核伤害，并可在右侧的<b>全息物理弹道沙盒</b>中操纵飞船实时开火测试天赋威能！
+            </p>
+        </section>
+
+        <!-- Hangar Matrix Matrix -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+            
+            <!-- Left Console: Six hex matrix tree nodes -->
+            <div class="lg:col-span-5 flex flex-col gap-6">
+                <div class="glass-panel rounded-3xl p-6 border-white/5 flex flex-col justify-between neon-border-purple flex-1">
+                    <div>
+                        <div class="flex justify-between items-center border-b border-white/10 pb-4 mb-4">
+                            <span class="text-xs font-black text-cyan-400 tracking-widest uppercase flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-nodes"></i> 永久天赋先驱矩阵
+                            </span>
+                            <span class="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/30 rounded text-[9px] font-black text-cyan-400" id="scrapDisplay">
+                                METASCRAP: 500
+                            </span>
+                        </div>
+
+                        <!-- Full Talent Hex SVG Star Map -->
+                        <div class="flex items-center justify-center py-4 relative">
+                            <div class="w-full max-w-[280px]">
+                                <svg viewBox="0 0 200 200" class="w-full h-auto">
+                                    <!-- Energy laser wires -->
+                                    <line x1="100" y1="100" x2="60" y2="40" stroke="#1e1b4b" stroke-width="2.5" id="line-A" />
+                                    <line x1="100" y1="100" x2="140" y2="40" stroke="#1e1b4b" stroke-width="2.5" id="line-B" />
+                                    <line x1="100" y1="100" x2="150" y2="100" stroke="#1e1b4b" stroke-width="2.5" id="line-C" />
+                                    <line x1="100" y1="100" x2="100" y2="160" stroke="#1e1b4b" stroke-width="2.5" id="line-D" />
+                                    <line x1="100" y1="100" x2="50" y2="100" stroke="#1e1b4b" stroke-width="2.5" id="line-E" />
+
+                                    <!-- Core Node -->
+                                    <circle cx="100" cy="100" r="14" fill="#0369a1" stroke="#0ea5e9" stroke-width="2" class="cursor-pointer" onclick="selectHangarNode('CORE')" />
+                                    <text x="100" y="102" fill="#fff" font-size="5" font-weight="900" text-anchor="middle" pointer-events="none">CORE</text>
+
+                                    <!-- Node A: Quantum Overclock -->
+                                    <polygon points="60,25 73,32.5 73,47.5 60,55 47,47.5 47,32.5" class="talent-node locked" id="node-A" onclick="selectHangarNode('A')" />
+                                    <text x="60" y="42" fill="#fff" font-size="6.5" font-weight="900" text-anchor="middle" pointer-events="none">A</text>
+
+                                    <!-- Node B: Core Amp -->
+                                    <polygon points="140,25 153,32.5 153,47.5 140,55 127,47.5 127,32.5" class="talent-node locked" id="node-B" onclick="selectHangarNode('B')" />
+                                    <text x="140" y="42" fill="#fff" font-size="6.5" font-weight="900" text-anchor="middle" pointer-events="none">B</text>
+
+                                    <!-- Node C: Antimatter Field -->
+                                    <polygon points="150,85 163,92.5 163,107.5 150,115 137,107.5 137,92.5" class="talent-node locked" id="node-C" onclick="selectHangarNode('C')" />
+                                    <text x="150" y="102" fill="#fff" font-size="6.5" font-weight="900" text-anchor="middle" pointer-events="none">C</text>
+
+                                    <!-- Node D: Magnet Siphon -->
+                                    <polygon points="100,145 113,152.5 113,167.5 100,175 87,167.5 87,152.5" class="talent-node locked" id="node-D" onclick="selectHangarNode('D')" />
+                                    <text x="100" y="162" fill="#fff" font-size="6.5" font-weight="900" text-anchor="middle" pointer-events="none">D</text>
+
+                                    <!-- Node E: Wingman Volley -->
+                                    <polygon points="50,85 63,92.5 63,107.5 50,115 37,107.5 37,92.5" class="talent-node locked" id="node-E" onclick="selectHangarNode('E')" />
+                                    <text x="50" y="102" fill="#fff" font-size="6.5" font-weight="900" text-anchor="middle" pointer-events="none">E</text>
+                                </svg>
+                                <div class="absolute inset-0 border border-white/5 rounded-full pointer-events-none scale-[1.05] border-dashed"></div>
+                            </div>
+                        </div>
+
+                        <!-- Selected Node Info -->
+                        <div class="mt-4 p-4 rounded-2xl bg-black/40 border border-white/5 flex flex-col justify-between min-h-[140px]" id="talentDetailCard">
+                            <div>
+                                <span class="px-2 py-0.5 bg-purple-500/10 border border-purple-500/30 rounded text-[7px] font-black text-purple-400 uppercase tracking-widest" id="talentClassLabel">SYSTEM CORE</span>
+                                <h4 class="text-sm font-black text-white mt-1" id="talentNameText">先驱者核心引擎</h4>
+                                <p class="text-[9px] text-gray-400 mt-1 leading-relaxed" id="talentDescText">
+                                    这是飞船的元聚变核心。所有外部六角天赋节点必须与核心引擎保持高维激光导线导通，才能激活高阶永久属性。
+                                </p>
+                            </div>
+                            <div class="flex justify-between items-center mt-3 pt-3 border-t border-white/5">
+                                <span class="text-[8px] font-mono text-gray-500" id="talentLevelText">ACTIVE</span>
+                                <button id="upgradeTalentBtn" disabled class="px-4 py-2 rounded-lg bg-gray-900 border border-white/10 text-gray-500 text-[9px] font-black uppercase tracking-wider">
+                                    核心引擎默认激活
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reset Talent Button -->
+                    <button onclick="resetHangarTalents()" class="w-full mt-4 py-2.5 border border-white/10 hover:border-rose-500/30 text-xs font-black rounded-xl text-gray-300 hover:text-rose-400 active:scale-95 transition bg-white/5 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-rotate-left"></i> 重置星盘天赋并返还全部废料
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Sandbox: Realtime playable engine sandbox simulator -->
+            <div class="lg:col-span-7 flex flex-col gap-4">
+                <div class="glass-panel rounded-3xl p-4 border-white/5 flex flex-col relative overflow-hidden neon-border-cyan flex-1">
+                    
+                    <div class="flex justify-between items-center mb-3 text-[10px] font-black px-2 z-10">
+                        <span class="text-cyan-400 tracking-widest uppercase flex items-center gap-1.5">
+                            <i class="fa-solid fa-expand animate-pulse"></i> HANGAR HOLOGRAPHIC SANDBOX
+                        </span>
+                        <div class="flex gap-4">
+                            <span class="text-amber-400">核变能量: <span id="simEnergy">100</span>%</span>
+                            <span class="text-gray-400">测试分数: <span id="simScore">000000</span></span>
+                        </div>
+                    </div>
+
+                    <!-- Canvas Aspect container -->
+                    <div class="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-slate-950/90 border border-white/5 shadow-inner">
+                        <canvas id="sandboxCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+
+                        <!-- Canvas overlay trigger -->
+                        <div id="canvasOverlay" class="absolute inset-0 bg-slate-950/85 flex flex-col items-center justify-center p-6 text-center transition-all duration-500">
+                            <div class="w-14 h-14 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xl mb-3 animate-pulse">
+                                <i class="fa-solid fa-crosshairs"></i>
+                            </div>
+                            <span class="text-xs font-black text-white tracking-widest uppercase mb-1">启动高维物理沙盒演练</span>
+                            <p class="text-[9px] text-gray-400 max-w-xs leading-relaxed mb-4">
+                                可使用鼠标或拖拽手指操控飞船位移及偏转。点火充能后，伴随僚机将环绕并自动追踪假想陨石射击！
+                            </p>
+                            <button onclick="startSandboxSim()" class="px-5 py-2 bg-gradient-to-r from-cyan-600 via-purple-600 to-rose-500 active:scale-95 transition rounded-xl text-[9px] font-black tracking-widest uppercase text-white shadow-lg shadow-cyan-600/20">
+                                反应堆点火起航
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 flex justify-between items-center text-[8px] text-gray-500 px-2">
+                        <span>💡 长按或滑动操纵战机及伴飞左右翼僚机，双击 Canvas 触发量子折跃爆破！</span>
+                        <span>[FPS: <span id="fpsText">60</span>]</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Meta interactive Callsign Certificate License card -->
+        <section id="pilot-id-card" class="glass-panel rounded-3xl p-8 border-amber-500/20 bg-gradient-to-br from-amber-950/5 via-slate-950/30 to-indigo-950/5 relative overflow-hidden">
+            <div class="absolute inset-0 pointer-events-none opacity-5 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:20px_20px] z-0"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center relative z-10">
+                <div class="space-y-4">
+                    <div>
+                        <span class="text-[10px] font-black text-cyan-400 uppercase tracking-widest block mb-1">🌌 王牌先驱者战时呼号 (Temporal Callsign)</span>
+                        <input type="text" id="certCallsign" value="GALAXY-HUNTER" class="w-full px-4 py-3 bg-gray-950/80 rounded-xl border border-white/10 text-xs font-bold text-white focus:outline-none focus:border-cyan-400 transition" placeholder="例如：PIONEER-V7">
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-black text-cyan-400 uppercase tracking-widest block mb-1">🧬 星图矩阵加成状况 (Hangar Config)</span>
+                        <div class="p-3 bg-gray-950/70 border border-white/5 rounded-xl flex justify-between items-center text-[10px]">
+                            <div>
+                                <span class="text-gray-500 block text-[8px] uppercase tracking-wider">量子超频能级</span>
+                                <span id="certOverclock" class="font-bold text-cyan-400">LV.0</span>
+                            </div>
+                            <div class="text-gray-600 font-black font-mono">⇋</div>
+                            <div class="text-center">
+                                <span class="text-gray-500 block text-[8px] uppercase tracking-wider">核心增幅倍率</span>
+                                <span id="certCoreBonus" class="font-bold text-purple-400">LV.0</span>
+                            </div>
+                            <div class="text-gray-600 font-black font-mono">⇋</div>
+                            <div class="text-right">
+                                <span class="text-gray-500 block text-[8px] uppercase tracking-wider">纳米力场减免</span>
+                                <span id="certHullField" class="font-bold text-rose-400">LV.0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="compileTemporalLicense()" class="w-full py-4 bg-gradient-to-r from-cyan-600 via-purple-600 to-rose-500 hover:from-cyan-500 hover:to-rose-400 active:scale-95 transition text-white text-xs font-black rounded-2xl tracking-widest uppercase shadow-lg shadow-cyan-600/20">
+                        编译折跃密钥卡 • 锁定内测资质 <i class="fa-solid fa-qrcode ml-1.5 animate-pulse"></i>
+                    </button>
+                </div>
+
+                <!-- License Passport card -->
+                <div class="flex justify-center">
+                    <div id="certCard" class="w-full max-w-[360px] p-6 rounded-3xl bg-slate-950/95 border border-cyan-500/20 flex flex-col justify-between h-[230px] relative overflow-hidden transition-all duration-300 shadow-2xl">
+                        <div class="absolute inset-0 pointer-events-none opacity-10 bg-gradient-to-tr from-cyan-500/20 via-transparent to-rose-500/20"></div>
+                        
+                        <div class="flex justify-between items-start relative z-10">
+                            <div>
+                                <span class="text-[9px] font-black text-cyan-400 tracking-widest block uppercase">TEMPORAL HUNTER LICENSE</span>
+                                <span class="text-[7px] text-gray-500 uppercase block tracking-wider mt-0.5">PROJECT STARSEA HUNTER V7</span>
+                            </div>
+                            <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-base"><i class="fa-solid fa-dna animate-pulse"></i></div>
+                        </div>
+
+                        <div class="my-4 relative z-10">
+                            <span class="text-[7px] text-gray-500 block uppercase">PILOT CALLSIGN</span>
+                            <span id="passCallsign" class="text-2xl font-black text-white tracking-widest neon-text-cyan cursor-blink">GALAXY-HUNTER</span>
+                            
+                            <div class="mt-2 flex items-center gap-1.5 flex-wrap">
+                                <span class="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/30 rounded text-[7px] font-black text-cyan-400 uppercase tracking-widest" id="passLeftLabel">CD: -0%</span>
+                                <span class="px-2 py-0.5 bg-purple-500/10 border border-purple-500/30 rounded text-[7px] font-black text-purple-400 uppercase tracking-widest" id="passRightLabel">ATK: +0%</span>
+                                <span class="px-2 py-0.5 bg-rose-500/10 border border-rose-500/30 rounded text-[7px] font-black text-rose-400 uppercase tracking-widest" id="passScoreLabel">DEF: +0%</span>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-end border-t border-white/5 pt-3 relative z-10">
+                            <div>
+                                <span class="text-[7px] text-gray-500 block uppercase font-bold">SEC-BARCODE KEY</span>
+                                <span id="passSecKey" class="text-[9px] font-mono font-bold text-gray-300 tracking-wider">KEY#8F4A2C-V7</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[8px] font-black text-emerald-400 uppercase tracking-widest animate-pulse block"><i class="fa-solid fa-circle-nodes"></i> CORE STEADY</span>
+                                <span class="text-[6px] text-gray-500 uppercase tracking-wider block mt-0.5">V7 ACTIVE VERIFIED</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="w-full text-center border-t border-white/5 pt-10 mt-16 text-[9px] text-gray-500 tracking-widest">
+        <p>© 2246 STARSEA FLIGHT CONTROL DEEPSPACE COMMAND. ALL RIGHTS RESERVED.</p>
+        <p class="mt-1 text-cyan-500/50 uppercase font-semibold">星海猎手 V7 先遣概念研发与永久改装中心</p>
+    </footer>
+
+    <!-- Audio and Physics Simulators logic -->
+    <script>
+        // ==========================================
+        // 1. WEB AUDIO SYNTHESIZER SOUND ENGINE
+        // ==========================================
+        let audioCtx = null;
+        let ambientHumNode = null;
+        let ambientLfoNode = null;
+
+        function initHangarAudio() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function toggleAudioReactor() {
+            initHangarAudio();
+            const btn = document.getElementById('reactorBtn');
+            const statusText = document.getElementById('reactorStatus');
+
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            if (ambientHumNode) {
+                try {
+                    ambientHumNode.stop();
+                    ambientLfoNode.stop();
+                } catch(e){}
+                ambientHumNode = null;
+                ambientLfoNode = null;
+                statusText.innerText = '离线';
+                statusText.className = 'text-rose-500';
+                btn.classList.remove('neon-border-cyan');
+            } else {
+                ambientHumNode = audioCtx.createOscillator();
+                const filter = audioCtx.createBiquadFilter();
+                const gain = audioCtx.createGain();
+
+                ambientLfoNode = audioCtx.createOscillator();
+                const lfoGain = audioCtx.createGain();
+
+                ambientHumNode.type = 'sawtooth';
+                ambientHumNode.frequency.setValueAtTime(55, audioCtx.currentTime); // 55Hz Low A
+
+                filter.type = 'lowpass';
+                filter.Q.setValueAtTime(4, audioCtx.currentTime);
+                filter.frequency.setValueAtTime(110, audioCtx.currentTime);
+
+                lfoGain.gain.setValueAtTime(35, audioCtx.currentTime);
+                ambientLfoNode.frequency.setValueAtTime(0.25, audioCtx.currentTime); // 0.25Hz
+
+                gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+
+                // Connections
+                ambientLfoNode.connect(lfoGain);
+                lfoGain.connect(filter.frequency);
+                
+                ambientHumNode.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                ambientHumNode.start();
+                ambientLfoNode.start();
+
+                statusText.innerText = '运行中';
+                statusText.className = 'text-emerald-400';
+                btn.classList.add('neon-border-cyan');
+
+                playSynthSound('unlock');
+            }
+        }
+
+        function playSynthSound(type) {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(150, now + 0.1);
+                    gain.gain.setValueAtTime(0.04, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                } 
+                else if (type === 'unlock') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.setValueAtTime(554, now + 0.06);
+                    osc.frequency.setValueAtTime(659, now + 0.12);
+                    osc.frequency.setValueAtTime(880, now + 0.18);
+                    gain.gain.setValueAtTime(0.07, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.65);
+                } 
+                else if (type === 'reset') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(330, now);
+                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.5);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.6);
+                }
+            } catch (e) {
+                console.log("Audio synthesis blocked or unsupported", e);
+            }
+        }
+
+        // ==========================================
+        // 2. META-PROGRESSION TALENT星盘 LOGIC
+        // ==========================================
+        const TALENT_NODES = {
+            'A': { name: '量子超频催化 (Quantum Overclock)', class: 'TACTICAL PATH', desc: '降低战术量子折跃 (Shift) 的冷却能耗 10% - 30%，并将折跃轰鸣的起点终点爆破半径扩大 40px。', cost: 120, maxLevel: 3, level: 0 },
+            'B': { name: '火控晶核增幅 (Core Amplification)', class: 'FIREPOWER PATH', desc: '使机体挂载的单晶核及融合共鸣被动雷击/火球基础伤害永久提升 8% - 24%。', cost: 150, maxLevel: 3, level: 0 },
+            'C': { name: '反物质纳米力场 (Antimatter Field)', class: 'DEFENSE PATH', desc: '在飞船身侧加固一层能核护盾圈，物理减免陨石碰撞所产生的动能碾压伤害 10% - 30%。', cost: 100, maxLevel: 3, level: 0 },
+            'D': { name: '磁力量子虹吸 (Magnet Siphon)', class: 'DEFENSE PATH', desc: '使合金废料 (Scrap) 回收虹吸引力吸引半径扩大 60px。每次吸附 scrap 时，以 5% 几率修复 2% 护盾外壳。', cost: 80, maxLevel: 3, level: 0 },
+            'E': { name: '僚机副武器齐射 (Wingman Volley)', class: 'FIREPOWER PATH', desc: '加挂双联副炮僚机能动。在释放主武器时，有 20% - 40% 的概率追加释放侧翼副武器齐射。', cost: 180, maxLevel: 2, level: 0 }
+        };
+
+        let activeNodeId = 'A';
+        let scrapBalance = 500;
+
+        function loadHangarData() {
+            // Load saved talents from LocalStorage
+            try {
+                const savedTalents = localStorage.getItem('space_v7_talents');
+                if (savedTalents) {
+                    const parsed = JSON.parse(savedTalents);
+                    for (const key in TALENT_NODES) {
+                        if (parsed[key] !== undefined) {
+                            TALENT_NODES[key].level = parsed[key];
+                        }
+                    }
+                }
+                const savedScrap = localStorage.getItem('space_best_scrap') || localStorage.getItem('space_scrap');
+                if (savedScrap) {
+                    scrapBalance = Math.max(500, parseInt(savedScrap) || 500);
+                }
+            } catch(e) {
+                console.warn("Storage sync fallback to default values", e);
+            }
+            document.getElementById('scrapDisplay').innerText = `METASCRAP: ${scrapBalance}`;
+            document.getElementById('scrapBalanceText').innerText = scrapBalance;
+
+            // Reflect in SVG visual elements
+            for (const key in TALENT_NODES) {
+                const node = TALENT_NODES[key];
+                const nodeEl = document.getElementById(`node-${key}`);
+                const lineEl = document.getElementById(`line-${key}`);
+                if (nodeEl) {
+                    if (node.level >= node.maxLevel) {
+                        nodeEl.setAttribute('class', 'talent-node maxed');
+                        if (lineEl) lineEl.setAttribute('stroke', '#d946ef');
+                    } else if (node.level > 0) {
+                        nodeEl.setAttribute('class', 'talent-node unlocked');
+                        if (lineEl) lineEl.setAttribute('stroke', '#0891b2');
+                    } else {
+                        nodeEl.setAttribute('class', 'talent-node locked');
+                        if (lineEl) lineEl.setAttribute('stroke', '#1e1b4b');
+                    }
+                }
+            }
+            updateTalentDetailsCard();
+        }
+
+        function selectHangarNode(id) {
+            playSynthSound('click');
+            activeNodeId = id;
+            updateTalentDetailsCard();
+        }
+
+        function updateTalentDetailsCard() {
+            if (activeNodeId === 'CORE') {
+                document.getElementById('talentClassLabel').innerText = 'SYSTEM CORE';
+                document.getElementById('talentNameText').innerText = '先驱者核心引擎';
+                document.getElementById('talentLevelText').innerText = 'ACTIVE';
+                document.getElementById('talentDescText').innerText = '这是飞船的元聚变核心。所有外部六角天赋节点必须与核心引擎保持高维行矢激光线导通，才能激活永久属性。';
+                const btn = document.getElementById('upgradeTalentBtn');
+                btn.disabled = true;
+                btn.className = 'px-4 py-2 rounded-lg bg-gray-900 border border-white/10 text-gray-500 text-[9px] font-black uppercase tracking-wider';
+                btn.innerText = '核心引擎默认激活';
+                return;
+            }
+
+            const data = TALENT_NODES[activeNodeId];
+            if (!data) return;
+
+            document.getElementById('talentClassLabel').innerText = data.class;
+            document.getElementById('talentNameText').innerText = data.name;
+            document.getElementById('talentLevelText').innerText = data.level >= data.maxLevel ? 'MAX LEVEL' : `LV.${data.level} / LV.${data.maxLevel}`;
+            document.getElementById('talentDescText').innerText = data.desc;
+
+            const btn = document.getElementById('upgradeTalentBtn');
+            if (data.level >= data.maxLevel) {
+                btn.disabled = true;
+                btn.className = 'px-4 py-2 rounded-lg bg-purple-950/80 border border-purple-800 text-purple-400 text-[9px] font-black uppercase';
+                btn.innerText = '已满级 MAX';
+            } else {
+                btn.disabled = scrapBalance < data.cost;
+                if (scrapBalance >= data.cost) {
+                    btn.className = 'px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-600 via-purple-600 to-rose-500 text-white text-[9px] font-black uppercase tracking-wider active:scale-95 transition shadow-lg shadow-cyan-600/20';
+                    btn.onclick = () => purchaseHangarTalent(activeNodeId);
+                } else {
+                    btn.className = 'px-4 py-2 rounded-lg bg-gray-900 border border-white/10 text-gray-600 text-[9px] font-black uppercase';
+                    btn.onclick = null;
+                }
+                btn.innerText = `点亮激活 · ${data.cost} 废料`;
+            }
+        }
+
+        function purchaseHangarTalent(id) {
+            const data = TALENT_NODES[id];
+            if (!data || scrapBalance < data.cost || data.level >= data.maxLevel) return;
+
+            playSynthSound('unlock');
+            scrapBalance -= data.cost;
+            data.level++;
+
+            // Save to storage
+            saveTalentState();
+
+            // Spawn floating text
+            spawnFloatText(window.innerWidth / 2, window.innerHeight / 2 - 100, `🧬 +${data.name.split(' ')[0]} 永久装配！`, 'purple');
+
+            loadHangarData();
+        }
+
+        function resetHangarTalents() {
+            playSynthSound('reset');
+            
+            // Refund
+            let refund = 0;
+            for (const key in TALENT_NODES) {
+                refund += TALENT_NODES[key].level * TALENT_NODES[key].cost;
+                TALENT_NODES[key].level = 0;
+            }
+            scrapBalance += refund;
+
+            saveTalentState();
+            spawnFloatText(window.innerWidth / 2, window.innerHeight / 2 - 100, `♻️ 天赋重置！返还 ${refund} 合金！`, 'cyan');
+            loadHangarData();
+        }
+
+        function saveTalentState() {
+            try {
+                const talents = {};
+                for (const key in TALENT_NODES) {
+                    talents[key] = TALENT_NODES[key].level;
+                }
+                localStorage.setItem('space_v7_talents', JSON.stringify(talents));
+                localStorage.setItem('space_best_scrap', String(scrapBalance));
+                localStorage.setItem('space_scrap', String(scrapBalance));
+            } catch(e) {
+                console.warn("Storage write failed", e);
+            }
+        }
+
+        // ==========================================
+        // 3. LICENCE PASS LICENSE COMPILER CARD
+        // ==========================================
+        function compilePilotPass() {
+            compileTemporalLicense();
+        }
+        
+        function compileTemporalLicense() {
+            playSynthSound('unlock');
+            const input = document.getElementById('certCallsign');
+            const nameVal = input.value.trim() || 'GALAXY-HUNTER';
+            
+            document.getElementById('passCallsign').innerText = nameVal.toUpperCase();
+            
+            // Set levels on card
+            document.getElementById('certOverclock').innerText = `LV.${TALENT_NODES.A.level}`;
+            document.getElementById('certCoreBonus').innerText = `LV.${TALENT_NODES.B.level}`;
+            document.getElementById('certHullField').innerText = `LV.${TALENT_NODES.C.level}`;
+            
+            document.getElementById('passLeftLabel').innerText = `CD: -${TALENT_NODES.A.level * 10}%`;
+            document.getElementById('passRightLabel').innerText = `ATK: +${TALENT_NODES.B.level * 8}%`;
+            document.getElementById('passScoreLabel').innerText = `DEF: +${TALENT_NODES.C.level * 10}%`;
+            
+            const randomHex = Math.floor(Math.random() * 16777215).toString(16).toUpperCase();
+            document.getElementById('passSecKey').innerText = `KEY#${randomHex}-V7`;
+
+            spawnFloatText(window.innerWidth / 2, window.innerHeight / 2 - 100, "📇 先驱折跃密钥编译成功！", "gold");
+        }
+
+        // ==========================================
+        // 4. HOLOGRAPHIC PHYSICS SANDBOX ENGINE (0-GC Canvas)
+        // ==========================================
+        let simActive = false;
+        let canvas = null;
+        let ctx = null;
+        let simWidth = 540;
+        let simHeight = 400;
+        let shipX = simWidth / 2;
+        let shipY = simHeight - 80;
+        let isDragging = false;
+        let score = 0;
+        let particles = [];
+        let bullets = [];
+        let meteors = [];
+
+        function startSandboxSim() {
+            document.getElementById('canvasOverlay').classList.add('opacity-0', 'pointer-events-none');
+            playSynthSound('unlock');
+            simActive = true;
+            initSandboxEngine();
+        }
+
+        function initSandboxEngine() {
+            canvas = document.getElementById('sandboxCanvas');
+            ctx = canvas.getContext('2d');
+            
+            // Sizing
+            canvas.width = simWidth;
+            canvas.height = simHeight;
+
+            // Events
+            canvas.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                updateShipPos(e);
+            });
+            window.addEventListener('mousemove', (e) => {
+                if (isDragging) updateShipPos(e);
+            });
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+            
+            // Double click to warp!
+            canvas.addEventListener('dblclick', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const tx = (e.clientX - rect.left) * (simWidth / rect.width);
+                const ty = (e.clientY - rect.top) * (simHeight / rect.height);
+                
+                // Singularity Warp Blast
+                score += 500;
+                playSynthSound('reset');
+                
+                // Explode meteors in radius
+                meteors.forEach(m => {
+                    const dist = Math.sqrt((m.x - tx)**2 + (m.y - ty)**2);
+                    if (dist < 120) {
+                        m.hp -= 200;
+                        m.vx += (m.x - tx) * 0.4;
+                        m.vy += (m.y - ty) * 0.4;
+                    }
+                });
+                
+                // Spark particles along path
+                const steps = 6;
+                const startX = shipX, startY = shipY;
+                for (let s = 0; s <= steps; s++) {
+                    const ratio = s / steps;
+                    const px = startX + (tx - startX) * ratio;
+                    const py = startY + (ty - startY) * ratio;
+                    for (let p=0; p<6; p++) {
+                        particles.push({
+                            x: px, y: py,
+                            vx: Math.random() * 4 - 2,
+                            vy: Math.random() * 4 - 2,
+                            size: Math.random() * 3 + 2,
+                            alpha: 1.0,
+                            color: '#06b6d4'
+                        });
+                    }
+                }
+                
+                shipX = tx;
+                shipY = ty;
+            });
+
+            // Spawning loop
+            setInterval(() => {
+                if (!simActive) return;
+                if (meteors.length < 5) {
+                    meteors.push({
+                        x: Math.random() * simWidth,
+                        y: -40,
+                        vx: Math.random() * 2 - 1,
+                        vy: Math.random() * 1.5 + 1.2,
+                        radius: Math.random() * 16 + 12,
+                        hp: 30, maxHp: 30,
+                        color: Math.random() < 0.2 ? '#06b6d4' : '#fb923c' // Phase shielded chance
+                    });
+                }
+            }, 1000);
+
+            requestAnimationFrame(simLoop);
+        }
+
+        function updateShipPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = (e.clientX - rect.left) * (simWidth / rect.width);
+            const mouseY = (e.clientY - rect.top) * (simHeight / rect.height);
+            shipX = mouseX;
+            shipY = mouseY;
+            // Boundary constraints
+            if (shipX < 30) shipX = 30;
+            if (shipX > simWidth - 30) shipX = simWidth - 30;
+            if (shipY < 40) shipY = 40;
+            if (shipY > simHeight - 40) shipY = simHeight - 40;
+        }
+
+        let fireCooldown = 0;
+        function simLoop(now) {
+            if (!simActive) return;
+            requestAnimationFrame(simLoop);
+
+            ctx.clearRect(0, 0, simWidth, simHeight);
+
+            // 1. Draw grid background
+            ctx.strokeStyle = 'rgba(255,255,255,0.02)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < simWidth; x += 30) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, simHeight); ctx.stroke();
+            }
+            for (let y = 0; y < simHeight; y += 30) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(simWidth, y); ctx.stroke();
+            }
+
+            // 2. Update and fire bullets
+            fireCooldown--;
+            if (fireCooldown <= 0) {
+                fireCooldown = 12; // High fire rate sandbox
+                playSynthSound('click');
+                
+                // Main Bullet
+                const damageBase = 12 * (1 + TALENT_NODES.B.level * 0.08);
+                bullets.push({ x: shipX, y: shipY - 20, vx: 0, vy: -7, radius: 4, color: '#38bdf8', damage: damageBase });
+                
+                // Wingman Bullet if level unlocked
+                if (TALENT_NODES.E.level > 0) {
+                    bullets.push({ x: shipX - 35, y: shipY + 10, vx: -1.2, vy: -6.5, radius: 3, color: '#ec4899', damage: damageBase * 0.7 });
+                    bullets.push({ x: shipX + 35, y: shipY + 10, vx: 1.2, vy: -6.5, radius: 3, color: '#ec4899', damage: damageBase * 0.7 });
+                }
+            }
+
+            // 3. Draw Player ship
+            ctx.fillStyle = '#0891b2';
+            ctx.strokeStyle = '#22d3ee';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(shipX, shipY - 20);
+            ctx.lineTo(shipX - 18, shipY + 16);
+            ctx.lineTo(shipX, shipY + 6);
+            ctx.lineTo(shipX + 18, shipY + 16);
+            ctx.closePath();
+            ctx.fill(); ctx.stroke();
+
+            // Wingmen rendering if level > 0
+            if (TALENT_NODES.E.level > 0) {
+                ctx.fillStyle = '#4c0519';
+                ctx.strokeStyle = '#fb7185';
+                ctx.beginPath();
+                ctx.arc(shipX - 35, shipY + 10, 6, 0, Math.PI * 2);
+                ctx.arc(shipX + 35, shipY + 10, 6, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+            }
+
+            // 4. Update bullets
+            bullets.forEach((b, bi) => {
+                b.x += b.vx;
+                b.y += b.vy;
+                
+                ctx.fillStyle = b.color;
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (b.y < -20 || b.x < -10 || b.x > simWidth + 10) {
+                    bullets.splice(bi, 1);
+                }
+            });
+
+            // 5. Update meteors
+            meteors.forEach((m, mi) => {
+                m.x += m.vx;
+                m.y += m.vy;
+
+                // Circular motion or wiggle
+                m.x += Math.sin(now * 0.005 + mi) * 0.5;
+
+                ctx.fillStyle = m.color;
+                ctx.strokeStyle = '#475569';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(m.x, m.y, m.radius, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                // Phase shield render outline if color cyan
+                if (m.color === '#06b6d4') {
+                    ctx.strokeStyle = '#22d3ee';
+                    ctx.lineWidth = 2.0;
+                    ctx.beginPath();
+                    ctx.arc(m.x, m.y, m.radius + 5, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+
+                // Check bullets collision
+                bullets.forEach((b, bi) => {
+                    const dist = Math.sqrt((b.x - m.x)**2 + (b.y - m.y)**2);
+                    if (dist < m.radius + b.radius) {
+                        m.hp -= b.damage;
+                        bullets.splice(bi, 1);
+
+                        // Sparks
+                        for (let p=0; p<4; p++) {
+                            particles.push({
+                                x: b.x, y: b.y,
+                                vx: Math.random() * 4 - 2,
+                                vy: Math.random() * 4 - 2,
+                                size: Math.random() * 2 + 1,
+                                alpha: 1.0,
+                                color: b.color
+                            });
+                        }
+                    }
+                });
+
+                if (m.hp <= 0) {
+                    score += 150;
+                    document.getElementById('simScore').innerText = String(score).padStart(6, '0');
+                    // Explode sparks
+                    for (let p=0; p<15; p++) {
+                        particles.push({
+                            x: m.x, y: m.y,
+                            vx: Math.random() * 6 - 3,
+                            vy: Math.random() * 6 - 3,
+                            size: Math.random() * 4 + 2,
+                            alpha: 1.0,
+                            color: m.color
+                        });
+                    }
+                    meteors.splice(mi, 1);
+                }
+
+                if (m.y > simHeight + 40) {
+                    meteors.splice(mi, 1);
+                }
+            });
+
+            // 6. Update particles
+            particles.forEach((p, pi) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 0.025;
+
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+                ctx.restore();
+
+                if (p.alpha <= 0) {
+                    particles.splice(pi, 1);
+                }
+            });
+        }
+
+        // ==========================================
+        // INITIALIZER
+        // ==========================================
+        window.onload = function() {
+            loadHangarData();
+            compileTemporalLicense();
+        };
+    </script>
+</body>
+</html>

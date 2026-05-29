@@ -1,5 +1,5 @@
 // =============================================
-// 星海猎手 V6: GameEngine - RENDERER 模块
+// 星海猎手 V7: GameEngine - RENDERER 模块
 // =============================================
 
 Object.assign(GameEngine.prototype, {
@@ -418,12 +418,13 @@ Object.assign(GameEngine.prototype, {
             
             this.ctx.save();
             this.ctx.rotate(b.titanAngle);
-            const numRocks = 12;
-            const ringRadius = 135;
+            const numRocks = 16;
+            const semiMajor = 155;
+            const semiMinor = 110;
             for (let i = 0; i < numRocks; i++) {
                 const rockAngle = (i / numRocks) * Math.PI * 2;
-                const rx = Math.cos(rockAngle) * ringRadius;
-                const ry = Math.sin(rockAngle) * ringRadius;
+                const rx = Math.cos(rockAngle) * semiMajor;
+                const ry = Math.sin(rockAngle) * semiMinor;
                 
                 this.ctx.fillStyle = i % 2 === 0 ? '#fb923c' : '#c084fc';
                 this.ctx.strokeStyle = i % 2 === 0 ? '#d97706' : '#8b5cf6';
@@ -681,6 +682,36 @@ Object.assign(GameEngine.prototype, {
                 this.ctx.closePath();
                 this.ctx.fill();
                 this.ctx.stroke();
+            } else if (item.type === 'exp') {
+                // EXP 经验微粒：渲染为旋转发光的晶莹菱形 (Diamond)
+                this.ctx.rotate(this.frameNow * 0.003 + item.y * 0.005);
+                this.ctx.fillStyle = this.powerupGradients['exp'] || '#22d3ee';
+                this.ctx.strokeStyle = '#ffffff';
+                this.ctx.lineWidth = 1.5;
+                this.ctx.shadowBlur = 10;
+                this.ctx.shadowColor = '#06b6d4';
+
+                // 外层晶莹菱形
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, -9);
+                this.ctx.lineTo(6, 0);
+                this.ctx.lineTo(0, 9);
+                this.ctx.lineTo(-6, 0);
+                this.ctx.closePath();
+                this.ctx.fill();
+                this.ctx.stroke();
+
+                // 内层能量核核心
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, -4);
+                this.ctx.lineTo(2.5, 0);
+                this.ctx.lineTo(0, 4);
+                this.ctx.lineTo(-2.5, 0);
+                this.ctx.closePath();
+                this.ctx.fill();
+                
+                this.ctx.shadowBlur = 0;
             } else {
                 this.ctx.fillStyle = this.powerupGradients[item.type] || this.powerupGradients['Rad'];
                 this.ctx.beginPath();
@@ -778,6 +809,19 @@ Object.assign(GameEngine.prototype, {
             this.ctx.save();
             this.ctx.translate(m.x, m.y);
             this.ctx.rotate(m.angle);
+
+            // Phase Shield Outer Ring rendering
+            if (m.shieldCount > 0) {
+                this.ctx.save();
+                this.ctx.strokeStyle = '#22d3ee';
+                this.ctx.lineWidth = 2.5;
+                this.ctx.shadowBlur = 10;
+                this.ctx.shadowColor = '#22d3ee';
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, m.radius + 6 + Math.sin(this.frameNow * 0.015) * 2, 0, Math.PI * 2);
+                this.ctx.stroke();
+                this.ctx.restore();
+            }
 
             this.ctx.fillStyle = m.color;
             this.ctx.globalAlpha = 0.9;

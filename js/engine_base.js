@@ -1,3 +1,7 @@
+// =============================================
+// 星海猎手 V7: GameEngine - BASE 核心模块
+// =============================================
+
 class GameEngine {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
@@ -107,6 +111,9 @@ class GameEngine {
         this.currentSkin = safeReadString('space_current_skin', 'default');
         this.unlockedSkins = safeReadJSON('space_unlocked_skins', ['default']);
         if (!Array.isArray(this.unlockedSkins)) this.unlockedSkins = ['default'];
+
+        // V7: 先驱者永久天赋矩阵（局外 Meta 升级），开局即生效
+        this.talents = loadTalents();
         
         this.bulletSearchIndex = 0;
         this.meteorSearchIndex = 0;
@@ -156,6 +163,19 @@ class GameEngine {
         this.physDelay = 0; // 物理更新延迟(ms)
         this.drawDelay = 0; // 渲染更新延迟(ms)
         
+        // V7 局内构筑与无尽深空核心状态
+        // Worker 环境探测：importScripts 仅存在于 Web Worker 全局作用域，主线程为 undefined。
+        // 不能依赖 DOM 元素是否存在来判断线程，因为 Worker 的 document mock 对任意 id 都返回 truthy。
+        this.isWorkerContext = (typeof importScripts === 'function');
+        this.endlessMode = false;
+        this.equippedMods = [];
+        this.disasterActive = false;
+        this.disasterTime = 0;
+        this.disasterType = '';
+        this.disasterTimer = 0;
+        this.radiationDmgTimer = 0;
+        this.solarFlareTimer = 0;
+
         this.bindUIElements();
         window.addEventListener('resize', () => this.resizeCanvas());
         this.resizeCanvas();
@@ -169,9 +189,9 @@ class GameEngine {
     initGradients() {
         const powerupColorMap = {
             'EM': '#06b6d4', 'Frost': '#3b82f6', 'Fire': '#f43f5e',
-            'Rad': '#fbbf24', 'shield': '#06b6d4', 'heal': '#10b981'
+            'Rad': '#fbbf24', 'shield': '#06b6d4', 'heal': '#10b981', 'exp': '#22d3ee'
         };
-        const powerupTypes = ['EM', 'Frost', 'Fire', 'Rad', 'shield', 'heal'];
+        const powerupTypes = ['EM', 'Frost', 'Fire', 'Rad', 'shield', 'heal', 'exp'];
         this.powerupGradients = {};
         for (let i = 0; i < powerupTypes.length; i++) {
             const type = powerupTypes[i];
@@ -275,6 +295,13 @@ class GameEngine {
         document.getElementById('buySkinVoidBtn').addEventListener('click', () => this.interactSkin('void', 80));
         document.getElementById('buySkinThunderBtn').addEventListener('click', () => this.interactSkin('thunder', 100));
         document.getElementById('buySkinImperialBtn').addEventListener('click', () => this.interactSkin('imperial', 120));
+        if (typeof TALENT_DEFINITIONS !== 'undefined') {
+            for (let i = 0; i < TALENT_DEFINITIONS.length; i++) {
+                const def = TALENT_DEFINITIONS[i];
+                const tb = document.getElementById(`buyTalent${def.id}Btn`);
+                if (tb) tb.addEventListener('click', () => this.buyTalent(def.id));
+            }
+        }
         document.getElementById('exitWorkshopBtn').addEventListener('click', () => this.exitHangar());
 
         // 绑定跑分 UI 交互事件
@@ -289,6 +316,25 @@ class GameEngine {
         
         const retryBench = document.getElementById('benchRetryBtn');
         if (retryBench) retryBench.addEventListener('click', () => this.startBenchmark());
+
+        // V7: 绑定局内 3选1 模组及超时空灾难 DOM
+        this.rogueUpgradeScreen = document.getElementById('rogueUpgradeScreen');
+        this.rogueCardsContainer = document.getElementById('rogueCardsContainer');
+        this.rogueLevelVal = document.getElementById('rogueLevelVal');
+        this.hazardOverlay = document.getElementById('hazardOverlay');
+        this.hazardAlertBox = document.getElementById('hazardAlertBox');
+        this.hazardTitleText = document.getElementById('hazardTitleText');
+        this.hazardDescText = document.getElementById('hazardDescText');
+        this.hudLevelText = document.getElementById('hudLevelText');
+        this.expBar = document.getElementById('expBar');
+        this.expPercentText = document.getElementById('expPercentText');
+
+        this.selectClassicBtn = document.getElementById('selectClassicBtn');
+        this.selectEndlessBtn = document.getElementById('selectEndlessBtn');
+        if (this.selectClassicBtn && this.selectEndlessBtn) {
+            this.selectClassicBtn.addEventListener('click', () => this.setCampaignMode(false));
+            this.selectEndlessBtn.addEventListener('click', () => this.setCampaignMode(true));
+        }
 
         this.bestScoreText.innerText = String(this.bestScore).padStart(6, '0');
     }
@@ -409,6 +455,29 @@ class GameEngine {
         this.showToast(mode === 'touch' ? "已选择：指尖滑动连发模式" : "已选择：键盘虚拟按键模式");
     }
 
+    setCampaignMode(isEndless) {
+        this.endlessMode = isEndless;
+        const classicBtn = document.getElementById('selectClassicBtn');
+        const endlessBtn = document.getElementById('selectEndlessBtn');
+        if (!classicBtn || !endlessBtn) return;
+        
+        if (isEndless) {
+            endlessBtn.classList.add('neon-border-rose', 'border-rose-500/50', 'bg-rose-950/20');
+            endlessBtn.classList.remove('text-gray-400');
+            endlessBtn.classList.add('text-white');
+            classicBtn.classList.remove('neon-border-cyan', 'border-cyan-500/50', 'bg-cyan-950/20');
+            classicBtn.classList.add('text-gray-400');
+            this.showToast("已选择：无尽深空突变模式");
+        } else {
+            classicBtn.classList.add('neon-border-cyan', 'border-cyan-500/50', 'bg-cyan-950/20');
+            classicBtn.classList.remove('text-gray-400');
+            classicBtn.classList.add('text-white');
+            endlessBtn.classList.remove('neon-border-rose', 'border-rose-500/50', 'bg-rose-950/20');
+            endlessBtn.classList.add('text-gray-400');
+            this.showToast("已选择：经典星域防守模式");
+        }
+    }
+
     toggleControlModeDirectly() {
         const nextMode = this.controlMode === 'touch' ? 'keyboard' : 'touch';
         this.setControlMode(nextMode);
@@ -521,12 +590,70 @@ class GameEngine {
         }
 
         if (this.warpCharge < 100) {
-            this.warpCharge += 0.333 * dtClamped; // 5 秒充满: 100 / (5 * 60fps) ≈ 0.333/帧
+            // 基础 5 秒充满 (0.333/帧)，永久天赋 A 每级 +15% 充能速度
+            const warpRate = 0.333 * (1 + 0.15 * ((this.talents && this.talents.A) || 0));
+            this.warpCharge += warpRate * dtClamped;
             if (this.warpCharge > 100) this.warpCharge = 100;
         }
 
         if (this.slingshotTime > 0) {
             this.slingshotTime -= dtClampedMs;
+        }
+
+        // Endless mode Solar Magnetism Disaster logic
+        if (this.endlessMode) {
+            this.disasterTimer += dtClampedMs;
+            if (!this.disasterActive) {
+                // Trigger disaster every 45 seconds
+                if (this.disasterTimer >= 45000) {
+                    this.disasterTimer = 0;
+                    this.disasterActive = true;
+                    this.disasterType = 'solar_magnetism';
+                    this.disasterTime = 12000; // Lasts 12 seconds
+                    this.setHazardOverlay(true);
+                    this.addFloatText(this.logicalWidth / 2, this.logicalHeight / 2 - 100, "⚠️ 太阳风暴入侵 SOLAR STORM DETECTED! ⚠️", "#ef4444", 24);
+                    sfx.playBomb();
+                }
+            } else {
+                this.disasterTime -= dtClampedMs;
+                
+                // Continuous particle solar flare emission from the edges (frame-rate independent)
+                this.solarFlareTimer += dtClampedMs;
+                if (this.solarFlareTimer >= 40) { // ~25 particles/sec
+                    this.solarFlareTimer = 0;
+                    const fromLeft = Math.random() < 0.5;
+                    const sx = fromLeft ? 0 : this.logicalWidth;
+                    const sy = Math.random() * this.logicalHeight;
+                    const svx = fromLeft ? (Math.random() * 5 + 3) : -(Math.random() * 5 + 3);
+                    const svy = Math.random() * 4 - 2;
+                    this.spawnParticle(sx, sy, svx, svy, Math.random() * 4 + 3, '#f97316', 0.015);
+                }
+
+                // Solar edge damage to player if too close to border
+                const edgeThreshold = 80;
+                if (this.player && this.player.hp > 0) {
+                    if (this.player.x < edgeThreshold || this.player.x > this.logicalWidth - edgeThreshold ||
+                        this.player.y < edgeThreshold + 40 || this.player.y > this.logicalHeight - edgeThreshold) {
+                        
+                        this.radiationDmgTimer += dtClampedMs;
+                        if (this.radiationDmgTimer >= 200) { // Every 200ms, frame-rate independent
+                            this.radiationDmgTimer = 0;
+                            this.damagePlayer(1);
+                            this.createScreenShake(4);
+                            this.addFloatText(this.player.x, this.player.y - 30, "⚡ RADIATION!", "#f97316", 12);
+                            this.spawnParticle(this.player.x, this.player.y, Math.random()*4-2, Math.random()*4-2, 6, '#fb7185', 0.03);
+                        }
+                    }
+                }
+
+                if (this.disasterTime <= 0) {
+                    this.disasterActive = false;
+                    this.disasterType = '';
+                    this.disasterTimer = 0;
+                    this.setHazardOverlay(false);
+                    this.addFloatText(this.logicalWidth / 2, this.logicalHeight / 2 - 100, "✅ 太阳风暴已平息 STABILIZED", "#10b981", 20);
+                }
+            }
         }
 
         for (let i = 0; i < this.maxLightningChains; i++) {
@@ -650,16 +777,22 @@ class GameEngine {
             const item = this.powerups[i];
             if (!item.active) continue;
 
-            if (item.type === 'scrap') {
+            if (item.type === 'scrap' || item.type === 'exp') {
                 const dx = this.player.x - item.x;
                 const dy = this.player.y - item.y;
                 const distSq = dx * dx + dy * dy;
                 let magnetRadius = 180;
-                let magnetRadiusSq = 32400;
                 if (this.currentSkin === 'imperial') {
                     magnetRadius = 230;
-                    magnetRadiusSq = 52900;
                 }
+                if (this.disasterActive && this.disasterType === 'solar_magnetism') {
+                    magnetRadius *= 3;
+                }
+                // V7 永久天赋 D「磁力量子虹吸」：每级 +50px 吸附半径
+                if (this.talents && this.talents.D > 0) {
+                    magnetRadius += 50 * this.talents.D;
+                }
+                const magnetRadiusSq = magnetRadius * magnetRadius;
                 
                 if (distSq < magnetRadiusSq) {
                     const dist = Math.sqrt(distSq);
@@ -857,7 +990,24 @@ class GameEngine {
             elementSlots: [], 
             lastShotTime: 0,
             fireInterval: 180,
+            level: 1,
+            exp: 0,
+            nextLevelExp: 120,
+            equippedMods: [],
         };
+
+        // V7: 复位无尽深空灾难状态，避免上一局风暴残留带入新局
+        this.disasterActive = false;
+        this.disasterTime = 0;
+        this.disasterType = '';
+        this.disasterTimer = 0;
+        this.radiationDmgTimer = 0;
+        this.solarFlareTimer = 0;
+        this.setHazardOverlay(false);
+
+        // V7: 隐蔽局内升级选择与灾难悬浮窗
+        if (this.rogueUpgradeScreen) this.rogueUpgradeScreen.classList.add('hidden');
+        if (this.hazardOverlay) this.hazardOverlay.classList.add('hidden');
 
         this.updateHUD();
         this.gameOverScreen.classList.add('hidden');
@@ -888,6 +1038,11 @@ class GameEngine {
 
 
     damagePlayer(amount) {
+        // V7 永久天赋 C「反物质纳米力场」：受到的一切伤害每级 -10%（至少保留 1 点，避免无敌）
+        const cLevel = (this.talents && this.talents.C) || 0;
+        if (cLevel > 0 && amount > 0) {
+            amount = Math.max(1, Math.round(amount * (1 - 0.10 * cLevel)));
+        }
         this.player.hp -= amount;
         // P1: 仅当一次性伤害 ≥5 时播放大爆炸，避免激光持续掉血每帧触发声效 spam
         sfx.playExplosion(amount >= 5);
@@ -917,9 +1072,13 @@ class GameEngine {
     triggerWarp(tx, ty) {
         if (!this.isRunning || this.isPaused || this.warpCharge < 100) return;
         
+        const startX = this.player.x;
+        const startY = this.player.y;
+        const hasImplosion = this.player.equippedMods && this.player.equippedMods.includes('implosion');
+
         // 1. Singularity Pull at Start Position
-        this.createExplosionParticles(this.player.x, this.player.y, 50, "#c084fc");
-        this.addFloatText(this.player.x, this.player.y, "WARP", "#c084fc", 16);
+        this.createExplosionParticles(startX, startY, 50, "#c084fc");
+        this.addFloatText(startX, startY, "WARP", "#c084fc", 16);
 
         // Execute Teleport
         this.player.x = tx;
@@ -931,7 +1090,44 @@ class GameEngine {
         this.createScreenShake(15);
         sfx.playWarp();
 
-        // 3. Calculate physics push and damage for meteors
+        // V7 Implosion Resonance logic
+        if (hasImplosion) {
+            const steps = 5;
+            for (let s = 1; s <= steps; s++) {
+                const ratio = s / steps;
+                const gx = startX + (tx - startX) * ratio;
+                const gy = startY + (ty - startY) * ratio;
+                this.createExplosionParticles(gx, gy, 30, "#06b6d4"); // Cyan micro gravity well
+            }
+            this.addFloatText((startX + tx) / 2, (startY + ty) / 2, "🌀 IMPLOSION", "#06b6d4", 18);
+
+            // Pull and damage meteors via Warp Singularity
+            for (let i = 0; i < this.maxMeteors; i++) {
+                const m = this.meteors[i];
+                if (!m.active) continue;
+
+                const dx = tx - m.x;
+                const dy = ty - m.y;
+                const distSq = dx * dx + dy * dy;
+                const dist = Math.sqrt(distSq) || 1;
+                
+                if (dist < 400) {
+                    const pullForce = (400 - dist) / 4;
+                    m.vx += (dx / dist) * pullForce;
+                    m.vy += (dy / dist) * pullForce;
+                    
+                    m.hp -= 80;
+                    this.createHitParticles(m.x, m.y, "#06b6d4");
+                    
+                    if (m.hp <= 0) {
+                        this.explodeMeteor(m);
+                        m.active = false;
+                    }
+                }
+            }
+        }
+
+        // 3. Calculate physics push and damage for meteors at the final blast area
         for (let i = 0; i < this.maxMeteors; i++) {
             const m = this.meteors[i];
             if (!m.active) continue;
@@ -943,6 +1139,7 @@ class GameEngine {
                 m.hp -= 300; 
                 if (m.hp <= 0) {
                     this.explodeMeteor(m);
+                    m.active = false;
                 } else {
                     // Push away
                     m.y -= 80;
@@ -1153,10 +1350,55 @@ class GameEngine {
         this.shieldBar.style.width = `${shieldPercent}%`;
         this.bombChargeBar.style.width = `${this.bombCharge}%`;
         this.warpBar.style.width = `${this.warpCharge}%`;
+
+        // V7: 刷新经验进度条
+        if (this.hudLevelText && this.player) {
+            this.hudLevelText.innerText = this.player.level || 1;
+            const expPercent = this.player.nextLevelExp > 0 ? (this.player.exp / this.player.nextLevelExp) * 100 : 0;
+            if (this.expBar) this.expBar.style.width = `${expPercent}%`;
+            if (this.expPercentText) this.expPercentText.innerText = `${Math.floor(expPercent)}%`;
+        }
+
+        // V7: 单线程降级模式下同步机载构装总览（Worker 模式由 game_worker 的 hud 消息驱动）
+        if (typeof window !== 'undefined' && typeof window.updateLoadoutUI === 'function' && this.player) {
+            window.updateLoadoutUI(
+                this.player.equippedMods || [],
+                this.player.elementSlots || [],
+                this.player.comboKey || ''
+            );
+        }
     }
 
     createScreenShake(intensity) {
         this.screenshake = intensity;
+    }
+
+    // V7: 切换全屏灾难红色警示遮罩。Worker 环境下 DOM 不可用，转交主线程渲染。
+    setHazardOverlay(active) {
+        if (this.isWorkerContext) {
+            if (typeof self !== 'undefined' && typeof self.postMessage === 'function') {
+                self.postMessage({ type: 'hazardOverlay', active: !!active });
+            }
+            return;
+        }
+        if (!this.hazardOverlay) return;
+        if (active) {
+            this.hazardOverlay.classList.remove('hidden');
+            this.hazardOverlay.classList.add('flex');
+            this.hazardOverlay.style.backgroundColor = 'rgba(127, 29, 29, 0.45)';
+            if (this.hazardAlertBox) {
+                this.hazardAlertBox.classList.remove('opacity-0', 'scale-90');
+                this.hazardAlertBox.classList.add('opacity-100', 'scale-100');
+            }
+        } else {
+            this.hazardOverlay.classList.add('hidden');
+            this.hazardOverlay.classList.remove('flex');
+            this.hazardOverlay.style.backgroundColor = 'rgba(127, 29, 29, 0)';
+            if (this.hazardAlertBox) {
+                this.hazardAlertBox.classList.add('opacity-0', 'scale-90');
+                this.hazardAlertBox.classList.remove('opacity-100', 'scale-100');
+            }
+        }
     }
 
 

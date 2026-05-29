@@ -585,6 +585,63 @@ canvas {
     background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.4), transparent);
 }
 
+/* ============ V7 车间分区横幅：本局临时 vs 永久保留 ============ */
+.zone-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 2px 6px;
+    padding: 9px 12px;
+    border-radius: 12px;
+    border: 1px solid;
+    background: rgba(15, 23, 42, 0.5);
+}
+.zone-banner .zone-ico {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    border: 1px solid;
+}
+.zone-banner .zone-titles { flex: 1; min-width: 0; }
+.zone-banner .zone-title {
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1.1;
+}
+.zone-banner .zone-sub {
+    font-size: 9px;
+    color: rgba(148, 163, 184, 0.85);
+    margin-top: 2px;
+    letter-spacing: 0.02em;
+}
+.zone-pill {
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    padding: 3px 8px;
+    border-radius: 999px;
+    flex-shrink: 0;
+    border: 1px solid;
+    text-transform: uppercase;
+}
+/* 临时区 — 琥珀 + 玫瑰警示 */
+.zone-temp { border-color: rgba(251, 146, 60, 0.32); }
+.zone-temp .zone-ico { background: rgba(251, 146, 60, 0.12); color: #fb923c; border-color: rgba(251, 146, 60, 0.3); }
+.zone-temp .zone-title { color: #fdba74; }
+.zone-temp .zone-pill { color: #fca5a5; border-color: rgba(244, 63, 94, 0.4); background: rgba(244, 63, 94, 0.1); }
+/* 永久区 — 翡翠 */
+.zone-perm { border-color: rgba(52, 211, 153, 0.32); }
+.zone-perm .zone-ico { background: rgba(52, 211, 153, 0.12); color: #34d399; border-color: rgba(52, 211, 153, 0.3); }
+.zone-perm .zone-title { color: #6ee7b7; }
+.zone-perm .zone-pill { color: #6ee7b7; border-color: rgba(52, 211, 153, 0.4); background: rgba(52, 211, 153, 0.1); }
+
 .upgrade-card {
     position: relative;
     display: flex;
@@ -806,3 +863,194 @@ canvas {
     --upg-btn-from:  #047857;
     --upg-btn-to:    #115e59;
 }
+
+/* ============ Rogue Upgrade Cards (局内量子构装卡) ============ */
+.rogue-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 15px 16px 15px 18px;
+    background:
+        linear-gradient(135deg, var(--rogue-glow-soft) 0%, transparent 42%),
+        linear-gradient(180deg, rgba(13, 18, 33, 0.94), rgba(6, 9, 18, 0.94));
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-left: 3px solid var(--rogue-accent);
+    border-radius: 16px;
+    overflow: hidden;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 22px -12px rgba(0, 0, 0, 0.75);
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease, border-color 0.28s ease;
+    cursor: pointer;
+}
+.rogue-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--rogue-accent);
+    box-shadow:
+        0 16px 36px -14px var(--rogue-glow),
+        0 0 22px var(--rogue-glow-soft),
+        inset 0 0 24px rgba(255, 255, 255, 0.025);
+}
+.rogue-card:active {
+    transform: translateY(-1px) scale(0.985);
+}
+
+/* L 型角标（右上 / 左下，避让左侧高亮条） */
+.rogue-card::before,
+.rogue-card::after {
+    content: '';
+    position: absolute;
+    width: 11px;
+    height: 11px;
+    border: 1.5px solid var(--rogue-accent, #22d3ee);
+    opacity: 0.55;
+    pointer-events: none;
+    transition: opacity 0.28s ease;
+}
+.rogue-card::before {
+    top: 6px; right: 6px;
+    border-left: none; border-bottom: none;
+}
+.rogue-card::after {
+    bottom: 6px; left: 9px;
+    border-right: none; border-top: none;
+}
+.rogue-card:hover::before,
+.rogue-card:hover::after {
+    opacity: 1;
+}
+
+/* 悬停斜向流光扫掠 */
+.rogue-card .rogue-scan {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 55%;
+    height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+    transform: translateX(-160%) skewX(-18deg);
+    transition: transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+}
+.rogue-card:hover .rogue-scan {
+    transform: translateX(240%) skewX(-18deg);
+}
+
+/* 图标块 */
+.rogue-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border-radius: 13px;
+    background:
+        radial-gradient(circle at 50% 32%, var(--rogue-glow-soft) 0%, transparent 72%),
+        linear-gradient(180deg, rgba(2, 4, 10, 0.72), rgba(2, 4, 10, 0.4));
+    border: 1px solid var(--rogue-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--rogue-accent);
+    font-size: 19px;
+    box-shadow:
+        0 0 12px var(--rogue-glow-soft),
+        inset 0 0 14px var(--rogue-glow-soft);
+    position: relative;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.rogue-card:hover .rogue-icon {
+    transform: scale(1.06);
+}
+.rogue-icon::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border: 1px dashed var(--rogue-accent);
+    border-radius: 15px;
+    opacity: 0.3;
+    animation: rogue-ring 12s linear infinite;
+}
+@keyframes rogue-ring {
+    from { transform: rotate(0); }
+    to { transform: rotate(360deg); }
+}
+
+/* 内容主体 */
+.rogue-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.rogue-body > .flex {
+    gap: 8px;
+}
+.rogue-name {
+    font-size: 14.5px;
+    font-weight: 900;
+    color: #ffffff;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+    text-shadow: 0 0 12px var(--rogue-glow-soft);
+}
+.rogue-class-tag {
+    flex-shrink: 0;
+    font-size: 8px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 999px;
+    border: 1px solid var(--rogue-accent);
+    background: var(--rogue-glow-soft);
+    color: var(--rogue-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+.rogue-desc {
+    font-size: 10px;
+    color: rgba(160, 174, 192, 0.9);
+    line-height: 1.45;
+}
+
+/* 右侧装配按钮 */
+.rogue-action-hint {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    border: 1px solid var(--rogue-accent);
+    background: var(--rogue-glow-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--rogue-accent);
+    font-size: 14px;
+    opacity: 0.8;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.28s ease, box-shadow 0.28s ease, background 0.28s ease, color 0.28s ease;
+}
+.rogue-card:hover .rogue-action-hint {
+    opacity: 1;
+    transform: translateX(3px);
+    background: var(--rogue-accent);
+    color: #05121a;
+    box-shadow: 0 0 14px var(--rogue-glow);
+}
+
+/* 三个分类配色：通用(青) / 超维共鸣(黄) / 混沌魔改(红) */
+.rogue-cyan {
+    --rogue-accent:    #22d3ee;
+    --rogue-glow:      rgba(34, 211, 238, 0.7);
+    --rogue-glow-soft: rgba(34, 211, 238, 0.16);
+}
+.rogue-amber {
+    --rogue-accent:    #fbbf24;
+    --rogue-glow:      rgba(251, 191, 36, 0.7);
+    --rogue-glow-soft: rgba(251, 191, 36, 0.16);
+}
+.rogue-rose {
+    --rogue-accent:    #fb7185;
+    --rogue-glow:      rgba(251, 113, 133, 0.7);
+    --rogue-glow-soft: rgba(251, 113, 133, 0.16);
+}
+

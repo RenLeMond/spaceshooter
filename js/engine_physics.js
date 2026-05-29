@@ -1,5 +1,5 @@
 // =============================================
-// 星海猎手 V6: GameEngine - PHYSICS 模块
+// 星海猎手 V7: GameEngine - PHYSICS 模块
 // =============================================
 
 Object.assign(GameEngine.prototype, {
@@ -17,6 +17,26 @@ Object.assign(GameEngine.prototype, {
             let damage = props.damage;
             let radius = props.radius;
             let color = props.color;
+            let pierce = props.pierce || 1;
+
+            if (this.player && this.player.equippedMods) {
+                if (this.player.equippedMods.includes('antimatter')) {
+                    damage = Math.floor(damage * 1.8);
+                }
+                if (this.player.equippedMods.includes('split') && !props.isSplitBullet) {
+                    damage = Math.floor(damage * 0.85);
+                }
+                if (this.player.equippedMods.includes('heavy')) {
+                    radius *= 1.4;
+                    pierce += 1;
+                }
+            }
+
+            // V7 永久天赋 B「火控晶核增幅」：所有子弹基础伤害每级 +8%
+            if (this.talents && this.talents.B > 0) {
+                damage = Math.floor(damage * (1 + 0.08 * this.talents.B));
+            }
+
             if (this.slingshotTime > 0) {
                 damage *= 2;
                 radius *= 1.5;
@@ -30,7 +50,7 @@ Object.assign(GameEngine.prototype, {
             bullet.radius = radius;
             bullet.damage = damage;
             bullet.color = color;
-            bullet.pierce = props.pierce || 1;
+            bullet.pierce = pierce;
             bullet.comboEffect = props.comboEffect || null;
             bullet.active = true;
             return bullet;
@@ -71,6 +91,7 @@ Object.assign(GameEngine.prototype, {
             }
             meteor.numPoints = numPoints;
             meteor.color = props.color;
+            meteor.shieldCount = props.shieldCount || 0;
             meteor.active = true;
             return meteor;
         }
@@ -377,15 +398,29 @@ Object.assign(GameEngine.prototype, {
 
                 if (dx * dx + dy * dy < radSum * radSum) {
                     this.createHitParticles(bullet.x, bullet.y, bullet.color);
-                    m.hp -= bullet.damage;
-                    sfx.playHit();
+                    
+                    let blockedByShield = false;
+                    if (m.shieldCount > 0) {
+                        m.shieldCount--;
+                        sfx.playHit();
+                        this.addFloatText(m.x, m.y - 20, `🛡️ PHASE SHIELD [${m.shieldCount}]`, '#22d3ee', 12);
+                        blockedByShield = true;
+                    } else {
+                        m.hp -= bullet.damage;
+                        sfx.playHit();
 
-                    if (bullet.comboEffect) {
-                        this.applySynergyBulletReaction(bullet, m);
+                        // V7 Tesla Chain Trigger
+                        if (this.player && this.player.equippedMods && this.player.equippedMods.includes('tesla') && Math.random() < 0.4) {
+                            this.triggerTeslaArc(m);
+                        }
+
+                        if (bullet.comboEffect) {
+                            this.applySynergyBulletReaction(bullet, m);
+                        }
                     }
 
                     let meteorDead = false;
-                    if (m.hp <= 0) {
+                    if (!blockedByShield && m.hp <= 0) {
                         this.explodeMeteor(m);
                         m.active = false;
                         meteorDead = true;
@@ -453,7 +488,7 @@ Object.assign(GameEngine.prototype, {
                     }
                     sfx.playHit();
                 } else {
-                    this.pickupPowerup(item.type);
+                    this.pickupPowerup(item.type, item);
                 }
                 item.active = false;
             }
@@ -564,6 +599,73 @@ Object.assign(GameEngine.prototype, {
         }
         this.particleColorIds[this.particleIndex] = colorId;
         this.particleIndex = (this.particleIndex + 1) % this.maxParticles;
+    },
+
+    triggerTeslaArc(startMeteor) {
+        let currentSource = startMeteor;
+        const hitMeteors = new Set([startMeteor]);
+        const maxHops = 2;
+        const chainDamage = 25;
+        const searchRange = 300;
+        const searchRangeSq = searchRange * searchRange;
+
+        for (let hop = 0; hop < maxHops; hop++) {
+            let nextTarget = null;
+            let minDistSq = searchRangeSq;
+
+            for (let i = 0; i < this.maxMeteors; i++) {
+                const m = this.meteors[i];
+                if (!m.active || hitMeteors.has(m)) continue;
+
+                const dx = m.x - currentSource.x;
+                const dy = m.y - currentSource.y;
+                const distSq = dx * dx + dy * dy;
+
+                if (distSq < minDistSq) {
+                    minDistSq = distSq;
+                    nextTarget = m;
+                }
+            }
+
+            if (!nextTarget) break;
+
+            // Visual: lightning chain
+            const chain = this.acquirePoolSlot(this.lightningChains);
+            if (chain) {
+                let curX = currentSource.x;
+                let curY = currentSource.y;
+                const numSegs = this.lightningChainSegs || 4;
+                for (let j = 0; j < numSegs; j++) {
+                    const ratio = (j + 1) / numSegs;
+                    const nextTargetX = currentSource.x + (nextTarget.x - currentSource.x) * ratio;
+                    const nextTargetY = currentSource.y + (nextTarget.y - currentSource.y) * ratio;
+                    const noiseX = j === numSegs - 1 ? 0 : (Math.random() * 26 - 13);
+                    const noiseY = j === numSegs - 1 ? 0 : (Math.random() * 26 - 13);
+                    const seg = chain.segments[j];
+                    seg.x1 = curX; seg.y1 = curY;
+                    seg.x2 = nextTargetX + noiseX; seg.y2 = nextTargetY + noiseY;
+                    curX = nextTargetX + noiseX;
+                    curY = nextTargetY + noiseY;
+                }
+                chain.segCount = numSegs;
+                chain.alpha = 1.0;
+                chain.color = '#38bdf8'; // Electric blue
+                chain.active = true;
+            }
+
+            // Apply Damage
+            nextTarget.hp -= chainDamage;
+            this.createHitParticles(nextTarget.x, nextTarget.y, '#38bdf8');
+            sfx.playHit();
+
+            if (nextTarget.hp <= 0) {
+                this.explodeMeteor(nextTarget);
+                nextTarget.active = false;
+            }
+
+            hitMeteors.add(nextTarget);
+            currentSource = nextTarget;
+        }
     }
 
 });
