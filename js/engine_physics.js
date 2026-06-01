@@ -19,7 +19,7 @@ Object.assign(GameEngine.prototype, {
             let color = props.color;
             let pierce = props.pierce || 1;
 
-            if (this.player && this.player.equippedMods) {
+            if (!props.isTalentVolley && this.player && this.player.equippedMods) {
                 if (this.player.equippedMods.includes('antimatter')) {
                     damage = Math.floor(damage * 1.8);
                 }
@@ -32,12 +32,7 @@ Object.assign(GameEngine.prototype, {
                 }
             }
 
-            // V7 永久天赋 B「火控晶核增幅」：所有子弹基础伤害每级 +8%
-            if (this.talents && this.talents.B > 0) {
-                damage = Math.floor(damage * (1 + 0.08 * this.talents.B));
-            }
-
-            if (this.slingshotTime > 0) {
+            if (!props.isTalentVolley && this.slingshotTime > 0) {
                 damage *= 2;
                 radius *= 1.5;
                 color = '#fbbf24'; // Neon gold
@@ -52,10 +47,18 @@ Object.assign(GameEngine.prototype, {
             bullet.color = color;
             bullet.pierce = pierce;
             bullet.comboEffect = props.comboEffect || null;
+            bullet.isTalentVolley = !!props.isTalentVolley;
             bullet.active = true;
             return bullet;
         }
         return null;
+    },
+
+    getFinalBulletDamage(baseDamage, targetKind, bullet) {
+        const bLevel = (this.talents && this.talents.B) || 0;
+        if (bLevel <= 0 || (bullet && bullet.isTalentVolley)) return baseDamage;
+        const perLevel = targetKind === 'boss' ? 0.01 : 0.04;
+        return baseDamage * (1 + perLevel * bLevel);
     },
 
     spawnMeteorInPool(props) {
@@ -357,7 +360,7 @@ Object.assign(GameEngine.prototype, {
 
                     if (dx * dx + dy * dy < radSum * radSum) {
                         this.createHitParticles(bullet.x, bullet.y, bullet.color);
-                        part.hp -= bullet.damage;
+                        part.hp -= this.getFinalBulletDamage(bullet.damage, 'boss', bullet);
                         sfx.playHit();
 
                         if (part.hp <= 0) {
@@ -406,7 +409,7 @@ Object.assign(GameEngine.prototype, {
                         this.addFloatText(m.x, m.y - 20, `🛡️ PHASE SHIELD [${m.shieldCount}]`, '#22d3ee', 12);
                         blockedByShield = true;
                     } else {
-                        m.hp -= bullet.damage;
+                        m.hp -= this.getFinalBulletDamage(bullet.damage, 'meteor', bullet);
                         sfx.playHit();
 
                         // V7 Tesla Chain Trigger
@@ -424,6 +427,12 @@ Object.assign(GameEngine.prototype, {
                         this.explodeMeteor(m);
                         m.active = false;
                         meteorDead = true;
+                    }
+
+                    if (blockedByShield) {
+                        bullet.active = false;
+                        bulletRemoved = true;
+                        break;
                     }
 
                     bullet.pierce--;

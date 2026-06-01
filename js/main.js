@@ -2,7 +2,7 @@
 // 资源缓存版本号 — 同步于 space_shooter.html 的所有 ?v= 查询参数。
 // Worker 链 (game_worker.js + importScripts 的 6 个引擎文件) 通过 self.location.search 自动继承该版本，
 // 后续 bump 仅需改本常量 + HTML 的 ?v= 两处即可全量失效旧缓存。
-const ASSET_VERSION = '7.0.7';
+const ASSET_VERSION = '7.0.16';
 
 window.onload = function() {
     const canvas = document.getElementById('gameCanvas');
@@ -98,6 +98,7 @@ window.onload = function() {
         let mainScrap = 0;
         let mainHangar = { turretLevel: 0, engineLevel: 0, wingsLevel: 0 };
         let mainTalents = (typeof loadTalents === 'function') ? loadTalents() : { A: 0, B: 0, C: 0, D: 0, E: 0 };
+        let mainPermanentCores = (typeof safeReadPermanentCores === 'function') ? safeReadPermanentCores() : 0;
         
         // 发送 init 初始化消息给 Worker 线程并转移 Canvas
         worker.postMessage({
@@ -108,7 +109,8 @@ window.onload = function() {
             unlockedSkins: mainUnlockedSkins,
             currentSkin: mainCurrentSkin,
             bestScore: mainBestScore,
-            talents: mainTalents
+            talents: mainTalents,
+            permanentCores: mainPermanentCores
         }, [offscreen]);
         
         window.addEventListener('resize', updateMainScale);
@@ -159,6 +161,8 @@ window.onload = function() {
         // 极客级无缝 Hangar UI 升级函数
         function updateMainHangarUI() {
             document.getElementById('shopScrapText').innerText = mainScrap;
+            const permanentCoreText = document.getElementById('permanentCoreText');
+            if (permanentCoreText) permanentCoreText.innerText = mainPermanentCores;
 
             renderUpgradeCard(
                 'upgradeCardTurret', 'turretProgress', 'turretLevelText', 'buyTurretBtn',
@@ -225,8 +229,8 @@ window.onload = function() {
                     card.classList.remove('is-equipped');
                     chip.className = 'status-chip status-locked';
                     chip.innerHTML = '<i class="fa-solid fa-lock text-[8px]"></i> Locked';
-                    btn.disabled = mainScrap < s.cost;
-                    btn.innerHTML = `<span class="cost"><i class="fa-solid fa-cube text-amber-300"></i> ${s.cost}</span> 解锁涂装`;
+                    btn.disabled = mainPermanentCores < s.cost;
+                    btn.innerHTML = `<span class="cost"><i class="fa-solid fa-gem text-cyan-300"></i> ${s.cost}</span> 解锁涂装`;
                 }
             });
 
@@ -242,7 +246,7 @@ window.onload = function() {
                 TALENT_DEFINITIONS.forEach(def => {
                     renderUpgradeCard(
                         `talentCard${def.id}`, `talentProgress${def.id}`, `talentLevelText${def.id}`, `buyTalent${def.id}Btn`,
-                        mainTalents[def.id] || 0, def.maxLevel, def.cost, mainScrap, talentLabels
+                        mainTalents[def.id] || 0, def.maxLevel, def.cost, mainPermanentCores, talentLabels
                     );
                 });
             }
@@ -254,11 +258,11 @@ window.onload = function() {
             if (!def) return;
             const lv = mainTalents[id] || 0;
             if (lv >= def.maxLevel) return;
-            if (mainScrap < def.cost) {
-                mainShowToast("❌ 合金废料不足，无法点亮永久天赋！");
+            if (mainPermanentCores < def.cost) {
+                mainShowToast("❌ 星核不足，无法点亮永久天赋！");
                 return;
             }
-            mainScrap -= def.cost;
+            mainPermanentCores = savePermanentCores(mainPermanentCores - def.cost);
             mainTalents[id] = lv + 1;
             localStorage.setItem('space_v7_talents', JSON.stringify(mainTalents));
             sfx.playPowerup();
@@ -322,8 +326,8 @@ window.onload = function() {
                 const names = { void: '🌌 星渊幻影', thunder: '⚡ 超维雷霆', imperial: '✨ 帝皇余晖' };
                 mainShowToast(`🎨 成功切换机体涂装为: ${names[skinId] || skinId}`);
             } else {
-                if (mainScrap >= cost) {
-                    mainScrap -= cost;
+                if (mainPermanentCores >= cost) {
+                    mainPermanentCores = savePermanentCores(mainPermanentCores - cost);
                     mainUnlockedSkins.push(skinId);
                     localStorage.setItem('space_unlocked_skins', JSON.stringify(mainUnlockedSkins));
                     mainCurrentSkin = skinId;
@@ -332,7 +336,7 @@ window.onload = function() {
                     const names = { void: '🌌 星渊幻影', thunder: '⚡ 超维雷霆', imperial: '✨ 帝皇余晖' };
                     mainShowToast(`✨ 成功解锁并装配超维机体: ${names[skinId] || skinId}`);
                 } else {
-                    mainShowToast("❌ 合金废料不足，无法解锁！");
+                    mainShowToast("❌ 星核不足，无法解锁！");
                 }
             }
             updateMainHangarUI();
@@ -522,12 +526,18 @@ window.onload = function() {
                     if (msg.key === 'space_v7_talents' && typeof loadTalents === 'function') {
                         mainTalents = loadTalents();
                     }
+                    if (msg.key === 'space_permanent_cores' && typeof safeReadPermanentCores === 'function') {
+                        mainPermanentCores = safeReadPermanentCores();
+                    }
                     break;
                     
                 case 'gameOver':
+                    mainPermanentCores = addPermanentCores(msg.permanentCoresEarned || 0);
                     document.getElementById('endScore').innerText = String(msg.score).padStart(6, '0');
                     document.getElementById('endWave').innerText = msg.wave;
                     document.getElementById('endBest').innerText = String(msg.bestScore).padStart(6, '0');
+                    const endCoreRewardEl = document.getElementById('endCoreReward');
+                    if (endCoreRewardEl) endCoreRewardEl.innerText = `+${msg.permanentCoresEarned || 0}`;
                     document.getElementById('gameOverScreen').classList.remove('hidden');
                     break;
                     
@@ -615,13 +625,12 @@ window.onload = function() {
             const touchBtn = document.getElementById('selectTouchBtn');
             const keyBtn = document.getElementById('selectKeyBtn');
             if (touchBtn && keyBtn) {
-                if (mode === 'touch') {
-                    touchBtn.classList.add('neon-border-cyan', 'border-cyan-500/50', 'bg-cyan-950/20');
-                    keyBtn.classList.remove('neon-border-cyan', 'border-cyan-500/50', 'bg-cyan-950/20');
-                } else {
-                    keyBtn.classList.add('neon-border-cyan', 'border-cyan-500/50', 'bg-cyan-950/20');
-                    touchBtn.classList.remove('neon-border-cyan', 'border-cyan-500/50', 'bg-cyan-950/20');
-                }
+                touchBtn.classList.toggle('is-selected', mode === 'touch');
+                keyBtn.classList.toggle('is-selected', mode === 'keyboard');
+                const touchIcon = touchBtn.querySelector('i');
+                const keyIcon = keyBtn.querySelector('i');
+                if (touchIcon) touchIcon.classList.toggle('animate-pulse', mode === 'touch');
+                if (keyIcon) keyIcon.classList.toggle('animate-pulse', mode === 'keyboard');
             }
             mainShowToast(mode === 'touch' ? "已选择：指尖滑动连发模式" : "已选择：键盘虚拟按键模式");
         }
@@ -635,17 +644,8 @@ window.onload = function() {
             const classicBtn = document.getElementById('selectClassicBtn');
             const endlessBtn = document.getElementById('selectEndlessBtn');
             if (classicBtn && endlessBtn) {
-                if (isEndless) {
-                    endlessBtn.classList.add('neon-border-rose', 'border-rose-500/50', 'bg-rose-950/20', 'text-white');
-                    endlessBtn.classList.remove('text-gray-400');
-                    classicBtn.classList.remove('neon-border-cyan', 'border-cyan-500/50', 'bg-cyan-950/20', 'text-white');
-                    classicBtn.classList.add('text-gray-400');
-                } else {
-                    classicBtn.classList.add('neon-border-cyan', 'border-cyan-500/50', 'bg-cyan-950/20', 'text-white');
-                    classicBtn.classList.remove('text-gray-400');
-                    endlessBtn.classList.remove('neon-border-rose', 'border-rose-500/50', 'bg-rose-950/20', 'text-white');
-                    endlessBtn.classList.add('text-gray-400');
-                }
+                classicBtn.classList.toggle('is-selected', !isEndless);
+                endlessBtn.classList.toggle('is-selected', isEndless);
             }
             mainShowToast(isEndless ? "已选择：无尽深空突变模式" : "已选择：经典星域防守模式");
         }
@@ -919,19 +919,10 @@ window.onload = function() {
 
 function renderMainRogueUpgradeCards(container, elementSlots, comboKey, equippedMods) {
     container.innerHTML = '';
-    
+
     const equipped = equippedMods || [];
     const hasEM = elementSlots.includes('EM') || comboKey.includes('EM');
-    
-    // 优先复用全局定义的模组列表，保证描述和属性完全一致，并移除重复定义
-    const poolSource = typeof ROGUE_MOD_DEFINITIONS !== 'undefined' ? ROGUE_MOD_DEFINITIONS : [
-        { id: 'split', title: '多重散射 (Split Shot)', class: '通用', icon: 'fa-cubes', color: 'cyan', desc: '主炮额外向左右两翼扇形发射 +2 侧向子弹，但基础主炮单发伤害削减 15%。' },
-        { id: 'heavy', title: '重力巨弹 (Heavy Mag)', class: '通用', icon: 'fa-compress', color: 'purple', desc: '子弹体积物理增大 40%，且穿透（Pierce）+1，但主炮开火频率降低 10%。' },
-        { id: 'drone', title: '先驱无人机 (Vanguard Drone)', class: '通用', icon: 'fa-shield-halved', color: 'rose', desc: '加挂一架独立的智能索敌巡航能盾僚机，自动对附近流星释放 15 点的电浆能量打击。' },
-        { id: 'tesla', title: '特斯拉雷电 (Tesla Arc)', class: '超维共鸣', icon: 'fa-bolt', color: 'amber', desc: '前置需拥有电磁 EM 晶核。所有子弹物理碰撞瞬间有 40% 概率触发 350px 链式高频雷暴。' },
-        { id: 'implosion', title: '折跃重力星轨 (Warp Singularity)', class: '超维共鸣', icon: 'fa-circle-notch', color: 'cyan', desc: '战术折跃(Shift)在起点与终点残留轨迹上施加引力聚能拉扯流星。' },
-        { id: 'antimatter', title: '反物质过载 (Antimatter Overload)', class: '混沌魔改', icon: 'fa-radiation', color: 'rose', desc: '主武器基础伤害疯狂暴涨 80%，但飞船最大 HP 永久缩减 30%，极限火力输出。' }
-    ];
+    const poolSource = getRogueModDefinitions();
 
     // 过滤：前置条件 + 去重已装备模组
     const availablePool = poolSource.filter(mod => {
@@ -995,17 +986,14 @@ function renderMainRogueUpgradeCards(container, elementSlots, comboKey, equipped
 // 同时服务 Worker 模式（hud 消息驱动）与单线程降级模式（engine.updateHUD 直接回调）。
 // 数据源：equippedMods + 当前晶核槽 + comboKey；渲染 HUD 快捷条与全屏总览面板。
 // ============================================================
-const LOADOUT_MOD_POOL = (typeof ROGUE_MOD_DEFINITIONS !== 'undefined') ? ROGUE_MOD_DEFINITIONS : [
-    { id: 'split', title: '多重散射 (Split Shot)', class: '通用', icon: 'fa-cubes', desc: '主炮额外向左右两翼扇形发射 +2 侧向子弹，但基础主炮单发伤害削减 15%。' },
-    { id: 'heavy', title: '重力巨弹 (Heavy Mag)', class: '通用', icon: 'fa-compress', desc: '子弹体积物理增大 40%，且穿透（Pierce）+1，但主炮开火频率降低 10%。' },
-    { id: 'drone', title: '先驱无人机 (Vanguard Drone)', class: '通用', icon: 'fa-shield-halved', desc: '加挂一架独立的智能索敌巡航能盾僚机，自动对附近流星释放 15 点的电浆能量打击。' },
-    { id: 'tesla', title: '特斯拉雷电 (Tesla Arc)', class: '超维共鸣', icon: 'fa-bolt', desc: '前置需拥有电磁 EM 晶核。所有子弹物理碰撞瞬间有 40% 概率触发 350px 链式高频雷暴。' },
-    { id: 'implosion', title: '折跃重力星轨 (Warp Singularity)', class: '超维共鸣', icon: 'fa-circle-notch', desc: '战术折跃(Shift)在起点与终点残留轨迹上施加引力聚能拉扯流星。' },
-    { id: 'antimatter', title: '反物质过载 (Antimatter Overload)', class: '混沌魔改', icon: 'fa-radiation', desc: '主武器基础伤害疯狂暴涨 80%，但飞船最大 HP 永久缩减 30%，极限火力输出。' }
-];
-
 let loadoutState = { equipped: [], slots: [], comboKey: '' };
 let _lastStripSig = null;
+
+function getRogueModDefinitions() {
+    return (typeof ROGUE_MOD_DEFINITIONS !== 'undefined' && Array.isArray(ROGUE_MOD_DEFINITIONS))
+        ? ROGUE_MOD_DEFINITIONS
+        : [];
+}
 
 function loadoutThemeColor(mod) {
     return mod.class === '超维共鸣' ? 'amber' : (mod.class === '混沌魔改' ? 'rose' : 'cyan');
@@ -1047,7 +1035,7 @@ function renderLoadoutStrip() {
     };
     let html = '';
     equipped.forEach(id => {
-        const mod = LOADOUT_MOD_POOL.find(m => m.id === id);
+        const mod = getRogueModDefinitions().find(m => m.id === id);
         if (!mod) return;
         const c = colorBy[loadoutThemeColor(mod)] || colorBy.cyan;
         html += `<span class="w-5 h-5 rounded-md border flex items-center justify-center text-[9px] ${c}" title="${mod.title}"><i class="fa-solid ${mod.icon}"></i></span>`;
@@ -1072,7 +1060,7 @@ function renderLoadoutPanel() {
     };
 
     let html = '';
-    LOADOUT_MOD_POOL.forEach(mod => {
+    getRogueModDefinitions().forEach(mod => {
         const isEquipped = equipped.includes(mod.id);
         const locked = (mod.id === 'tesla' && !hasEM && !isEquipped);
         const theme = colorBy[loadoutThemeColor(mod)] || colorBy.cyan;

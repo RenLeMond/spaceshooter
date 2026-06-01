@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>《星海猎手 V6》极客底层物理与核心引擎架构白皮书</title>
+    <title>《星海猎手 V7》极客底层物理与核心引擎架构白皮书</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Noto+Sans+SC:wght@300;500;700;900&display=swap" rel="stylesheet">
@@ -115,6 +115,133 @@
         .neon-text-purple { text-shadow: 0 0 8px rgba(168, 85, 247, 0.6), 0 0 20px rgba(168, 85, 247, 0.2); }
         .neon-text-indigo { text-shadow: 0 0 8px rgba(99, 102, 241, 0.6), 0 0 20px rgba(99, 102, 241, 0.2); }
         .neon-text-lime { text-shadow: 0 0 8px rgba(132, 204, 22, 0.6), 0 0 20px rgba(132, 204, 22, 0.2); }
+
+        @media (max-width: 768px) {
+            body {
+                font-size: 15px;
+            }
+
+            header {
+                position: sticky;
+                padding: 0.75rem 0.875rem !important;
+                gap: 0.75rem;
+            }
+
+            header > div:first-child {
+                min-width: 0;
+            }
+
+            header h1 {
+                font-size: 0.75rem !important;
+                letter-spacing: 0.08em !important;
+                white-space: nowrap;
+            }
+
+            header p {
+                max-width: 11rem;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            header a[href="space_shooter.html"] {
+                padding: 0.5rem 0.625rem !important;
+                font-size: 0;
+                flex-shrink: 0;
+            }
+
+            header a[href="space_shooter.html"] i {
+                margin: 0 !important;
+                font-size: 0.8rem;
+            }
+
+            main {
+                margin-top: 1.25rem !important;
+                padding-left: 0.875rem !important;
+                padding-right: 0.875rem !important;
+                gap: 1.25rem;
+                overflow-x: hidden;
+            }
+
+            section {
+                scroll-margin-top: 5.25rem;
+            }
+
+            .glass-card {
+                border-radius: 1rem !important;
+                transform: none !important;
+            }
+
+            .glass-card:hover {
+                transform: none !important;
+            }
+
+            main > section:first-child {
+                padding: 1.25rem !important;
+            }
+
+            h2 {
+                font-size: 1.65rem !important;
+                line-height: 1.16 !important;
+                letter-spacing: 0.01em !important;
+            }
+
+            h3 {
+                font-size: 1rem !important;
+                line-height: 1.35 !important;
+                letter-spacing: 0.04em !important;
+            }
+
+            section > p,
+            .pl-6 {
+                padding-left: 0 !important;
+            }
+
+            .ml-6 {
+                margin-left: 0 !important;
+            }
+
+            .p-6 {
+                padding: 1rem !important;
+            }
+
+            .p-5 {
+                padding: 0.875rem !important;
+            }
+
+            .grid {
+                min-width: 0;
+            }
+
+            .flex.justify-between {
+                gap: 0.75rem;
+            }
+
+            .flex.justify-between > span:last-child {
+                text-align: right;
+                overflow-wrap: anywhere;
+            }
+
+            code,
+            .font-mono {
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+            }
+
+            table {
+                min-width: 680px;
+            }
+
+            .overflow-x-auto {
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .katex-display {
+                overflow-x: auto;
+                overflow-y: hidden;
+                padding-bottom: 0.25rem;
+            }
+        }
     </style>
     <!-- KaTeX for formula rendering -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
@@ -134,15 +261,17 @@
                 <i class="fa-solid fa-microchip animate-pulse"></i>
             </div>
             <div>
-                <h1 class="text-sm font-black text-white tracking-widest uppercase">STARHUNTER V6</h1>
+                <h1 class="text-sm font-black text-white tracking-widest uppercase">STARHUNTER V7</h1>
                 <p class="text-[9px] text-cyan-400 font-bold uppercase tracking-wider">底层物理引擎与数值架构白皮书</p>
             </div>
         </div>
-        <nav class="hidden md:flex items-center gap-6 text-xs font-bold text-gray-400">
+        <nav class="hidden xl:flex items-center gap-5 text-xs font-bold text-gray-400">
             <a href="#meteors" class="hover:text-cyan-400 transition">陨石物理</a>
-            <a href="#squares" class="hover:text-amber-400 transition">三维正方形</a>
-            <a href="#charge" class="hover:text-rose-400 transition">电浆风暴</a>
+            <a href="#squares" class="hover:text-amber-400 transition">几何职能</a>
             <a href="#crystals" class="hover:text-emerald-400 transition">晶核重组</a>
+            <a href="#talents" class="hover:text-violet-400 transition">永久天赋</a>
+            <a href="#rogue-modules" class="hover:text-rose-400 transition">超维模组</a>
+            <a href="#endless-hazards" class="hover:text-amber-400 transition">深空磁暴</a>
         </nav>
         <div class="flex items-center gap-2">
             <a href="space_shooter.html" class="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-1.5 shadow-md shadow-cyan-500/10 active:scale-95 transition">
@@ -160,7 +289,7 @@
                 ENGINE DOCUMENTATION • ARCHITECTURE SPECS
             </div>
             <h2 class="text-3xl md:text-4xl font-extrabold text-white tracking-wider leading-tight">
-                星海猎手 V6 <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-emerald-400 to-amber-400 font-black">极客底盘白皮书</span>
+                星海猎手 V7 <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-emerald-400 to-amber-400 font-black">极客底盘白皮书</span>
             </h2>
             <p class="text-xs md:text-sm text-gray-400 mt-4 leading-relaxed">
                 本技术文献面向“星海猎手”机组战略导航员及极客飞行员。文档彻底拆解了基于原型链注入（Prototype Injection）、0-GC 对象池（Omni-Pooling）、引力弹弓软化（Slingshot Softening）等游戏底层物理机制，并提供了详尽的数值配比模型。
@@ -616,6 +745,7 @@
                             <span>并在吞噬点生成霓虹绿浮空文字 <code>DEVOUR +HP</code>。</span>
                         </div>
                     </div>
+                </div>
                 <div class="p-4 bg-black/40 border border-lime-500/20 rounded-xl">
                     <span class="font-bold text-white block text-sm mb-2"><i class="fa-solid fa-scissors text-rose-400 mr-1.5"></i> 3. 躯体断裂裂变算法 (Segment Fission Engine)</span>
                     <p class="text-[11px] text-gray-400 leading-relaxed mb-3">
@@ -634,7 +764,7 @@
                 <div class="p-4 bg-black/40 border border-lime-500/20 rounded-xl mt-4">
                     <span class="font-bold text-white block text-sm mb-2"><i class="fa-solid fa-shield-halved text-emerald-400 mr-1.5"></i> 4. 突变分裂上限保护机制 (Fission Head Throttle Limit)</span>
                     <p class="text-[11px] text-gray-400 leading-relaxed mb-3">
-                        在极端高密雷击闪电或量子爆破中，长蠕虫身体多段关节可能瞬间 HP 归零。若无拦截地触发多次分裂，将在屏幕上生成海量游动巨头，导致视觉崩溃与物理计算瓶颈。V6 引擎设置了头部裂变上限截流防御。当战场上现存活动头部数量大于等于 3 个时，将不再允许后继关节变异为新头部：
+                        在极端高密雷击闪电或量子爆破中，长蠕虫身体多段关节可能瞬间 HP 归零。若无拦截地触发多次分裂，将在屏幕上生成海量游动巨头，导致视觉崩溃与物理计算瓶颈。V7 引擎设置了头部裂变上限截流防御。当战场上现存活动头部数量大于等于 3 个时，将不再允许后继关节变异为新头部：
                     </p>
                     <div class="bg-black/50 p-3 rounded font-mono text-[9px] text-emerald-300 overflow-x-auto">
                         // 裂变截流计数保护
@@ -659,7 +789,7 @@
                 <h3 class="text-lg font-black text-white uppercase tracking-widest">八、 0-GC 物理底层极客算力 (0-GC Static Memory Optimization)</h3>
             </div>
             <p class="text-xs text-gray-400 leading-relaxed pl-6">
-                在巨神兵扫频死光、多节蠕虫蠕动和海量粒子爆燃的物理高强度结算中，《星海猎手 V6》通过底层平坦化内存池锁定了稳定的 60FPS。
+                在巨神兵扫频死光、多节蠕虫蠕动和海量粒子爆燃的物理高强度结算中，《星海猎手 V7》通过底层平坦化内存池锁定了稳定的 60FPS。
             </p>
 
             <div class="glass-card p-6 rounded-2xl glow-border-cyan ml-6 space-y-4">
@@ -700,7 +830,7 @@
                 <h3 class="text-lg font-black text-white uppercase tracking-widest">九、 视口坐标精密映射与 DPI 自适应物理触控 (DPI-Aware Touch Physics)</h3>
             </div>
             <p class="text-xs text-gray-400 leading-relaxed pl-6">
-                在 V6 引擎的多分辨率缩放和 Retina/4K 高 DPI 屏幕适配中，直接使用绝对屏幕坐标或常规缩放因子会导致拖拽触控漂移。《星海猎手 V6》设计了完美的客户端到逻辑像素动态双射映射：
+                在 V7 引擎的多分辨率缩放和 Retina/4K 高 DPI 屏幕适配中，直接使用绝对屏幕坐标或常规缩放因子会导致拖拽触控漂移。《星海猎手 V7》设计了完美的客户端到逻辑像素动态双射映射：
             </p>
             <div class="glass-card p-6 rounded-2xl glow-border-purple ml-6 space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-gray-400">
@@ -742,14 +872,14 @@
                 <h3 class="text-lg font-black text-white uppercase tracking-widest">十、 超大级粒子群 Path2D 阶梯透明度分批渲染 (Path2D Alpha Quantized Batch Rendering)</h3>
             </div>
             <p class="text-xs text-gray-400 leading-relaxed pl-6">
-                在 V6 终极星云巨神兵决战、电爆网连锁雷击以及星能折跃量子爆破中，每帧有上百颗高亮物理粒子活跃。如果遍历粒子使用传统的 <code>ctx.fillRect()</code>，将为 CPU/GPU 带来灾难性的 Draw Calls 开销。V6 重构了透明度阶梯复合路径批量重绘策略。
+                在 V7 终极星云巨神兵决战、电爆网连锁雷击以及星能折跃量子爆破中，每帧有上百颗高亮物理粒子活跃。如果遍历粒子使用传统的 <code>ctx.fillRect()</code>，将为 CPU/GPU 带来灾难性的 Draw Calls 开销。V7 重构了透明度阶梯复合路径批量重绘策略。
             </p>
             <div class="glass-card p-6 rounded-2xl glow-border-amber ml-6 space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-gray-400">
                     <div class="p-4 bg-black/30 border border-amber-500/20 rounded-xl space-y-3">
                         <span class="font-bold text-white block text-sm"><i class="fa-solid fa-compress-arrows-alt text-amber-400 mr-1.5 animate-pulse"></i> 1. 透明度区间量化分配 (Alpha Quantization)</span>
                         <p class="text-[11px] leading-relaxed">
-                            高频衰变粒子的透明度 $\alpha \in [0.0, 1.0]$ 为连续浮点数。若不做处理，每个粒子都需要单独设置 <code>ctx.globalAlpha</code>。V6 将其透明度阶梯量化为 $5$ 个高亮通道，量化映射算子如下：
+                            高频衰变粒子的透明度 $\alpha \in [0.0, 1.0]$ 为连续浮点数。若不做处理，每个粒子都需要单独设置 <code>ctx.globalAlpha</code>。V7 将其透明度阶梯量化为 $5$ 个高亮通道，量化映射算子如下：
                         </p>
                         <div class="bg-black/50 p-2.5 rounded font-mono text-[10px] text-amber-300 text-center">
                             $$\alpha_{\text{quantized}} = \frac{\lceil \alpha \times 5 \rceil}{5} \quad \left(\alpha_{\text{quantized}} \in \{0.2, \ 0.4, \ 0.6, \ 0.8, \ 1.0\}\right)$$
@@ -786,7 +916,7 @@
                 <h3 class="text-lg font-black text-white uppercase tracking-widest">十一、 极客合成器保护：高频音效时间节流闸门 (Audio Throttling Defense System)</h3>
             </div>
             <p class="text-xs text-gray-400 leading-relaxed pl-6">
-                当高频子弹爆轰、陨石撞击物理或雷击电网在同一帧大量触发时，如果无节制地频繁调用 Web Audio API 实例声效，将导致浏览器音频通道极速阻塞饱和，引发爆音、破音或显著的 CPU 线程卡死。V6 音效防线配置了毫秒级的时间防御隔离闸：
+                当高频子弹爆轰、陨石撞击物理或雷击电网在同一帧大量触发时，如果无节制地频繁调用 Web Audio API 实例声效，将导致浏览器音频通道极速阻塞饱和，引发爆音、破音或显著的 CPU 线程卡死。V7 音效防线配置了毫秒级的时间防御隔离闸：
             </p>
             <div class="glass-card p-6 rounded-2xl glow-border-rose ml-6 space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-gray-400">
@@ -824,11 +954,304 @@
         </section>
 
         <!-- CORS-Free 离线运行保证书 -->
-        <section class="glass-card p-6 rounded-3xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+
+        <!-- 十二、机舱整备赛博风模块 UI 架构 -->
+        <section id="module-ui" class="space-y-4 scroll-mt-28">
+            <div class="flex items-center gap-2">
+                <span class="text-cyan-400 text-lg"><i class="fa-solid fa-microchip"></i></span>
+                <h3 class="text-lg font-black text-white uppercase tracking-widest">十二、机舱整备赛博风模块 UI 架构 (Hangar Module UI)</h3>
+            </div>
+            <p class="text-xs text-gray-400 leading-relaxed pl-6">
+                V7 引擎在机舱整备车间引入了全新的赛博朋克风格升级卡片 (Upgrade Cards) UI 渲染架构。采用 CSS Custom Properties 与高级拟物特效结合。
+            </p>
+
+            <div class="glass-card p-6 rounded-2xl glow-border-cyan ml-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-gray-400">
+                    <div class="p-4 bg-black/30 border border-cyan-500/10 rounded-xl space-y-3">
+                        <span class="font-bold text-white block text-sm"><i class="fa-solid fa-layer-group text-cyan-400 mr-1.5 animate-pulse"></i> 1. 全息框架与扫描线 (Holo-Frame)</span>
+                        <p class="text-[11px] leading-relaxed">
+                            升级卡片 (<code class="text-cyan-300">.upgrade-card</code>) 采用紧凑横排布局，并融入了 L 型边角修饰与顶部 1px 流光扫描线 (<code class="text-cyan-300">.upg-scan</code>)。卡片交互悬停时触发径向光晕扩张与主题色边框高亮。
+                        </p>
+                    </div>
+
+                    <div class="p-4 bg-black/30 border border-cyan-500/10 rounded-xl space-y-3">
+                        <span class="font-bold text-white block text-sm"><i class="fa-solid fa-signal text-cyan-400 mr-1.5 animate-pulse"></i> 2. 动态等级节点 (Level Dots)</span>
+                        <p class="text-[11px] leading-relaxed">
+                            废除传统进度条，改用 <code class="text-cyan-300">.level-dots</code> 离散等级指示器。激活状态的节点会自动点亮主题色并产生发光晕影 (Glow)，与 Orbitron 风格的等级标签 (LV.1 / MAX) 深度联动。满级 (is-maxed) 时触发卡片金边内发光，升级按钮变绿。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- 十三、先驱者六角星盘永久天赋系统数值模型 -->
+        <section id="talents" class="space-y-4 scroll-mt-28">
+            <div class="flex items-center gap-2">
+                <span class="text-violet-400 text-lg"><i class="fa-solid fa-atom animate-spin-slow"></i></span>
+                <h3 class="text-lg font-black text-white uppercase tracking-widest">十三、先驱者六角星盘永久天赋系统数值模型 (Permanent Talent Matrix)</h3>
+            </div>
+            <p class="text-xs text-gray-400 leading-relaxed pl-6">
+                V7 引擎引入了局外持久化的**先驱者六角星盘永久天赋系统**（等级保存于 <code>space_v7_talents</code>，货币保存于 <code>space_permanent_cores</code>）。这些天赋通过战局结算获得的星核点亮，并直接通过数学常数常驻性修改底层物理循环与数值判定矩阵：
+            </p>
+
+            <div class="glass-card p-6 rounded-2xl glow-border-purple ml-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-gray-400">
+                    <!-- Talent Math 1 -->
+                    <div class="p-4 bg-black/30 border border-purple-500/10 rounded-xl space-y-3">
+                        <span class="font-bold text-white block text-sm"><i class="fa-solid fa-calculator text-purple-400 mr-1.5"></i> 1. 折跃超频与受损减免方程</span>
+                        <p class="text-[11px] leading-relaxed">
+                            天赋 **A (量子超频催化)** 与 **C (反物质纳米力场)** 直接线性影响战机的时空折跃充能步长与物理受损系数：
+                        </p>
+                        <div class="bg-black/50 p-3 rounded-lg font-mono text-[10px] text-purple-300 space-y-2">
+                            <div>$$\text{warpCharge} \leftarrow \min(100, \text{warpCharge} + 0.333 \times (1 + 0.10 \times L_A) \times dt)$$</div>
+                            <div>$$\text{damage}_{\text{final}} = \text{damage}_{\text{base}} \times (1 - 0.08 \times L_C)$$</div>
+                        </div>
+                        <p class="text-[10px] text-gray-500 leading-relaxed">
+                            其中 $L_A$ 为天赋 A 等级（最大 3 级，最大缩短 30% 充能耗时），$L_C$ 为天赋 C 等级（最大 3 级，提供最高 24% 永久物理免伤效果）。
+                        </p>
+                    </div>
+
+                    <!-- Talent Math 2 -->
+                    <div class="p-4 bg-black/30 border border-purple-500/10 rounded-xl space-y-3">
+                        <span class="font-bold text-white block text-sm"><i class="fa-solid fa-magnet text-emerald-400 mr-1.5"></i> 2. 磁力强虹吸与火控增幅公式</span>
+                        <p class="text-[11px] leading-relaxed">
+                            天赋 **D (磁力量子虹吸)** 和 **B (火控晶核增幅)** 控制废料吸引半径与最终物理伤害乘区：
+                        </p>
+                        <div class="bg-black/50 p-3 rounded-lg font-mono text-[10px] text-emerald-300 space-y-2">
+                            <div>$$R_{\text{magnet}} = R_{\text{base}} + 35\text{px} \times L_D$$</div>
+                            <div>$$\text{Dmg}_{\text{meteor}} = \text{Dmg}_{\text{base}} \times (1 + 0.04 \times L_B)$$</div>
+                            <div>$$\text{Dmg}_{\text{boss}} = \text{Dmg}_{\text{base}} \times (1 + 0.01 \times L_B)$$</div>
+                        </div>
+                        <p class="text-[10px] text-gray-500 leading-relaxed">
+                            其中吸引基准半径 $R_{\text{base}} = 180\text{px}$（帝皇涂装下为 $230\text{px}$）。最高级天赋 D 可使吸引范围额外狂扩 $105\text{px}$，火控天赋 B 可使基础弹幕额外造成 $12\%$ 的物理爆破伤害。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Talent Table -->
+                <div class="p-4 bg-black/40 rounded-xl border border-white/5 space-y-2">
+                    <span class="font-bold text-white block text-xs"><i class="fa-solid fa-list text-purple-400 mr-1"></i> 先驱者星盘全量天赋矩阵表</span>
+                    <div class="overflow-x-auto text-[11px]">
+                        <table class="w-full text-left border-collapse text-gray-300">
+                            <thead>
+                                <tr class="border-b border-white/10 text-gray-500 font-bold uppercase font-mono">
+                                    <th class="py-2 px-3">编号 (ID)</th>
+                                    <th class="py-2 px-3">天赋名称 (Name)</th>
+                                    <th class="py-2 px-3 text-center">等级上限 (Max)</th>
+                                    <th class="py-2 px-3">星核消耗曲线 (Core Cost)</th>
+                                    <th class="py-2 px-3">物理影响机制 (Effect)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-white/5">
+                                <tr>
+                                    <td class="py-2 px-3 font-mono text-purple-400">A</td>
+                                    <td class="py-2 px-3 font-bold">量子超频催化 (QUANTUM OVERCLOCK)</td>
+                                    <td class="py-2 px-3 text-center font-mono">LV.3</td>
+                                    <td class="py-2 px-3 font-mono">120 → 240 → 360</td>
+                                    <td class="py-2 px-3">折跃(Shift)充能速度每级永久 +10%</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-3 font-mono text-rose-400">B</td>
+                                    <td class="py-2 px-3 font-bold">火控晶核增幅 (CORE AMPLIFICATION)</td>
+                                    <td class="py-2 px-3 text-center font-mono">LV.3</td>
+                                    <td class="py-2 px-3 font-mono">150 → 300 → 450</td>
+                                    <td class="py-2 px-3">普通子弹伤害每级 +4%；Boss伤害每级 +1%</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-3 font-mono text-cyan-400">C</td>
+                                    <td class="py-2 px-3 font-bold">反物质纳米力场 (ANTIMATTER FIELD)</td>
+                                    <td class="py-2 px-3 text-center font-mono">LV.3</td>
+                                    <td class="py-2 px-3 font-mono">100 → 200 → 300</td>
+                                    <td class="py-2 px-3">物理受损系数每级永久 -8%（免伤叠加）</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-3 font-mono text-emerald-400">D</td>
+                                    <td class="py-2 px-3 font-bold">磁力量子虹吸 (MAGNET SIPHON)</td>
+                                    <td class="py-2 px-3 text-center font-mono">LV.3</td>
+                                    <td class="py-2 px-3 font-mono">80 → 160 → 240</td>
+                                    <td class="py-2 px-3">经验与废料磁力吸附半径每级 +35px</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-3 font-mono text-rose-400">E</td>
+                                    <td class="py-2 px-3 font-bold">僚机副武器齐射 (WINGMAN VOLLEY)</td>
+                                    <td class="py-2 px-3 text-center font-mono">LV.2</td>
+                                    <td class="py-2 px-3 font-mono">180 → 360</td>
+                                    <td class="py-2 px-3">开火时 12% / 20% 概率追加侧翼物理弹雨齐射</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 十四、局内 Roguelike 3选1超维模组系统 -->
+        <section id="rogue-modules" class="space-y-4 scroll-mt-28">
+            <div class="flex items-center gap-2">
+                <span class="text-rose-400 text-lg"><i class="fa-solid fa-layer-group"></i></span>
+                <h3 class="text-lg font-black text-white uppercase tracking-widest">十四、局内 Roguelike 3选1超维模组与 0-GC 内存分配 (Rogue-like Upgrades)</h3>
+            </div>
+            <p class="text-xs text-gray-400 leading-relaxed pl-6">
+                战斗中拾取经验微粒（EXP Crystals，掉落价值随陨石体积 $S$ 呈线性缩放 $\text{val} = \max(4, \lfloor S \times 0.16 \rfloor)$）可填满经验槽。每次升级触发强悍的局内 3 选 1 **超维模组选择机制**。
+            </p>
+
+            <div class="glass-card p-6 rounded-2xl glow-border-rose ml-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-gray-400">
+                    <!-- Exp and Draw Math -->
+                    <div class="p-4 bg-black/30 border border-rose-500/10 rounded-xl space-y-3">
+                        <span class="font-bold text-white block text-sm"><i class="fa-solid fa-arrow-trend-up text-rose-400 mr-1.5 animate-pulse"></i> 1. 经验成长阈值与对象洗牌算法</span>
+                        <p class="text-[11px] leading-relaxed">
+                            升级经验需求呈非线性幂次增长，防止中后期过度膨胀导致数值失衡。升级公式如下：
+                        </p>
+                        <div class="bg-black/50 p-2.5 rounded font-mono text-xs text-rose-300 text-center">
+                            $$\text{EXP}_{\text{next}} = \lfloor 120 \times 1.3^{\text{Level} - 1} \rfloor$$
+                        </div>
+                        <p class="text-[11px] leading-relaxed">
+                            为了在升级卡片渲染时避免高频 GC，引擎采用了原地 **Fisher-Yates 0-GC 洗牌算法**。在常量池数组中直接原地交换索引，杜绝了 <code>Array.sort()</code> 和动态创建临时对象造成的内存碎片：
+                        </p>
+                        <code class="block bg-black/40 p-2 rounded text-[9px] font-mono text-rose-300 overflow-x-auto">
+                            for (let i = pool.length - 1; i > 0; i--) {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;const j = Math.floor(Math.random() * (i + 1));<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;[pool[i], pool[j]] = [pool[j], pool[i]];<br>
+                            }
+                        </code>
+                    </div>
+
+                    <!-- Softlock Prevention -->
+                    <div class="p-4 bg-black/30 border border-rose-500/10 rounded-xl space-y-3 flex flex-col justify-between">
+                        <div class="space-y-3">
+                            <span class="font-bold text-white block text-sm"><i class="fa-solid fa-shield-halved text-cyan-400 mr-1.5"></i> 2. 软锁兜底与满构装转换 (Softlock Fallback)</span>
+                            <p class="text-[11px] leading-relaxed">
+                                当玩家战斗到后期，所有 6 大模组已全部装配完毕（或因未拾取 EM 晶核导致特有雷电模组无法激活），若再次升级，传统框架会导致弹出空白选择卡陷入逻辑死锁。
+                            </p>
+                            <p class="text-[11px] leading-relaxed">
+                                V7 物理引擎引入了**防软锁拦截判定**：若 $A_{\text{mods}}.\text{length} = 0$，将不弹窗暂停，直接激发能量转换，发放高价值替代奖励并飘飞蓝字特效：
+                            </p>
+                        </div>
+                        <div class="bg-black/50 p-3 rounded-lg font-mono text-[9px] text-cyan-300 space-y-1">
+                            <div>$$\text{Heal} = \lceil \text{HP}_{\text{max}} \times 0.25 \rceil$$</div>
+                            <div>$$\text{HP} \leftarrow \min(\text{HP}_{\text{max}}, \text{HP} + \text{Heal})$$</div>
+                            <div>$$\text{Score} \leftarrow \text{Score} + 800$$</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6 Modules Spec -->
+                <div class="p-4 bg-black/40 rounded-xl border border-white/5 space-y-3">
+                    <span class="font-bold text-white block text-xs"><i class="fa-solid fa-shapes text-rose-400 mr-1"></i> 六大超维升级模组物理参数表</span>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-[11px]">
+                        <!-- Mod 1 -->
+                        <div class="p-3 bg-gray-900/60 rounded-xl border border-cyan-500/20 space-y-1.5">
+                            <span class="font-bold text-cyan-400 block"><i class="fa-solid fa-cubes"></i> 多重散射 (Split Shot)</span>
+                            <p class="text-[10px] text-gray-400">主炮左右两侧额外加装 15度 扇形侧炮，发射 $\pm 2.5$ 物理倾角子弹。作为动能守恒惩罚，基础主炮弹伤害衰减 $15\%$。</p>
+                        </div>
+                        <!-- Mod 2 -->
+                        <div class="p-3 bg-gray-900/60 rounded-xl border border-purple-500/20 space-y-1.5">
+                            <span class="font-bold text-purple-400 block"><i class="fa-solid fa-compress"></i> 重力巨弹 (Heavy Mag)</span>
+                            <p class="text-[10px] text-gray-400">主炮物理截面积扩大 $40\%$，穿透能力（Pierce）永久 $+1$。由于弹壳重装延迟，开火冷却间隔延长 $12\%$。</p>
+                        </div>
+                        <!-- Mod 3 -->
+                        <div class="p-3 bg-gray-900/60 rounded-xl border border-rose-500/20 space-y-1.5">
+                            <span class="font-bold text-rose-400 block"><i class="fa-solid fa-shield-halved"></i> 先驱无人机 (Drone)</span>
+                            <p class="text-[10px] text-gray-400">加挂独立的智能索敌巡航副翼，自动寻敌。每隔基准射击帧周期向附近流星释放 $15$ 点的等离子电击打击。</p>
+                        </div>
+                        <!-- Mod 4 -->
+                        <div class="p-3 bg-gray-900/60 rounded-xl border border-amber-500/20 space-y-1.5">
+                            <span class="font-bold text-amber-400 block"><i class="fa-solid fa-bolt"></i> 特斯拉雷电 (Tesla Arc)</span>
+                            <p class="text-[10px] text-gray-400"><strong class="text-amber-400">前置条件：槽位含 EM。</strong> 每次子弹碰撞流星时有 $40\%$ 概率在 $350\text{px}$ 范围内触发最大跃迁为 2 跳的链式高能雷电网。</p>
+                        </div>
+                        <!-- Mod 5 -->
+                        <div class="p-3 bg-gray-900/60 rounded-xl border border-cyan-500/20 space-y-1.5">
+                            <span class="font-bold text-cyan-400 block"><i class="fa-solid fa-circle-notch"></i> 折跃引力星轨 (Warp)</span>
+                            <p class="text-[10px] text-gray-400">战术折跃(Shift)在原坐标起点 $\vec{x}_{\text{start}}$ 与落点终点 $\vec{x}_{\text{end}}$ 留存 2.5 秒重力坍缩奇点，产生双向拉拽物理约束力。</p>
+                        </div>
+                        <!-- Mod 6 -->
+                        <div class="p-3 bg-gray-900/60 rounded-xl border border-rose-500/20 space-y-1.5">
+                            <span class="font-bold text-rose-400 block"><i class="fa-solid fa-radiation"></i> 反物质过载 (Antimatter)</span>
+                            <p class="text-[10px] text-gray-400"><strong class="text-rose-400">高危混沌魔改。</strong> 主武器基础物理面板伤害疯狂暴增 $80\%$，但代偿为战机最大生命上限永久性缩减 $30\%$。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 十五、无尽深空异常突变与太阳磁暴状态机 -->
+        <section id="endless-hazards" class="space-y-4 scroll-mt-28">
+            <div class="flex items-center gap-2">
+                <span class="text-amber-400 text-lg"><i class="fa-solid fa-radiation animate-pulse"></i></span>
+                <h3 class="text-lg font-black text-white uppercase tracking-widest">十五、无尽深空异常突变与太阳磁暴状态机 (Endless & Solar Disaster)</h3>
+            </div>
+            <p class="text-xs text-gray-400 leading-relaxed pl-6">
+                无尽深空突变模式引入了极为严酷的流星非线性成长机制、高强度相位护盾陨石、以及全自动的太阳磁暴状态机切换：
+            </p>
+
+            <div class="glass-card p-6 rounded-2xl glow-border-amber ml-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-gray-400">
+                    <!-- Endless meteor scaling -->
+                    <div class="p-4 bg-black/30 border border-amber-500/10 rounded-xl space-y-3">
+                        <span class="font-bold text-white block text-sm"><i class="fa-solid fa-circle-nodes text-amber-400 mr-1.5 animate-pulse"></i> 1. 陨石非线性成长与相位防护盾 (Endless Scaling)</span>
+                        <p class="text-[11px] leading-relaxed">
+                            随着无尽波次推进，陨石 $HP$ 与垂直下降速度 $vy$ 按照高维指数方程进行幂次缩放，以形成极富挑战性的压力区间：
+                        </p>
+                        <div class="bg-black/50 p-3 rounded-lg font-mono text-[10px] text-amber-300 space-y-1">
+                            <div>$$HP_{\text{endless}} = \text{Math.ceil}(HP_{\text{base}} \times (1 + 0.42 \times (Wave - 1))^{1.15})$$</div>
+                            <div>$$vy_{\text{endless}} = vy_{\text{base}} \times (1 + 0.12 \times (Wave - 1))^{0.85}$$</div>
+                        </div>
+                        <p class="text-[11px] leading-relaxed">
+                            此外，在无尽深空模式中，大中型陨石在生成瞬间有 **$15\%$ 的概率**发生相位纠缠，类型被强制赋予为 <code>phase_shield</code>，带有 $3$ 层能阻挡所有常规物理穿透的多段相位能盾圈！
+                        </p>
+                    </div>
+
+                    <!-- Solar storm State Machine -->
+                    <div class="p-4 bg-black/30 border border-amber-500/10 rounded-xl space-y-3">
+                        <span class="font-bold text-white block text-sm"><i class="fa-solid fa-solar-panel text-orange-400 mr-1.5 animate-pulse"></i> 2. 太阳磁暴天象状态机 (Solar Storm State)</span>
+                        <p class="text-[11px] leading-relaxed">
+                            状态机通过高维计时变量进行无条件转移。太阳暴风每隔 $45$ 秒周期性降临，持续 $12$ 秒：
+                        </p>
+                        <div class="bg-black/50 p-2.5 rounded font-mono text-[10px] text-orange-300 space-y-1">
+                            <div>$\text{State 0 (Dormant)} \xrightarrow{t \ge 45000\text{ms}} \text{State 1 (Storm Active)}$</div>
+                            <div>$\text{State 1 (Storm Active)} \xrightarrow{t \ge 12000\text{ms}} \text{State 0 (Dormant)}$</div>
+                        </div>
+                        <p class="text-[11px] leading-relaxed">
+                            **磁暴状态行为限制**：屏幕降临猩红全息扫描框。强磁场使得废料吸引范围暴增为 3 倍（量子虹吸效果累加）。但高维能量射流密集暴涌，战机如果过于靠近屏幕边缘（$X < 80\text{px}$ 或 $X > \text{Width} - 80\text{px}$ 等），会以 $200\text{ms}$ 的高频间隔持续遭到 **$1$ 点核辐射强伤害剥蚀**！
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 十六、高清 DPI 像素精密映射与指尖物理同步 -->
+        <section id="viewport-dpi" class="space-y-4 scroll-mt-28">
+            <div class="flex items-center gap-2">
+                <span class="text-cyan-400 text-lg"><i class="fa-solid fa-expand animate-pulse"></i></span>
+                <h3 class="text-lg font-black text-white uppercase tracking-widest">十六、高清 DPI 像素精密映射与指尖物理同步 (Viewport High-DPI Mapping)</h3>
+            </div>
+            <p class="text-xs text-gray-400 leading-relaxed pl-6">
+                为了解决各种高清屏幕、Retina 视网膜屏及浏览器任意缩放比（Zooming）下手势拖动漂移的问题，V7 引擎重构了像素精密映射算法：
+            </p>
+
+            <div class="glass-card p-6 rounded-2xl glow-border-cyan ml-6 space-y-4">
+                <p class="text-xs text-gray-300 leading-relaxed">
+                    在极速战斗中，引擎的物理逻辑在标准化尺寸 $540 \times 960$（逻辑坐标）下进行独立迭代，而屏幕渲染尺寸会根据设备容器自适应缩放并强制居中 Letterbox 视口。手势与触控监听通过获取 <code>clientX</code> 并使用物理尺度比率 $\text{scaleX}$ 进行精细变换，完美解决了由于页面高缩放比造成的手指跟手位移偏角漂移：
+                </p>
+                <div class="bg-black/50 p-4 rounded-xl font-mono text-xs text-cyan-300 space-y-1">
+                    <div>$\text{rect} = \text{canvas.getBoundingClientRect()}$</div>
+                    <div>$\text{touch.logicalX} = (\text{touch.clientX} - \text{rect.left}) \times (\text{logicalWidth} / \text{rect.width})$</div>
+                    <div>$\text{touch.logicalY} = (\text{touch.clientY} - \text{rect.top}) \times (\text{logicalHeight} / \text{rect.height})$</div>
+                </div>
+                <p class="text-xs text-gray-500 leading-relaxed">
+                    该映射保证了在 4K 极清分辨率或小尺寸折叠屏下，指尖在 Canvas 上的滑动落点与战机物理碰撞中心实现 $100\%$ 完全物理重合，达到了像素级的精密跟手防滑抖动。
+                </p>
+            </div>
+        </section>
+
+        <!-- CORS-Free Offline Running Stamp -->
+        <section class="glass-card p-6 rounded-3xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 mt-8">
             <div class="space-y-2">
-                <span class="text-xs font-black text-cyan-400 block uppercase"><i class="fa-solid fa-shield-halved mr-1.5 animate-pulse"></i> CORS-Free 100% 静态离线运行保证</span>
+                <span class="text-xs font-black text-cyan-400 block uppercase flex items-center gap-1.5"><i class="fa-solid fa-shield-halved animate-pulse"></i> CORS-Free 100% 静态离线运行保证</span>
                 <p class="text-xs text-gray-400 leading-relaxed max-w-lg">
-                    作为极客飞行战斗网的一员，本页面与《星海猎手 V6》的主游戏、编年史、改装车间等所有 6 大页面完全遵循 <strong>CORS-Free 规范</strong>。无需启动任何本地静态 HTTP 服务器，双击即可无阻碍启动 Canvas 特效与 Web Audio 音效，实现完美离线单机运行。
+                    作为极客飞行战斗网的一员，本页面与《星海猎手 V7》的主游戏、编年史、改装车间等所有 6 大页面完全遵循 <strong>CORS-Free 规范</strong>。无需启动任何本地静态 HTTP 服务器，双击即可无阻碍启动 Canvas 特效与 Web Audio 音效，实现完美离线单机运行。
                 </p>
             </div>
             <div class="px-5 py-4 bg-cyan-950/20 border border-cyan-500/30 rounded-2xl text-center shrink-0">
@@ -845,7 +1268,6 @@
             <a href="space_shooter.html" class="hover:text-cyan-400 transition">主战战机机舱</a>
             <a href="version_history.html" class="hover:text-cyan-400 transition">编年史记录</a>
             <a href="v7_hangar.html" class="hover:text-cyan-400 transition">永久天赋星盘机库</a>
-            <a href="v7_roadmap.html" class="hover:text-cyan-400 transition">V7前瞻发布展望</a>
         </div>
         <p class="tracking-wider">星海猎手 V7 © 2026 DEEPMIND ADVANCED CODING DESIGN PARTNERSHIP</p>
     </footer>

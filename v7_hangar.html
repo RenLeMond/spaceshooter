@@ -151,6 +151,61 @@
             15% { transform: translate(-50%, -100%) scale(1.3); opacity: 1; }
             100% { transform: translate(-50%, -200%) scale(0.85); opacity: 0; }
         }
+
+        .skin-hangar-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(8, 12, 28, 0.76);
+            min-height: 250px;
+        }
+        .skin-hangar-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0.34;
+            pointer-events: none;
+        }
+        .skin-hangar-card[data-skin="void"]::before {
+            background: radial-gradient(circle at 50% 24%, rgba(168, 85, 247, 0.48), transparent 44%);
+        }
+        .skin-hangar-card[data-skin="thunder"]::before {
+            background: radial-gradient(circle at 50% 24%, rgba(34, 211, 238, 0.48), transparent 44%);
+        }
+        .skin-hangar-card[data-skin="imperial"]::before {
+            background: radial-gradient(circle at 50% 24%, rgba(245, 158, 11, 0.44), transparent 44%);
+        }
+        .skin-ship-mark {
+            width: 76px;
+            height: 88px;
+            margin: 0 auto;
+            clip-path: polygon(50% 0, 74% 50%, 94% 100%, 50% 76%, 6% 100%, 26% 50%);
+            border: 2px solid rgba(255, 255, 255, 0.42);
+            box-shadow: 0 0 24px rgba(255, 255, 255, 0.12);
+        }
+        .skin-ship-mark.void {
+            background: linear-gradient(160deg, #13051f, #7c3aed 54%, #22d3ee);
+        }
+        .skin-ship-mark.thunder {
+            background: linear-gradient(160deg, #07131f, #0ea5e9 48%, #facc15);
+        }
+        .skin-ship-mark.imperial {
+            background: linear-gradient(160deg, #170903, #b45309 45%, #fde047);
+        }
+        .skin-state-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            border-radius: 999px;
+            padding: 3px 8px;
+            font-size: 8px;
+            font-weight: 900;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(2, 6, 23, 0.7);
+        }
     </style>
 </head>
 <body class="min-h-screen relative pb-16">
@@ -191,16 +246,16 @@
         <!-- Banner Title -->
         <section class="text-center space-y-4 max-w-3xl mx-auto pt-6 relative">
             <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-cyan-500/10 border border-cyan-500/30 rounded-full text-[10px] font-black text-cyan-400 uppercase tracking-widest">
-                <i class="fa-solid fa-circle-nodes text-xs animate-pulse text-cyan-400"></i>先驱者先遣永久核能星盘整备机库
+                <i class="fa-solid fa-user-astronaut text-xs animate-pulse text-cyan-400"></i>先驱者永久机库用户中心
             </div>
             <h1 class="text-4xl md:text-6xl font-black tracking-tight leading-none text-white uppercase">
-                先驱者核心矩阵天赋树 <br>
+                永久机库用户中心 <br>
                 <span class="text-2xl md:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-500 to-rose-400 font-extrabold block mt-2">
-                    永久合金改装与全息物理流星沙盒
+                    星盘矩阵 · 超维涂装 · 星核资产
                 </span>
             </h1>
             <p class="text-xs text-gray-400 leading-relaxed max-w-xl mx-auto">
-                欢迎来到 V7 先遣级永久整备机库。通过收集战区所获的<b>合金废料 (Scrap)</b>，在此点亮激活永久六角星盘天赋点，加固装甲，重组晶核伤害，并可在右侧的<b>全息物理弹道沙盒</b>中操纵飞船实时开火测试天赋威能！
+                这里是跨局永久成长的账户中心。通过结算获得的<b>星核</b>点亮星盘、回退星盘、购买或出售涂装；所有状态与局内永久军械库共用同一份本地存档。
             </p>
         </section>
 
@@ -216,7 +271,7 @@
                                 <i class="fa-solid fa-circle-nodes"></i> 永久天赋先驱矩阵
                             </span>
                             <span class="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/30 rounded text-[9px] font-black text-cyan-400" id="scrapDisplay">
-                                METASCRAP: 500
+                                STAR CORES: 0
                             </span>
                         </div>
 
@@ -279,7 +334,7 @@
 
                     <!-- Reset Talent Button -->
                     <button onclick="resetHangarTalents()" class="w-full mt-4 py-2.5 border border-white/10 hover:border-rose-500/30 text-xs font-black rounded-xl text-gray-300 hover:text-rose-400 active:scale-95 transition bg-white/5 flex items-center justify-center gap-1.5">
-                        <i class="fa-solid fa-rotate-left"></i> 重置星盘天赋并返还全部废料
+                        <i class="fa-solid fa-rotate-left"></i> 重置星盘天赋并返还全部星核
                     </button>
                 </div>
             </div>
@@ -322,6 +377,77 @@
                         <span>[FPS: <span id="fpsText">60</span>]</span>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- Permanent Skin User Center -->
+        <section class="glass-panel rounded-3xl p-6 border-white/5 neon-border-gold">
+            <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 border-b border-white/10 pb-4 mb-5">
+                <div>
+                    <span class="text-[10px] font-black text-amber-400 uppercase tracking-widest flex items-center gap-1.5">
+                        <i class="fa-solid fa-palette"></i> 永久涂装中心
+                    </span>
+                    <h2 class="text-2xl font-black text-white mt-1 tracking-wider">超维机体资产</h2>
+                    <p class="text-xs text-gray-400 mt-1">购买、装配或出售涂装；出售会锁回涂装并返还对应星核。</p>
+                </div>
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-cyan-500/10 border border-cyan-500/30 rounded-xl self-start md:self-auto">
+                    <i class="fa-solid fa-gem text-cyan-300 text-xs"></i>
+                    <span class="text-[10px] text-cyan-300 font-black uppercase tracking-wider">星核余额</span>
+                    <span id="skinCoreBalanceText" class="text-sm text-white font-black">0</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="skinHangarGrid">
+                <article class="skin-hangar-card p-4 flex flex-col gap-4" data-skin="void">
+                    <div class="relative z-10 flex items-center justify-between">
+                        <span class="text-[9px] font-black text-purple-300 uppercase tracking-widest">SKIN · 001</span>
+                        <span id="skinStateVoid" class="skin-state-pill text-gray-400"><i class="fa-solid fa-lock"></i> Locked</span>
+                    </div>
+                    <div class="relative z-10 text-center py-2">
+                        <div class="skin-ship-mark void"></div>
+                        <h3 class="text-lg font-black text-white mt-3">星渊幻影</h3>
+                        <p class="text-[9px] text-purple-300 font-black uppercase tracking-widest">VOID PHANTOM</p>
+                    </div>
+                    <p class="relative z-10 text-[10px] text-gray-400 leading-relaxed flex-1">机翼紫蓝能流、引力弹弓特效与量子残影外观。适合偏机动与视觉反馈的飞行员。</p>
+                    <div class="relative z-10 grid grid-cols-2 gap-2">
+                        <button id="skinPrimaryVoidBtn" onclick="interactHangarSkin('void')" class="py-2 rounded-xl bg-cyan-600/20 border border-cyan-500/30 text-cyan-300 text-[10px] font-black active:scale-95 transition">购买 · 80</button>
+                        <button id="skinSellVoidBtn" onclick="sellHangarSkin('void')" class="py-2 rounded-xl bg-rose-600/10 border border-rose-500/25 text-rose-300 text-[10px] font-black active:scale-95 transition">出售</button>
+                    </div>
+                </article>
+
+                <article class="skin-hangar-card p-4 flex flex-col gap-4" data-skin="thunder">
+                    <div class="relative z-10 flex items-center justify-between">
+                        <span class="text-[9px] font-black text-cyan-300 uppercase tracking-widest">SKIN · 002</span>
+                        <span id="skinStateThunder" class="skin-state-pill text-gray-400"><i class="fa-solid fa-lock"></i> Locked</span>
+                    </div>
+                    <div class="relative z-10 text-center py-2">
+                        <div class="skin-ship-mark thunder"></div>
+                        <h3 class="text-lg font-black text-white mt-3">超维雷霆</h3>
+                        <p class="text-[9px] text-cyan-300 font-black uppercase tracking-widest">DIMENSION THUNDER</p>
+                    </div>
+                    <p class="relative z-10 text-[10px] text-gray-400 leading-relaxed flex-1">蓝黄电弧尾流、雷暴风格装甲与高能推进器外观。适合喜欢高亮战斗读数的飞行员。</p>
+                    <div class="relative z-10 grid grid-cols-2 gap-2">
+                        <button id="skinPrimaryThunderBtn" onclick="interactHangarSkin('thunder')" class="py-2 rounded-xl bg-cyan-600/20 border border-cyan-500/30 text-cyan-300 text-[10px] font-black active:scale-95 transition">购买 · 100</button>
+                        <button id="skinSellThunderBtn" onclick="sellHangarSkin('thunder')" class="py-2 rounded-xl bg-rose-600/10 border border-rose-500/25 text-rose-300 text-[10px] font-black active:scale-95 transition">出售</button>
+                    </div>
+                </article>
+
+                <article class="skin-hangar-card p-4 flex flex-col gap-4" data-skin="imperial">
+                    <div class="relative z-10 flex items-center justify-between">
+                        <span class="text-[9px] font-black text-amber-300 uppercase tracking-widest">SKIN · 003</span>
+                        <span id="skinStateImperial" class="skin-state-pill text-gray-400"><i class="fa-solid fa-lock"></i> Locked</span>
+                    </div>
+                    <div class="relative z-10 text-center py-2">
+                        <div class="skin-ship-mark imperial"></div>
+                        <h3 class="text-lg font-black text-white mt-3">帝皇余晖</h3>
+                        <p class="text-[9px] text-amber-300 font-black uppercase tracking-widest">IMPERIAL AFTERGLOW</p>
+                    </div>
+                    <p class="relative z-10 text-[10px] text-gray-400 leading-relaxed flex-1">红金尾焰、强磁拾取主题与重装舰首外观。适合偏资源回收和厚重质感的飞行员。</p>
+                    <div class="relative z-10 grid grid-cols-2 gap-2">
+                        <button id="skinPrimaryImperialBtn" onclick="interactHangarSkin('imperial')" class="py-2 rounded-xl bg-cyan-600/20 border border-cyan-500/30 text-cyan-300 text-[10px] font-black active:scale-95 transition">购买 · 120</button>
+                        <button id="skinSellImperialBtn" onclick="sellHangarSkin('imperial')" class="py-2 rounded-xl bg-rose-600/10 border border-rose-500/25 text-rose-300 text-[10px] font-black active:scale-95 transition">出售</button>
+                    </div>
+                </article>
             </div>
         </section>
 
@@ -537,15 +663,22 @@
         // 2. META-PROGRESSION TALENT星盘 LOGIC
         // ==========================================
         const TALENT_NODES = {
-            'A': { name: '量子超频催化 (Quantum Overclock)', class: 'TACTICAL PATH', desc: '降低战术量子折跃 (Shift) 的冷却能耗 10% - 30%，并将折跃轰鸣的起点终点爆破半径扩大 40px。', cost: 120, maxLevel: 3, level: 0 },
-            'B': { name: '火控晶核增幅 (Core Amplification)', class: 'FIREPOWER PATH', desc: '使机体挂载的单晶核及融合共鸣被动雷击/火球基础伤害永久提升 8% - 24%。', cost: 150, maxLevel: 3, level: 0 },
-            'C': { name: '反物质纳米力场 (Antimatter Field)', class: 'DEFENSE PATH', desc: '在飞船身侧加固一层能核护盾圈，物理减免陨石碰撞所产生的动能碾压伤害 10% - 30%。', cost: 100, maxLevel: 3, level: 0 },
-            'D': { name: '磁力量子虹吸 (Magnet Siphon)', class: 'DEFENSE PATH', desc: '使合金废料 (Scrap) 回收虹吸引力吸引半径扩大 60px。每次吸附 scrap 时，以 5% 几率修复 2% 护盾外壳。', cost: 80, maxLevel: 3, level: 0 },
-            'E': { name: '僚机副武器齐射 (Wingman Volley)', class: 'FIREPOWER PATH', desc: '加挂双联副炮僚机能动。在释放主武器时，有 20% - 40% 的概率追加释放侧翼副武器齐射。', cost: 180, maxLevel: 2, level: 0 }
+            'A': { name: '量子超频催化 (Quantum Overclock)', class: 'TACTICAL PATH', desc: '提高战术量子折跃 (Shift) 充能效率 10% - 30%，强化机动手感但不直接抬高火力。', cost: 120, maxLevel: 3, level: 0 },
+            'B': { name: '火控晶核增幅 (Core Amplification)', class: 'FIREPOWER PATH', desc: '普通陨石子弹伤害提升 4% - 12%；Boss 目标仅提升 1% - 3%，避免开局碾压首领。', cost: 150, maxLevel: 3, level: 0 },
+            'C': { name: '反物质纳米力场 (Antimatter Field)', class: 'DEFENSE PATH', desc: '在飞船身侧加固一层能核护盾圈，物理减免陨石碰撞所产生的动能碾压伤害 8% - 24%。', cost: 100, maxLevel: 3, level: 0 },
+            'D': { name: '磁力量子虹吸 (Magnet Siphon)', class: 'DEFENSE PATH', desc: '使合金废料与经验晶体回收虹吸引力吸引半径扩大 35px - 105px。', cost: 80, maxLevel: 3, level: 0 },
+            'E': { name: '僚机副武器齐射 (Wingman Volley)', class: 'FIREPOWER PATH', desc: '释放主武器时，有 12% - 20% 的概率追加低伤害侧翼副武器齐射，不参与局内构装伤害乘区。', cost: 180, maxLevel: 2, level: 0 }
         };
 
         let activeNodeId = 'A';
-        let scrapBalance = 500;
+        let scrapBalance = 0;
+        let unlockedSkins = ['default'];
+        let currentSkin = 'default';
+        const SKIN_DEFINITIONS = {
+            void: { name: '星渊幻影', cost: 80 },
+            thunder: { name: '超维雷霆', cost: 100 },
+            imperial: { name: '帝皇余晖', cost: 120 }
+        };
 
         function loadHangarData() {
             // Load saved talents from LocalStorage
@@ -559,15 +692,25 @@
                         }
                     }
                 }
-                const savedScrap = localStorage.getItem('space_best_scrap') || localStorage.getItem('space_scrap');
+                const savedScrap = localStorage.getItem('space_permanent_cores');
                 if (savedScrap) {
-                    scrapBalance = Math.max(500, parseInt(savedScrap) || 500);
+                    scrapBalance = Math.max(0, parseInt(savedScrap) || 0);
                 }
+                const savedSkins = localStorage.getItem('space_unlocked_skins');
+                if (savedSkins) {
+                    const parsedSkins = JSON.parse(savedSkins);
+                    unlockedSkins = Array.isArray(parsedSkins) ? parsedSkins : ['default'];
+                }
+                if (!unlockedSkins.includes('default')) unlockedSkins.unshift('default');
+                currentSkin = localStorage.getItem('space_current_skin') || 'default';
+                if (!unlockedSkins.includes(currentSkin)) currentSkin = 'default';
             } catch(e) {
                 console.warn("Storage sync fallback to default values", e);
             }
-            document.getElementById('scrapDisplay').innerText = `METASCRAP: ${scrapBalance}`;
-            document.getElementById('scrapBalanceText').innerText = scrapBalance;
+            document.getElementById('scrapDisplay').innerText = `STAR CORES: ${scrapBalance}`;
+            const balanceText = document.getElementById('scrapBalanceText');
+            if (balanceText) balanceText.innerText = scrapBalance;
+            renderSkinHangar();
 
             // Reflect in SVG visual elements
             for (const key in TALENT_NODES) {
@@ -588,6 +731,89 @@
                 }
             }
             updateTalentDetailsCard();
+        }
+
+        function skinDomId(id) {
+            return id.charAt(0).toUpperCase() + id.slice(1);
+        }
+
+        function saveSkinState() {
+            localStorage.setItem('space_unlocked_skins', JSON.stringify(unlockedSkins));
+            localStorage.setItem('space_current_skin', currentSkin);
+            localStorage.setItem('space_permanent_cores', String(scrapBalance));
+        }
+
+        function renderSkinHangar() {
+            const balanceEl = document.getElementById('skinCoreBalanceText');
+            if (balanceEl) balanceEl.innerText = scrapBalance;
+            Object.keys(SKIN_DEFINITIONS).forEach(id => {
+                const skin = SKIN_DEFINITIONS[id];
+                const suffix = skinDomId(id);
+                const owned = unlockedSkins.includes(id);
+                const equipped = currentSkin === id;
+                const stateEl = document.getElementById(`skinState${suffix}`);
+                const primaryBtn = document.getElementById(`skinPrimary${suffix}Btn`);
+                const sellBtn = document.getElementById(`skinSell${suffix}Btn`);
+                if (stateEl) {
+                    if (equipped) {
+                        stateEl.className = 'skin-state-pill text-emerald-300';
+                        stateEl.innerHTML = '<i class="fa-solid fa-circle-check"></i> Equipped';
+                    } else if (owned) {
+                        stateEl.className = 'skin-state-pill text-cyan-300';
+                        stateEl.innerHTML = '<i class="fa-solid fa-unlock"></i> Owned';
+                    } else {
+                        stateEl.className = 'skin-state-pill text-gray-400';
+                        stateEl.innerHTML = '<i class="fa-solid fa-lock"></i> Locked';
+                    }
+                }
+                if (primaryBtn) {
+                    primaryBtn.disabled = !owned && scrapBalance < skin.cost;
+                    primaryBtn.className = owned
+                        ? 'py-2 rounded-xl bg-emerald-600/15 border border-emerald-500/30 text-emerald-300 text-[10px] font-black active:scale-95 transition disabled:opacity-40'
+                        : 'py-2 rounded-xl bg-cyan-600/20 border border-cyan-500/30 text-cyan-300 text-[10px] font-black active:scale-95 transition disabled:opacity-40';
+                    primaryBtn.innerText = equipped ? '已装配' : (owned ? '装配' : `购买 · ${skin.cost}`);
+                }
+                if (sellBtn) {
+                    sellBtn.disabled = !owned;
+                    sellBtn.className = 'py-2 rounded-xl bg-rose-600/10 border border-rose-500/25 text-rose-300 text-[10px] font-black active:scale-95 transition disabled:opacity-30 disabled:text-gray-500';
+                    sellBtn.innerText = owned ? `出售 +${skin.cost}` : '未拥有';
+                }
+            });
+        }
+
+        function interactHangarSkin(id) {
+            const skin = SKIN_DEFINITIONS[id];
+            if (!skin) return;
+            if (unlockedSkins.includes(id)) {
+                currentSkin = id;
+                saveSkinState();
+                playSynthSound('click');
+                spawnFloatText(window.innerWidth / 2, window.innerHeight / 2 - 100, `🎨 已装配 ${skin.name}`, 'cyan');
+            } else {
+                if (scrapBalance < skin.cost) {
+                    spawnFloatText(window.innerWidth / 2, window.innerHeight / 2 - 100, '星核不足', 'rose');
+                    return;
+                }
+                scrapBalance -= skin.cost;
+                unlockedSkins.push(id);
+                currentSkin = id;
+                saveSkinState();
+                playSynthSound('unlock');
+                spawnFloatText(window.innerWidth / 2, window.innerHeight / 2 - 100, `✨ 解锁 ${skin.name}`, 'gold');
+            }
+            loadHangarData();
+        }
+
+        function sellHangarSkin(id) {
+            const skin = SKIN_DEFINITIONS[id];
+            if (!skin || !unlockedSkins.includes(id)) return;
+            unlockedSkins = unlockedSkins.filter(skinId => skinId !== id);
+            if (currentSkin === id) currentSkin = 'default';
+            scrapBalance += skin.cost;
+            saveSkinState();
+            playSynthSound('reset');
+            spawnFloatText(window.innerWidth / 2, window.innerHeight / 2 - 100, `♻️ 出售 ${skin.name}，返还 ${skin.cost} 星核`, 'cyan');
+            loadHangarData();
         }
 
         function selectHangarNode(id) {
@@ -631,7 +857,7 @@
                     btn.className = 'px-4 py-2 rounded-lg bg-gray-900 border border-white/10 text-gray-600 text-[9px] font-black uppercase';
                     btn.onclick = null;
                 }
-                btn.innerText = `点亮激活 · ${data.cost} 废料`;
+                btn.innerText = `点亮激活 · ${data.cost} 星核`;
             }
         }
 
@@ -664,7 +890,7 @@
             scrapBalance += refund;
 
             saveTalentState();
-            spawnFloatText(window.innerWidth / 2, window.innerHeight / 2 - 100, `♻️ 天赋重置！返还 ${refund} 合金！`, 'cyan');
+            spawnFloatText(window.innerWidth / 2, window.innerHeight / 2 - 100, `♻️ 天赋重置！返还 ${refund} 星核！`, 'cyan');
             loadHangarData();
         }
 
@@ -675,8 +901,7 @@
                     talents[key] = TALENT_NODES[key].level;
                 }
                 localStorage.setItem('space_v7_talents', JSON.stringify(talents));
-                localStorage.setItem('space_best_scrap', String(scrapBalance));
-                localStorage.setItem('space_scrap', String(scrapBalance));
+                localStorage.setItem('space_permanent_cores', String(scrapBalance));
             } catch(e) {
                 console.warn("Storage write failed", e);
             }
@@ -702,8 +927,8 @@
             document.getElementById('certHullField').innerText = `LV.${TALENT_NODES.C.level}`;
             
             document.getElementById('passLeftLabel').innerText = `CD: -${TALENT_NODES.A.level * 10}%`;
-            document.getElementById('passRightLabel').innerText = `ATK: +${TALENT_NODES.B.level * 8}%`;
-            document.getElementById('passScoreLabel').innerText = `DEF: +${TALENT_NODES.C.level * 10}%`;
+            document.getElementById('passRightLabel').innerText = `ATK: +${TALENT_NODES.B.level * 4}%`;
+            document.getElementById('passScoreLabel').innerText = `DEF: +${TALENT_NODES.C.level * 8}%`;
             
             const randomHex = Math.floor(Math.random() * 16777215).toString(16).toUpperCase();
             document.getElementById('passSecKey').innerText = `KEY#${randomHex}-V7`;
@@ -853,7 +1078,7 @@
                 playSynthSound('click');
                 
                 // Main Bullet
-                const damageBase = 12 * (1 + TALENT_NODES.B.level * 0.08);
+                const damageBase = 12 * (1 + TALENT_NODES.B.level * 0.04);
                 bullets.push({ x: shipX, y: shipY - 20, vx: 0, vy: -7, radius: 4, color: '#38bdf8', damage: damageBase });
                 
                 // Wingman Bullet if level unlocked

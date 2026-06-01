@@ -9,7 +9,7 @@ Object.assign(GameEngine.prototype, {
         this.updateHangarUI();
     },
 
-    _renderUpgradeCard(cardId, progressId, tagId, btnId, level, maxLevel, cost, labels) {
+    _renderUpgradeCard(cardId, progressId, tagId, btnId, level, maxLevel, cost, labels, balance = this.scrap) {
         const card = document.getElementById(cardId);
         const progress = document.getElementById(progressId);
         const tag = document.getElementById(tagId);
@@ -31,12 +31,15 @@ Object.assign(GameEngine.prototype, {
             card.classList.remove('is-maxed');
             tag.innerText = level > 0 ? labels.leveled(level) : labels.locked;
             btn.innerText = labels.btnCost(cost);
-            btn.disabled = this.scrap < cost;
+            btn.disabled = balance < cost;
         }
     },
 
     updateHangarUI() {
         document.getElementById('shopScrapText').innerText = this.scrap;
+        const permanentCoreText = document.getElementById('permanentCoreText');
+        const permanentCores = safeReadPermanentCores();
+        if (permanentCoreText) permanentCoreText.innerText = permanentCores;
 
         this._renderUpgradeCard(
             'upgradeCardTurret', 'turretProgress', 'turretLevelText', 'buyTurretBtn',
@@ -103,8 +106,8 @@ Object.assign(GameEngine.prototype, {
                 card.classList.remove('is-equipped');
                 chip.className = 'status-chip status-locked';
                 chip.innerHTML = '<i class="fa-solid fa-lock text-[8px]"></i> Locked';
-                btn.disabled = this.scrap < s.cost;
-                btn.innerHTML = `<span class="cost"><i class="fa-solid fa-cube text-amber-300"></i> ${s.cost}</span> 解锁涂装`;
+                btn.disabled = permanentCores < s.cost;
+                btn.innerHTML = `<span class="cost"><i class="fa-solid fa-gem text-cyan-300"></i> ${s.cost}</span> 解锁涂装`;
             }
         });
 
@@ -125,7 +128,7 @@ Object.assign(GameEngine.prototype, {
             const def = TALENT_DEFINITIONS[i];
             this._renderUpgradeCard(
                 `talentCard${def.id}`, `talentProgress${def.id}`, `talentLevelText${def.id}`, `buyTalent${def.id}Btn`,
-                (this.talents && this.talents[def.id]) || 0, def.maxLevel, def.cost, labels
+                (this.talents && this.talents[def.id]) || 0, def.maxLevel, def.cost, labels, permanentCores
             );
         }
     },
@@ -137,11 +140,12 @@ Object.assign(GameEngine.prototype, {
         if (!this.talents) this.talents = defaultTalents();
         const lv = this.talents[id] || 0;
         if (lv >= def.maxLevel) return;
-        if (this.scrap < def.cost) {
-            this.showToast("❌ 合金废料不足，无法点亮永久天赋！");
+        const permanentCores = safeReadPermanentCores();
+        if (permanentCores < def.cost) {
+            this.showToast("❌ 星核不足，无法点亮永久天赋！");
             return;
         }
-        this.scrap -= def.cost;
+        savePermanentCores(permanentCores - def.cost);
         this.talents[id] = lv + 1;
         localStorage.setItem('space_v7_talents', JSON.stringify(this.talents));
         sfx.playPowerup();
@@ -190,8 +194,9 @@ Object.assign(GameEngine.prototype, {
             this.showToast(`🎨 成功切换机体涂装为: ${names[skinId] || skinId}`);
         } else {
             // Unlock skin
-            if (this.scrap >= cost) {
-                this.scrap -= cost;
+            const permanentCores = safeReadPermanentCores();
+            if (permanentCores >= cost) {
+                savePermanentCores(permanentCores - cost);
                 this.unlockedSkins.push(skinId);
                 localStorage.setItem('space_unlocked_skins', JSON.stringify(this.unlockedSkins));
                 this.currentSkin = skinId;
@@ -200,7 +205,7 @@ Object.assign(GameEngine.prototype, {
                 const names = { void: '🌌 星渊幻影', thunder: '⚡ 超维雷霆', imperial: '✨ 帝皇余晖' };
                 this.showToast(`✨ 成功解锁并装配超维机体: ${names[skinId] || skinId}`);
             } else {
-                this.showToast("❌ 合金废料不足，无法解锁！");
+                this.showToast("❌ 星核不足，无法解锁！");
             }
         }
         this.updateHangarUI();

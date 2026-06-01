@@ -38,6 +38,40 @@ function safeReadString(key, fallback) {
     return (raw !== null && raw !== '') ? raw : fallback;
 }
 
+var PERMANENT_CORES_KEY = 'space_permanent_cores';
+
+function safeReadPermanentCores() {
+    return Math.max(0, safeReadInt(PERMANENT_CORES_KEY, 0));
+}
+
+function savePermanentCores(value) {
+    const safeValue = Math.max(0, Math.floor(Number(value) || 0));
+    localStorage.setItem(PERMANENT_CORES_KEY, String(safeValue));
+    return safeValue;
+}
+
+function addPermanentCores(amount) {
+    const add = Math.max(0, Math.floor(Number(amount) || 0));
+    if (add <= 0) return safeReadPermanentCores();
+    return savePermanentCores(safeReadPermanentCores() + add);
+}
+
+function calculatePermanentCoreReward(stats) {
+    const defeated = (stats && Array.isArray(stats.bossTiersDefeated)) ? stats.bossTiersDefeated : [];
+    let bossCoreReward = 0;
+    for (let i = 0; i < defeated.length; i++) {
+        bossCoreReward += Math.min(130, 35 + Math.max(1, defeated[i]) * 20);
+    }
+    const waveBonus = Math.min(20, Math.max(0, ((stats && stats.wave) || 1) - 1) * 2);
+    const scrapBonus = Math.floor(Math.min(Math.max(0, (stats && stats.scrap) || 0), 150) / 25);
+    return {
+        bossCoreReward: bossCoreReward,
+        waveBonus: waveBonus,
+        scrapBonus: scrapBonus,
+        total: bossCoreReward + waveBonus + scrapBonus
+    };
+}
+
 // P2: 武器名称表 — 模块级常量，避免每次 HUD/pickup 重建对象字面量
 // HUD 字号 9px、宽度有限，去掉装饰【】让单核/共鸣名能完整显示
 const WEAPONS_NAMES = {
@@ -73,13 +107,13 @@ function shuffleArray(arr) {
 }
 
 // V7: 先驱者六角星盘「永久天赋矩阵」定义 — Worker / 主线程共用 (var 供跨文件 classic script 访问)
-// 局外 Meta 永久升级：用局内收集的合金废料(scrap)点亮，持久化于 localStorage('space_v7_talents')，开局自动生效。
+// 局外 Meta 永久升级：用结算星核点亮，等级持久化于 localStorage('space_v7_talents')，开局自动生效。
 var TALENT_DEFINITIONS = [
-    { id: 'A', name: '量子超频催化', en: 'QUANTUM OVERCLOCK', icon: 'fa-gauge-high', color: 'cyan',    cost: 120, maxLevel: 3, desc: '折跃(Shift)充能速度永久 +15% / 级' },
-    { id: 'B', name: '火控晶核增幅', en: 'CORE AMPLIFICATION', icon: 'fa-burst',      color: 'rose',    cost: 150, maxLevel: 3, desc: '所有子弹基础伤害永久 +8% / 级' },
-    { id: 'C', name: '反物质纳米力场', en: 'ANTIMATTER FIELD',  icon: 'fa-shield-halved', color: 'cyan', cost: 100, maxLevel: 3, desc: '受到的一切伤害永久 -10% / 级' },
-    { id: 'D', name: '磁力量子虹吸', en: 'MAGNET SIPHON',      icon: 'fa-magnet',     color: 'emerald', cost: 80,  maxLevel: 3, desc: '废料 / 经验吸附半径永久 +50px / 级' },
-    { id: 'E', name: '僚机副武器齐射', en: 'WINGMAN VOLLEY',    icon: 'fa-angles-up',  color: 'rose',    cost: 180, maxLevel: 2, desc: '开火时 +20% / 级 概率追加侧翼齐射' }
+    { id: 'A', name: '量子超频催化', en: 'QUANTUM OVERCLOCK', icon: 'fa-gauge-high', color: 'cyan',    cost: 120, maxLevel: 3, desc: '折跃(Shift)充能速度永久 +10% / 级' },
+    { id: 'B', name: '火控晶核增幅', en: 'CORE AMPLIFICATION', icon: 'fa-burst',      color: 'rose',    cost: 150, maxLevel: 3, desc: '普通陨石子弹伤害 +4% / 级；Boss 伤害 +1% / 级' },
+    { id: 'C', name: '反物质纳米力场', en: 'ANTIMATTER FIELD',  icon: 'fa-shield-halved', color: 'cyan', cost: 100, maxLevel: 3, desc: '受到的一切伤害永久 -8% / 级' },
+    { id: 'D', name: '磁力量子虹吸', en: 'MAGNET SIPHON',      icon: 'fa-magnet',     color: 'emerald', cost: 80,  maxLevel: 3, desc: '废料 / 经验吸附半径永久 +35px / 级' },
+    { id: 'E', name: '僚机副武器齐射', en: 'WINGMAN VOLLEY',    icon: 'fa-angles-up',  color: 'rose',    cost: 180, maxLevel: 2, desc: '开火时 12% / 20% 概率追加侧翼齐射' }
 ];
 
 function defaultTalents() {
@@ -361,10 +395,12 @@ Object.assign(GameEngine.prototype, {
                 this.spawnBulletInPool({ x: p.x + 16, y: p.y - 20, vx: 2.5, vy: -12.5, radius: 4, damage: 15, color: baseColor, isSplitBullet: true });
             }
 
-            // V7 永久天赋 E「僚机副武器齐射」：开火时按概率追加一对侧翼副炮齐射
-            if (this.talents && this.talents.E > 0 && Math.random() < 0.20 * this.talents.E) {
-                this.spawnBulletInPool({ x: p.x - 22, y: p.y - 8, vx: -3, vy: -11, radius: 3.5, damage: 14, color: '#fbbf24', isSplitBullet: true });
-                this.spawnBulletInPool({ x: p.x + 22, y: p.y - 8, vx: 3, vy: -11, radius: 3.5, damage: 14, color: '#fbbf24', isSplitBullet: true });
+            // V7 永久天赋 E「僚机副武器齐射」：横向补火，不参与局内构装/弹弓伤害乘区
+            const volleyChanceByLevel = [0, 0.12, 0.20];
+            const eLevel = Math.min(2, (this.talents && this.talents.E) || 0);
+            if (eLevel > 0 && Math.random() < volleyChanceByLevel[eLevel]) {
+                this.spawnBulletInPool({ x: p.x - 22, y: p.y - 8, vx: -3, vy: -11, radius: 3.5, damage: 8, color: '#fbbf24', isSplitBullet: true, isTalentVolley: true });
+                this.spawnBulletInPool({ x: p.x + 22, y: p.y - 8, vx: 3, vy: -11, radius: 3.5, damage: 8, color: '#fbbf24', isSplitBullet: true, isTalentVolley: true });
             }
         }
     },
@@ -751,8 +787,8 @@ Object.assign(GameEngine.prototype, {
         if (this.player.exp >= this.player.nextLevelExp) {
             this.player.exp -= this.player.nextLevelExp;
             this.player.level++;
-            // 指数量级经验递增：基数 120，倍率 1.45，让满构装需要打满一整局
-            this.player.nextLevelExp = Math.floor(120 * Math.pow(1.45, this.player.level - 1));
+            // 平滑递增：确保正常一整局有机会装满 4-6 个构装，而后期仍保留成长压力
+            this.player.nextLevelExp = Math.floor(120 * Math.pow(1.3, this.player.level - 1));
             this.triggerLevelUp();
         }
         this.updateHUD();

@@ -38,6 +38,7 @@ self.window = {
             if (key === 'space_current_skin') return self.currentSkin || 'default';
             if (key === 'space_best_score') return String(self.bestScore || 0);
             if (key === 'space_v7_talents') return JSON.stringify(self.talents || { A: 0, B: 0, C: 0, D: 0, E: 0 });
+            if (key === 'space_permanent_cores') return String(self.permanentCores || 0);
             return null;
         },
         setItem: (key, val) => {
@@ -56,6 +57,10 @@ self.window = {
             if (key === 'space_v7_talents') {
                 try { self.talents = JSON.parse(val); } catch (e) {}
                 postMessage({ type: 'saveLocalStorage', key, val });
+            }
+            if (key === 'space_permanent_cores') {
+                self.permanentCores = Math.max(0, parseInt(val, 10) || 0);
+                postMessage({ type: 'saveLocalStorage', key, val: String(self.permanentCores) });
             }
         }
     }
@@ -292,7 +297,14 @@ class GameEngineWorker extends GameEngine {
 
     // 重写游戏结束
     triggerGameOver() {
+        if (this.gameOverCoreSettled) return;
+        this.gameOverCoreSettled = true;
         this.isRunning = false;
+        const coreReward = calculatePermanentCoreReward({
+            wave: this.wave,
+            scrap: this.scrap,
+            bossTiersDefeated: this.bossTiersDefeatedThisRun || []
+        });
         // 计算最佳分数
         if (this.score > this.bestScore) {
             this.bestScore = this.score;
@@ -303,7 +315,8 @@ class GameEngineWorker extends GameEngine {
             type: 'gameOver',
             score: this.score,
             wave: this.wave,
-            bestScore: this.bestScore
+            bestScore: this.bestScore,
+            permanentCoresEarned: this.isBenchmarking ? 0 : coreReward.total
         });
     }
 
@@ -419,6 +432,7 @@ self.onmessage = function(e) {
             self.currentSkin = data.currentSkin || 'default';
             self.bestScore = data.bestScore || 0;
             self.talents = data.talents || { A: 0, B: 0, C: 0, D: 0, E: 0 };
+            self.permanentCores = data.permanentCores || 0;
             
             engineInstance = new GameEngineWorker();
             

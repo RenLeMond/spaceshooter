@@ -126,6 +126,8 @@ class GameEngine {
         this.bossTier = 0; // 本局已歼灭的首领阶数，下一阶 = bossTier + 1
         this.bossSpawnCooldown = 0; // 歼灭后冷却，防止连刷
         this.nextBossThreshold = 3500; // 由 _refreshNextBossThreshold() 在 boss 模块加载后刷新
+        this.bossTiersDefeatedThisRun = [];
+        this.gameOverCoreSettled = false;
 
         this.spawnTimer = 0;
         this.waveTransitionTimer = 0;
@@ -590,8 +592,8 @@ class GameEngine {
         }
 
         if (this.warpCharge < 100) {
-            // 基础 5 秒充满 (0.333/帧)，永久天赋 A 每级 +15% 充能速度
-            const warpRate = 0.333 * (1 + 0.15 * ((this.talents && this.talents.A) || 0));
+            // 基础 5 秒充满 (0.333/帧)，永久天赋 A 每级 +10% 充能速度
+            const warpRate = 0.333 * (1 + 0.10 * ((this.talents && this.talents.A) || 0));
             this.warpCharge += warpRate * dtClamped;
             if (this.warpCharge > 100) this.warpCharge = 100;
         }
@@ -788,9 +790,9 @@ class GameEngine {
                 if (this.disasterActive && this.disasterType === 'solar_magnetism') {
                     magnetRadius *= 3;
                 }
-                // V7 永久天赋 D「磁力量子虹吸」：每级 +50px 吸附半径
+                // V7 永久天赋 D「磁力量子虹吸」：每级 +35px 吸附半径
                 if (this.talents && this.talents.D > 0) {
-                    magnetRadius += 50 * this.talents.D;
+                    magnetRadius += 35 * this.talents.D;
                 }
                 const magnetRadiusSq = magnetRadius * magnetRadius;
                 
@@ -959,6 +961,8 @@ class GameEngine {
         this.boss = null;
         this.bossTier = 0;
         this.bossSpawnCooldown = 0;
+        this.bossTiersDefeatedThisRun = [];
+        this.gameOverCoreSettled = false;
         if (typeof this._refreshNextBossThreshold === 'function') {
             this._refreshNextBossThreshold();
         }
@@ -1038,10 +1042,10 @@ class GameEngine {
 
 
     damagePlayer(amount) {
-        // V7 永久天赋 C「反物质纳米力场」：受到的一切伤害每级 -10%（至少保留 1 点，避免无敌）
+        // V7 永久天赋 C「反物质纳米力场」：受到的一切伤害每级 -8%（至少保留 1 点，避免无敌）
         const cLevel = (this.talents && this.talents.C) || 0;
         if (cLevel > 0 && amount > 0) {
-            amount = Math.max(1, Math.round(amount * (1 - 0.10 * cLevel)));
+            amount = Math.max(1, Math.round(amount * (1 - 0.08 * cLevel)));
         }
         this.player.hp -= amount;
         // P1: 仅当一次性伤害 ≥5 时播放大爆炸，避免激光持续掉血每帧触发声效 spam
@@ -1055,8 +1059,18 @@ class GameEngine {
     }
 
     triggerGameOver() {
+        if (this.gameOverCoreSettled) return;
+        this.gameOverCoreSettled = true;
         this.isRunning = false;
         sfx.playGameOver();
+        const coreReward = calculatePermanentCoreReward({
+            wave: this.wave,
+            scrap: this.scrap,
+            bossTiersDefeated: this.bossTiersDefeatedThisRun || []
+        });
+        if (!this.isBenchmarking && coreReward.total > 0) {
+            addPermanentCores(coreReward.total);
+        }
         
         if (this.score > this.bestScore) {
             this.bestScore = this.score;
@@ -1066,6 +1080,8 @@ class GameEngine {
         document.getElementById('endScore').innerText = String(this.score).padStart(6, '0');
         document.getElementById('endWave').innerText = this.wave;
         document.getElementById('endBest').innerText = String(this.bestScore).padStart(6, '0');
+        const endCoreReward = document.getElementById('endCoreReward');
+        if (endCoreReward) endCoreReward.innerText = `+${this.isBenchmarking ? 0 : coreReward.total}`;
         this.gameOverScreen.classList.remove('hidden');
     }
 

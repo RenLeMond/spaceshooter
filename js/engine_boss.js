@@ -306,6 +306,7 @@ Object.assign(GameEngine.prototype, {
                 b.laserSweepTimer -= 16.666 * dtClamped;
                 if (b.laserSweepTimer <= 0) {
                     b.laserActive = false;
+                    b.laserDamageCarry = 0;
                 } else {
                     // V7: 360-degree sweep continuous linear angle accumulation (modulo 2π to prevent float precision loss)
                     b.laserAnglePhase = ((b.laserAnglePhase || 0) + 0.0035 * 16.666 * dtClamped) % (Math.PI * 2);
@@ -617,6 +618,7 @@ Object.assign(GameEngine.prototype, {
         b.laserSweepTimer = 1800;
         b.laserAngle = 0;
         b.laserAnglePhase = 0; // 每次起手都从 0 相位开始
+        b.laserDamageCarry = 0;
         sfx.playTitanLaser();
         this.addFloatText(b.x, b.y + 50, "💥 OVERLOAD DEATH LASER!", "#ef4444", 22);
         this.showToast("⚠️ 警报：巨神兵正在积蓄能量释放横扫切割死光！");
@@ -653,8 +655,13 @@ Object.assign(GameEngine.prototype, {
             const distSq = (px - nx) * (px - nx) + (py - ny) * (py - ny);
             if (distSq < 900) {
                 if (this.shieldTime <= 0 && this.slingshotTime <= 0) {
-                    this.damagePlayer(Math.floor(1.2 * dtClamped));
-                    this.createScreenShake(6);
+                    b.laserDamageCarry = (b.laserDamageCarry || 0) + 1.2 * dtClamped;
+                    const laserDamage = Math.floor(b.laserDamageCarry);
+                    if (laserDamage > 0) {
+                        b.laserDamageCarry -= laserDamage;
+                        this.damagePlayer(laserDamage);
+                        this.createScreenShake(6);
+                    }
                 } else {
                     this.addFloatText(px, py - 30, "LASER BLOCKED!", "#06b6d4", 11);
                 }
@@ -755,6 +762,8 @@ Object.assign(GameEngine.prototype, {
         this.scrap += 150 + tier * 45;
         this.score += 5000 + tier * 1500;
 
+        if (!this.bossTiersDefeatedThisRun) this.bossTiersDefeatedThisRun = [];
+        this.bossTiersDefeatedThisRun.push(tier);
         this.bossTier = tier;
         this.bossSpawnCooldown = BOSS_SPAWN_COOLDOWN_MS;
         this._refreshNextBossThreshold();

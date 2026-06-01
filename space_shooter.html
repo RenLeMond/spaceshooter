@@ -12,7 +12,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Noto+Sans+SC:wght@300;500;700;900&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=7.0.7">
+    <link rel="stylesheet" href="style.css?v=7.0.16">
 </head>
 <body class="flex items-center justify-center min-h-screen">
 
@@ -138,121 +138,101 @@
             </div>
         </div>
 
-        <div id="startScreen" class="absolute inset-0 z-20 flex flex-col justify-between p-5 cyber-grid">
-            <!-- 全息扫描装饰线 -->
-            <div class="scan-line"></div>
+                <div id="startScreen" class="absolute inset-0 z-20 cyber-grid">
+            <div class="cyber-scan-line"></div>
+            <div class="start-shell">
+                <header class="start-topbar">
+                    <div class="start-status">
+                        <span class="pulse-dot"></span>
+                        ONLINE
+                    </div>
+                    <div class="start-version">ENGINE V7 · 0-GC · 60FPS</div>
+                </header>
 
-            <!-- 顶部系统状态条 -->
-            <div class="flex items-center justify-between text-[9px] font-bold tracking-[0.18em] uppercase">
-                <div class="flex items-center gap-1.5 text-emerald-400">
-                    <span class="pulse-dot"></span>
-                    SYS · ONLINE
+                <section class="start-hero">
+                    <div class="start-kicker"><i class="fa-solid fa-satellite-dish"></i> ARCADE SHMUP</div>
+                    <h1>星海猎手 V7</h1>
+                    <p>机载超维构装 · 深空天象</p>
+                </section>
+
+                <!-- V7 Holographic Ship Projection Chamber -->
+                <div class="holo-chamber" id="holoChamber">
+                    <div class="holo-scanner">
+                        <div class="holo-radar-sweep"></div>
+                        <div id="holoShipSvgWrap">
+                            <!-- SVG dynamically injected here -->
+                        </div>
+                    </div>
+                    <div class="holo-telemetry-panel">
+                        <span class="holo-skin-tag" id="holoSkinName">先驱者默认机型</span>
+                        <span class="holo-stats-text" id="holoSkinBuffs">量子能盾发生器 · 量子折跃推进</span>
+                        <div class="holo-term-log">
+                            <span class="holo-term-col"><i class="fa-solid fa-microchip text-[7px]"></i> CORE: ACTIVE</span>
+                            <span class="holo-term-col text-indigo-400"><i class="fa-solid fa-radar text-[7px] animate-pulse"></i> SEC: DELTA-9</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="flex items-center gap-1.5 text-cyan-400/60">
-                    <span>ENGINE V7</span>
-                    <span class="dot-sep"></span>
-                    <span class="text-emerald-400/80">0-GC</span>
-                    <span class="dot-sep"></span>
-                    <span>60FPS</span>
-                </div>
+
+                <section class="start-menu-panel">
+                    <div class="start-section">
+                        <div class="start-section-title"><i class="fa-solid fa-sliders"></i> 操控方式</div>
+                        <div class="control-mode-grid">
+                            <button id="selectTouchBtn" class="control-mode-btn is-selected" type="button">
+                                <span class="led-dot"></span>
+                                <span class="control-mode-icon"><i class="fa-solid fa-fingerprint animate-pulse"></i></span>
+                                <span class="control-mode-copy">
+                                    <strong>指尖拖动</strong>
+                                    <em>跟手移动 · 自动开火</em>
+                                </span>
+                            </button>
+                            <button id="selectKeyBtn" class="control-mode-btn" type="button">
+                                <span class="led-dot"></span>
+                                <span class="control-mode-icon"><i class="fa-solid fa-keyboard"></i></span>
+                                <span class="control-mode-copy">
+                                    <strong>键盘按键</strong>
+                                    <em>A/D · Space · Shift</em>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="start-section">
+                        <div class="start-section-title"><i class="fa-solid fa-globe"></i> 作战星域</div>
+                        <div class="campaign-mode-grid">
+                            <button id="selectClassicBtn" class="campaign-mode-btn is-selected" type="button">
+                                <span class="led-dot"></span>
+                                <i class="fa-solid fa-flag"></i> 经典星域
+                            </button>
+                            <button id="selectEndlessBtn" class="campaign-mode-btn" type="button">
+                                <span class="led-dot"></span>
+                                <i class="fa-solid fa-infinity"></i> 无尽深空
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="start-actions">
+                        <button id="startPlayBtn" class="start-primary-btn" type="button">
+                            起航征战
+                        </button>
+                        <button id="startBenchmarkBtn" class="start-secondary-btn" type="button">
+                            <i class="fa-solid fa-bolt"></i> 性能跑分
+                        </button>
+                    </div>
+                </section>
             </div>
 
-            <!-- 主标题英雄区 -->
-            <div class="text-center">
-                <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-950/40 rounded-full text-[10px] font-bold text-cyan-400 border border-cyan-500/40 tracking-[0.25em] uppercase mb-4">
-                    <i class="fa-solid fa-satellite-dish text-[9px]"></i>
-                    Arcade Heavy-Metal Shmup
-                </div>
-                <h1 class="text-5xl font-black text-white leading-none">
-                <span data-text="星海猎手 V7" class="chromatic neon-text-cyan inline-block tracking-wider">星海猎手 V7</span>
-                </h1>
-                <div class="mt-3 text-lg tracking-[0.35em] font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-purple-400 to-cyan-400">
-                机载超维构装 · 深空天象
-                </div>
-
-                <div class="mt-5 max-w-xs mx-auto holo-frame rounded-md px-3 py-2.5">
-                    <p class="text-[11px] text-gray-300 leading-relaxed">
-                        <span class="text-cyan-400 font-bold">双击</span>/<span class="text-cyan-400 font-bold">Shift</span> 启动战术量子折跃<br>
-                        时空坍缩 × 斥力爆轰横扫流星<br>
-                        <span class="text-fuchsia-400">三大超维涂装</span> · <span class="text-rose-400">多阶首领</span>终极对决
-                    </p>
-                </div>
-
-                <!-- 战机参数三联读数 -->
-                <div class="grid grid-cols-3 gap-2 mt-4">
-                    <div class="holo-frame rounded-md px-1.5 py-1.5 text-center">
-                        <div class="text-[8px] text-cyan-400/70 tracking-[0.18em] font-bold">CORES</div>
-                        <div class="text-[11px] font-black text-white mt-0.5">DUAL-THREAD</div>
-                    </div>
-                    <div class="holo-frame rounded-md px-1.5 py-1.5 text-center">
-                        <div class="text-[8px] text-fuchsia-400/70 tracking-[0.18em] font-bold">SKINS</div>
-                        <div class="text-[11px] font-black text-white mt-0.5">3 COSMIC</div>
-                    </div>
-                    <div class="holo-frame rounded-md px-1.5 py-1.5 text-center">
-                        <div class="text-[8px] text-rose-400/70 tracking-[0.18em] font-bold">BOSS</div>
-                        <div class="text-[11px] font-black text-white mt-0.5">MULTI-TIER</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 操控选择 -->
-            <div class="space-y-2.5">
-                <div class="flex items-center gap-2">
-                    <span class="flex-1 h-px bg-gradient-to-r from-transparent to-cyan-500/40"></span>
-                    <span class="text-[10px] text-cyan-400 font-bold uppercase tracking-[0.25em]">选择机载导航系统</span>
-                    <span class="flex-1 h-px bg-gradient-to-l from-transparent to-cyan-500/40"></span>
-                </div>
-                <button id="selectTouchBtn" class="w-full py-3 px-4 rounded-xl glass-panel text-left flex items-center gap-3 border-cyan-500/50 bg-cyan-950/20 neon-border-cyan transition duration-200">
-                    <div class="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-400 text-lg shrink-0 border border-cyan-500/30">
-                        <i class="fa-solid fa-fingerprint animate-pulse"></i>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="text-sm font-bold text-white flex items-center gap-2">指尖丝滑拖动 <span class="text-[9px] text-cyan-400 font-mono">[TOUCH]</span></div>
-                        <div class="text-[11px] text-gray-400 mt-0.5">手指/鼠标任意划动，飞船跟随，自动倾泻弹药</div>
-                    </div>
-                </button>
-                <button id="selectKeyBtn" class="w-full py-3 px-4 rounded-xl glass-panel text-left flex items-center gap-3 hover:border-cyan-500/30 transition duration-200">
-                    <div class="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center text-gray-400 text-lg shrink-0 border border-white/10">
-                        <i class="fa-solid fa-keyboard"></i>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="text-sm font-bold text-white flex items-center gap-2">键盘 / 虚拟按键 <span class="text-[9px] text-gray-500 font-mono">[KEYBOARD]</span></div>
-                        <div class="text-[11px] text-gray-400 mt-0.5">A/D 左右移动，空格开火，Shift 折跃</div>
-                    </div>
-                </button>
-            </div>
-
-            <!-- V7 战役模式选择 (Campaign vs Endless) -->
-            <div class="space-y-2">
-                <div class="flex items-center gap-2">
-                    <span class="flex-1 h-px bg-gradient-to-r from-transparent to-cyan-500/40"></span>
-                    <span class="text-[10px] text-cyan-400 font-bold uppercase tracking-[0.25em]">选择机载导航系统</span>
-                    <span class="flex-1 h-px bg-gradient-to-l from-transparent to-cyan-500/40"></span>
-                </div>
-                <div class="flex gap-2">
-                    <button id="selectClassicBtn" class="flex-1 py-2 px-3 rounded-xl glass-panel text-xs font-bold text-white flex items-center justify-center gap-1.5 border-cyan-500/50 bg-cyan-950/20 neon-border-cyan transition duration-200 active:scale-95">
-                        <i class="fa-solid fa-flag"></i> 经典星域
-                    </button>
-                    <button id="selectEndlessBtn" class="flex-1 py-2 px-3 rounded-xl glass-panel text-xs font-bold text-gray-400 flex items-center justify-center gap-1.5 hover:border-rose-500/30 transition duration-200 active:scale-95">
-                        <i class="fa-solid fa-infinity"></i> 无尽深空
-                    </button>
-                </div>
-            </div>
-
-            <!-- 主行动按键区 -->
-            <div class="text-center">
-                <button id="startPlayBtn" class="w-full py-4 px-6 cta-neon tech-cut text-white font-black text-base tracking-[0.4em] uppercase relative">
-                    <span class="relative z-10">起 航 征 战</span>
-                </button>
-                <button id="startBenchmarkBtn" class="w-full mt-2 py-2.5 tech-cut border border-indigo-500/40 hover:border-indigo-400 text-cyan-300 text-[10px] font-black uppercase tracking-[0.25em] bg-indigo-950/40 active:scale-95 transition flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-bolt text-yellow-400 animate-pulse"></i>
-                    极客性能跑分 · Benchmark
-                </button>
-                <div class="mt-2.5 flex items-center justify-center gap-1.5 text-[9px] text-gray-500 tracking-wider">
-                    <i class="fa-solid fa-circle-info text-cyan-500/60"></i>
-                    PC 电竞屏 / 移动端满屏体验最佳
-                </div>
-            </div>
+            <!-- Anchor Hangar Dock at the absolute bottom under startScreen (Outside start-shell) -->
+            <footer class="home-entry-dock">
+                <a href="game_design.html" class="home-entry-link" aria-label="查看设计白皮书">
+                    <i class="fa-solid fa-drafting-compass"></i> 设计说明
+                </a>
+                <a href="game_manual.html" class="home-entry-link" aria-label="查看航行手册">
+                    <i class="fa-solid fa-book-open"></i> 航行手册
+                </a>
+                <a href="v7_hangar.html" class="home-entry-link home-entry-link-primary" aria-label="进入永久机库">
+                    <i class="fa-solid fa-user-astronaut"></i> 永久机库
+                </a>
+            </footer>
         </div>
 
         <!-- V7 机载量子构装自选卡牌覆盖层 (Rogue Upgrade Cards Overlay) -->
@@ -315,11 +295,18 @@
                     <i class="fa-solid fa-screwdriver-wrench animate-pulse"></i>
                 </div>
                 <h2 class="text-2xl font-black text-white uppercase tracking-widest neon-text-emerald">机舱改装整备车间</h2>
-                <p class="text-xs text-gray-400 mt-1">用本局废料强化：临时模块仅本轮有效，星盘与涂装永久保留</p>
-                <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/30 rounded-xl">
-                    <i class="fa-solid fa-cube text-amber-400 text-xs"></i>
-                    <span class="text-xs font-bold text-amber-300">当前可用废料: </span>
-                    <span id="shopScrapText" class="text-xs font-black text-amber-300">0</span>
+                <p class="text-xs text-gray-400 mt-1">本局废料强化临时模块；星核用于永久星盘与涂装</p>
+                <div class="mt-3 flex items-center justify-center gap-2">
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+                        <i class="fa-solid fa-cube text-amber-400 text-xs"></i>
+                        <span class="text-xs font-bold text-amber-300">本局废料: </span>
+                        <span id="shopScrapText" class="text-xs font-black text-amber-300">0</span>
+                    </div>
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-500/10 border border-cyan-500/30 rounded-xl">
+                        <i class="fa-solid fa-gem text-cyan-300 text-xs"></i>
+                        <span class="text-xs font-bold text-cyan-300">永久星核: </span>
+                        <span id="permanentCoreText" class="text-xs font-black text-cyan-300">0</span>
+                    </div>
                 </div>
             </div>
 
@@ -404,7 +391,7 @@
                     <div class="zone-ico"><i class="fa-solid fa-infinity"></i></div>
                     <div class="zone-titles">
                         <div class="zone-title">永久升级军械库</div>
-                        <div class="zone-sub">星盘天赋 + 超维涂装 · 一经点亮永久存档，跨局保留</div>
+                        <div class="zone-sub">消耗结算星核点亮 · 一经解锁跨局永久保留</div>
                     </div>
                     <span class="zone-pill"><i class="fa-solid fa-lock"></i> 永久保留</span>
                 </div>
@@ -423,7 +410,7 @@
                             <span class="upgrade-name">量子超频催化</span>
                             <span class="upgrade-en">QUANTUM OVERCLOCK · 战术</span>
                         </div>
-                        <div class="upgrade-desc">折跃(Shift)充能速度永久 +15% / 级</div>
+                        <div class="upgrade-desc">折跃(Shift)充能速度永久 +10% / 级</div>
                         <div class="upgrade-meta">
                             <div id="talentProgressA" class="level-dots">
                                 <span class="dot"></span><span class="dot"></span><span class="dot"></span>
@@ -431,7 +418,7 @@
                             <span id="talentLevelTextA" class="upgrade-level-tag">未点亮</span>
                         </div>
                     </div>
-                    <button id="buyTalentABtn" class="upgrade-btn">升级 · 120</button>
+                    <button id="buyTalentABtn" class="upgrade-btn">点亮 · 120</button>
                 </div>
 
                 <!-- B 火控晶核增幅 -->
@@ -443,7 +430,7 @@
                             <span class="upgrade-name">火控晶核增幅</span>
                             <span class="upgrade-en">CORE AMPLIFICATION · 火力</span>
                         </div>
-                        <div class="upgrade-desc">所有子弹基础伤害永久 +8% / 级</div>
+                        <div class="upgrade-desc">普通陨石伤害 +4% / 级；Boss 伤害 +1% / 级</div>
                         <div class="upgrade-meta">
                             <div id="talentProgressB" class="level-dots">
                                 <span class="dot"></span><span class="dot"></span><span class="dot"></span>
@@ -451,7 +438,7 @@
                             <span id="talentLevelTextB" class="upgrade-level-tag">未点亮</span>
                         </div>
                     </div>
-                    <button id="buyTalentBBtn" class="upgrade-btn">升级 · 150</button>
+                    <button id="buyTalentBBtn" class="upgrade-btn">点亮 · 150</button>
                 </div>
 
                 <!-- C 反物质纳米力场 -->
@@ -463,7 +450,7 @@
                             <span class="upgrade-name">反物质纳米力场</span>
                             <span class="upgrade-en">ANTIMATTER FIELD · 防御</span>
                         </div>
-                        <div class="upgrade-desc">受到的一切伤害永久 -10% / 级</div>
+                        <div class="upgrade-desc">受到的一切伤害永久 -8% / 级</div>
                         <div class="upgrade-meta">
                             <div id="talentProgressC" class="level-dots">
                                 <span class="dot"></span><span class="dot"></span><span class="dot"></span>
@@ -471,7 +458,7 @@
                             <span id="talentLevelTextC" class="upgrade-level-tag">未点亮</span>
                         </div>
                     </div>
-                    <button id="buyTalentCBtn" class="upgrade-btn">升级 · 100</button>
+                    <button id="buyTalentCBtn" class="upgrade-btn">点亮 · 100</button>
                 </div>
 
                 <!-- D 磁力量子虹吸 -->
@@ -483,7 +470,7 @@
                             <span class="upgrade-name">磁力量子虹吸</span>
                             <span class="upgrade-en">MAGNET SIPHON · 防御</span>
                         </div>
-                        <div class="upgrade-desc">废料 / 经验吸附半径永久 +50px / 级</div>
+                        <div class="upgrade-desc">废料 / 经验吸附半径永久 +35px / 级</div>
                         <div class="upgrade-meta">
                             <div id="talentProgressD" class="level-dots">
                                 <span class="dot"></span><span class="dot"></span><span class="dot"></span>
@@ -491,7 +478,7 @@
                             <span id="talentLevelTextD" class="upgrade-level-tag">未点亮</span>
                         </div>
                     </div>
-                    <button id="buyTalentDBtn" class="upgrade-btn">升级 · 80</button>
+                    <button id="buyTalentDBtn" class="upgrade-btn">点亮 · 80</button>
                 </div>
 
                 <!-- E 僚机副武器齐射 -->
@@ -503,7 +490,7 @@
                             <span class="upgrade-name">僚机副武器齐射</span>
                             <span class="upgrade-en">WINGMAN VOLLEY · 火力</span>
                         </div>
-                        <div class="upgrade-desc">开火时 +20% / 级 概率追加侧翼齐射</div>
+                        <div class="upgrade-desc">开火时 12% / 20% 概率追加侧翼齐射</div>
                         <div class="upgrade-meta">
                             <div id="talentProgressE" class="level-dots">
                                 <span class="dot"></span><span class="dot"></span>
@@ -511,7 +498,7 @@
                             <span id="talentLevelTextE" class="upgrade-level-tag">未点亮</span>
                         </div>
                     </div>
-                    <button id="buyTalentEBtn" class="upgrade-btn">升级 · 180</button>
+                    <button id="buyTalentEBtn" class="upgrade-btn">点亮 · 180</button>
                 </div>
 
                 <!-- V6 Cosmic Skins · 超维涂装区 -->
@@ -563,7 +550,7 @@
                     </div>
                     <div class="px-3 pb-3">
                         <button id="buySkinVoidBtn" class="action-btn">
-                            <span class="cost"><i class="fa-solid fa-cube text-amber-300"></i> 80</span>
+                            <span class="cost"><i class="fa-solid fa-gem text-cyan-300"></i> 80</span>
                             解锁涂装
                         </button>
                     </div>
@@ -614,7 +601,7 @@
                     </div>
                     <div class="px-3 pb-3">
                         <button id="buySkinThunderBtn" class="action-btn">
-                            <span class="cost"><i class="fa-solid fa-cube text-amber-300"></i> 100</span>
+                            <span class="cost"><i class="fa-solid fa-gem text-cyan-300"></i> 100</span>
                             解锁涂装
                         </button>
                     </div>
@@ -667,7 +654,7 @@
                     </div>
                     <div class="px-3 pb-3">
                         <button id="buySkinImperialBtn" class="action-btn">
-                            <span class="cost"><i class="fa-solid fa-cube text-amber-300"></i> 120</span>
+                            <span class="cost"><i class="fa-solid fa-gem text-cyan-300"></i> 120</span>
                             解锁涂装
                         </button>
                     </div>
@@ -718,6 +705,10 @@
                     <div class="text-right">
                         <div class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">抵御波数</div>
                         <div id="endWave" class="text-xl font-black text-cyan-400 mt-0.5">1</div>
+                    </div>
+                    <div class="text-left col-span-2 border-t border-white/5 pt-2 flex justify-between items-center">
+                        <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">本局获得星核</span>
+                        <span id="endCoreReward" class="text-sm font-black text-cyan-300">+0</span>
                     </div>
                     <div class="text-left col-span-2 border-t border-white/5 pt-2 flex justify-between items-center">
                         <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">历史最高记录</span>
@@ -809,13 +800,147 @@
     </div>
 
     <!-- Scripts using global script tags for CORS-free local execution -->
-    <script charset="utf-8" src="js/sound.js?v=7.0.7"></script>
-    <script charset="utf-8" src="js/engine_base.js?v=7.0.7"></script>
-    <script charset="utf-8" src="js/engine_physics.js?v=7.0.7"></script>
-    <script charset="utf-8" src="js/engine_entities.js?v=7.0.7"></script>
-    <script charset="utf-8" src="js/engine_boss.js?v=7.0.7"></script>
-    <script charset="utf-8" src="js/engine_renderer.js?v=7.0.7"></script>
-    <script charset="utf-8" src="js/engine_hangar.js?v=7.0.7"></script>
-    <script charset="utf-8" src="js/main.js?v=7.0.7"></script>
+    <script charset="utf-8" src="js/sound.js?v=7.0.16"></script>
+    <script charset="utf-8" src="js/engine_base.js?v=7.0.16"></script>
+    <script charset="utf-8" src="js/engine_physics.js?v=7.0.16"></script>
+    <script charset="utf-8" src="js/engine_entities.js?v=7.0.16"></script>
+    <script charset="utf-8" src="js/engine_boss.js?v=7.0.16"></script>
+    <script charset="utf-8" src="js/engine_renderer.js?v=7.0.16"></script>
+    <script charset="utf-8" src="js/engine_hangar.js?v=7.0.16"></script>
+    <script charset="utf-8" src="js/main.js?v=7.0.16"></script>
+
+    <!-- V7 Holographic Ship Synchronizer Script -->
+    <script>
+        function updateHologramShip() {
+            const svgWrap = document.getElementById('holoShipSvgWrap');
+            const nameEl = document.getElementById('holoSkinName');
+            const buffsEl = document.getElementById('holoSkinBuffs');
+            const termLogEl = document.querySelector('.holo-term-log');
+            if (!svgWrap || !nameEl || !buffsEl) return;
+
+            const skin = localStorage.getItem('space_current_skin') || 'default';
+            let svgContent = '';
+            let nameText = '先驱者默认机型';
+            let buffsText = '量子能盾发生器 · 量子折跃推进';
+            let glowVars = {
+                glow: 'rgba(34, 211, 238, 0.75)',
+                glowSoft: 'rgba(34, 211, 238, 0.18)',
+                nameFrom: '#22d3ee',
+                nameTo: '#38bdf8'
+            };
+
+            if (skin === 'void') {
+                nameText = '星渊幻影 VOID PHANTOM';
+                buffsText = '引力重力海啸波 · 双螺旋量子残影';
+                glowVars = {
+                    glow: 'rgba(217, 70, 239, 0.8)',
+                    glowSoft: 'rgba(217, 70, 239, 0.2)',
+                    nameFrom: '#d946ef',
+                    nameTo: '#c084fc'
+                };
+                svgContent = `
+                    <svg class="holographic-ship" viewBox="0 0 100 100">
+                        <defs>
+                            <radialGradient id="voidCoreHolo" cx="50%" cy="40%">
+                                <stop offset="0%" stop-color="#f0abfc"/>
+                                <stop offset="100%" stop-color="#a21caf"/>
+                            </radialGradient>
+                        </defs>
+                        <path d="M 28 70 L 6 92 L 36 78 Z" fill="#4a044e" stroke="#d946ef" stroke-width="1.5" opacity="0.65"/>
+                        <path d="M 72 70 L 94 92 L 64 78 Z" fill="#4a044e" stroke="#d946ef" stroke-width="1.5" opacity="0.65"/>
+                        <path d="M 50 10 L 22 64 L 38 56 L 50 62 L 62 56 L 78 64 Z" fill="#170b24" stroke="#d946ef" stroke-width="2.5"/>
+                        <circle cx="50" cy="38" r="9" fill="url(#voidCoreHolo)"/>
+                        <path d="M 50 20 L 44 38 L 56 38 Z" fill="#f472b6" opacity="0.95"/>
+                    </svg>
+                `;
+            } else if (skin === 'thunder') {
+                nameText = '超维雷霆 DIMENSION THUNDER';
+                buffsText = 'EM索敌电链增幅 · 锯齿弧光雷暴尾流';
+                glowVars = {
+                    glow: 'rgba(250, 204, 21, 0.8)',
+                    glowSoft: 'rgba(250, 204, 21, 0.2)',
+                    nameFrom: '#facc15',
+                    nameTo: '#fef08a'
+                };
+                svgContent = `
+                    <svg class="holographic-ship" viewBox="0 0 100 100">
+                        <defs>
+                            <radialGradient id="thunderCoreHolo" cx="50%" cy="40%">
+                                <stop offset="0%" stop-color="#fef9c3"/>
+                                <stop offset="100%" stop-color="#0891b2"/>
+                            </radialGradient>
+                        </defs>
+                        <path d="M 28 68 L 12 88 L 36 76 Z" fill="#422006" stroke="#facc15" stroke-width="1.5" opacity="0.65"/>
+                        <path d="M 72 68 L 88 88 L 64 76 Z" fill="#422006" stroke="#facc15" stroke-width="1.5" opacity="0.65"/>
+                        <path d="M 50 12 L 18 56 L 34 56 L 30 68 L 70 68 L 66 56 L 82 56 Z" fill="#0f172a" stroke="#facc15" stroke-width="2.5"/>
+                        <circle cx="50" cy="38" r="9" fill="url(#thunderCoreHolo)"/>
+                    </svg>
+                `;
+            } else if (skin === 'imperial') {
+                nameText = '帝皇余晖 IMPERIAL AFTERGLOW';
+                buffsText = '合金废料极速强磁吸附 · 回收双倍暴击';
+                glowVars = {
+                    glow: 'rgba(251, 191, 36, 0.8)',
+                    glowSoft: 'rgba(251, 191, 36, 0.2)',
+                    nameFrom: '#fbbf24',
+                    nameTo: '#fb923c'
+                };
+                svgContent = `
+                    <svg class="holographic-ship" viewBox="0 0 100 100">
+                        <defs>
+                            <radialGradient id="impCoreHolo" cx="50%" cy="40%">
+                                <stop offset="0%" stop-color="#fde68a"/>
+                                <stop offset="100%" stop-color="#b91c1c"/>
+                            </radialGradient>
+                        </defs>
+                        <path d="M 28 70 L 8 88 L 36 78 Z" fill="#78350f" stroke="#fbbf24" stroke-width="1.5" opacity="0.65"/>
+                        <path d="M 72 70 L 92 88 L 64 78 Z" fill="#78350f" stroke="#fbbf24" stroke-width="1.5" opacity="0.65"/>
+                        <path d="M 50 8 L 22 60 L 26 70 L 50 62 L 74 70 L 78 60 Z" fill="#1a1005" stroke="#fbbf24" stroke-width="2.5"/>
+                        <path d="M 50 6 L 50 20" stroke="#fbbf24" stroke-width="2"/>
+                        <circle cx="50" cy="38" r="9" fill="url(#impCoreHolo)"/>
+                        <circle cx="50" cy="38" r="3" fill="#fef9c3"/>
+                    </svg>
+                `;
+            } else {
+                svgContent = `
+                    <svg class="holographic-ship" viewBox="0 0 100 100">
+                        <path d="M 50 15 L 18 64 L 34 56 L 50 62 L 66 56 L 82 64 Z" fill="#0c1e36" stroke="#22d3ee" stroke-width="2.5"/>
+                        <path d="M 50 20 L 44 38 L 56 38 Z" fill="#22d3ee" opacity="0.95"/>
+                    </svg>
+                `;
+            }
+
+            // Set custom properties
+            svgWrap.style.setProperty('--holo-glow', glowVars.glow);
+            svgWrap.style.setProperty('--holo-glow-soft', glowVars.glowSoft);
+            svgWrap.style.setProperty('--holo-name-from', glowVars.nameFrom);
+            svgWrap.style.setProperty('--holo-name-to', glowVars.nameTo);
+
+            svgWrap.innerHTML = svgContent;
+            nameEl.innerText = nameText;
+            buffsEl.innerText = buffsText;
+
+            // Sync talent information into left status panel
+            let totalTalents = 0;
+            try {
+                const talents = JSON.parse(localStorage.getItem('space_v7_talents') || '{}');
+                Object.values(talents).forEach(v => {
+                    totalTalents += (parseInt(v) || 0);
+                });
+            } catch(e) {}
+
+            if (termLogEl) {
+                termLogEl.innerHTML = `
+                    <span class="holo-term-col"><i class="fa-solid fa-microchip text-[7px] text-cyan-400"></i> MATRIX: LV.${totalTalents}</span>
+                    <span class="holo-term-col text-indigo-400"><i class="fa-solid fa-satellite text-[7px] animate-pulse"></i> SEC: DELTA-9</span>
+                `;
+            }
+        }
+
+        // Call immediately and sync periodically
+        document.addEventListener('DOMContentLoaded', updateHologramShip);
+        window.addEventListener('load', updateHologramShip);
+        setInterval(updateHologramShip, 1200);
+    </script>
 </body>
 </html>
