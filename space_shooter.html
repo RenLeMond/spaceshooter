@@ -2,6 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+    <link rel="shortcut icon" href="favicon.png">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -12,7 +14,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Noto+Sans+SC:wght@300;500;700;900&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=7.0.16">
+    <link rel="stylesheet" href="style.css?v=7.0.18">
 </head>
 <body class="flex items-center justify-center min-h-screen">
 
@@ -173,6 +175,15 @@
                     </div>
                 </div>
 
+                <section class="start-launch-panel">
+                    <button id="startPlayBtn" class="start-primary-btn" type="button">
+                        起航征战
+                    </button>
+                    <button id="startBenchmarkBtn" class="start-secondary-btn" type="button">
+                        <i class="fa-solid fa-bolt"></i> 性能跑分
+                    </button>
+                </section>
+
                 <section class="start-menu-panel">
                     <div class="start-section">
                         <div class="start-section-title"><i class="fa-solid fa-sliders"></i> 操控方式</div>
@@ -210,14 +221,6 @@
                         </div>
                     </div>
 
-                    <div class="start-actions">
-                        <button id="startPlayBtn" class="start-primary-btn" type="button">
-                            起航征战
-                        </button>
-                        <button id="startBenchmarkBtn" class="start-secondary-btn" type="button">
-                            <i class="fa-solid fa-bolt"></i> 性能跑分
-                        </button>
-                    </div>
                 </section>
             </div>
 
@@ -232,7 +235,7 @@
                 <a href="leaderboard.html" class="home-entry-link" aria-label="查看全球排行榜">
                     <i class="fa-solid fa-trophy"></i> 联机排行
                 </a>
-                <a href="v7_hangar.html?v=7.0.17" class="home-entry-link home-entry-link-primary" aria-label="进入永久机库">
+                <a href="v7_hangar.html?v=7.0.18" class="home-entry-link home-entry-link-primary" aria-label="进入永久机库">
                     <i class="fa-solid fa-user-astronaut"></i> 永久机库
                 </a>
             </footer>
@@ -803,16 +806,16 @@
     </div>
 
     <!-- Scripts using global script tags for CORS-free local execution -->
-    <script charset="utf-8" src="js/sound.js?v=7.0.16"></script>
-    <script charset="utf-8" src="js/engine_base.js?v=7.0.16"></script>
-    <script charset="utf-8" src="js/engine_physics.js?v=7.0.16"></script>
-    <script charset="utf-8" src="js/engine_entities.js?v=7.0.16"></script>
-    <script charset="utf-8" src="js/engine_boss.js?v=7.0.16"></script>
-    <script charset="utf-8" src="js/engine_renderer.js?v=7.0.16"></script>
-    <script charset="utf-8" src="js/engine_hangar.js?v=7.0.16"></script>
-    <script charset="utf-8" src="js/leaderboard_config.js?v=7.0.16"></script>
-    <script charset="utf-8" src="js/leaderboard_api.js?v=7.0.16"></script>
-    <script charset="utf-8" src="js/main.js?v=7.0.16"></script>
+    <script charset="utf-8" src="js/sound.js?v=7.0.18"></script>
+    <script charset="utf-8" src="js/engine_base.js?v=7.0.18"></script>
+    <script charset="utf-8" src="js/engine_physics.js?v=7.0.18"></script>
+    <script charset="utf-8" src="js/engine_entities.js?v=7.0.18"></script>
+    <script charset="utf-8" src="js/engine_boss.js?v=7.0.18"></script>
+    <script charset="utf-8" src="js/engine_renderer.js?v=7.0.18"></script>
+    <script charset="utf-8" src="js/engine_hangar.js?v=7.0.18"></script>
+    <script charset="utf-8" src="js/leaderboard_config.js?v=7.0.18"></script>
+    <script charset="utf-8" src="js/leaderboard_api.js?v=7.0.18"></script>
+    <script charset="utf-8" src="js/main.js?v=7.0.18"></script>
 
     <!-- V7 Holographic Ship Synchronizer Script -->
     <script>

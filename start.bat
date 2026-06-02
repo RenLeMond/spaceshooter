@@ -31,7 +31,7 @@ goto server_started
 :: 3. 终极兼容方案：使用 Windows 原生 PowerShell (零环境依赖，完美兼容任何现代 Windows)
 echo [INFO] 未检测到 Python/Node.js 运行环境。
 echo [INFO] 正在调用 Windows 原生 PowerShell 网络监听器启动静默服务...
-start /b powershell -NoProfile -WindowStyle Hidden -Command "$l=New-Object Net.HttpListener; $l.Prefixes.Add('http://localhost:9999/'); $l.Start(); while($l.IsListening){ $c=$l.GetContext(); $rq=$c.Request; $rp=$c.Response; $f=Join-Path . $rq.Url.LocalPath.TrimStart('/'); if($rq.Url.LocalPath -eq '/'){$f='space_shooter.html'}; if(Test-Path $f -PathType Leaf){ $b=[IO.File]::ReadAllBytes($f); $rp.OutputStream.Write($b,0,$b.Length) }else{$rp.StatusCode=404}; $rp.Close() }"
+start /b powershell -NoProfile -WindowStyle Hidden -Command "$l=New-Object Net.HttpListener; $l.Prefixes.Add('http://localhost:9999/'); $l.Start(); while($l.IsListening){ $c=$l.GetContext(); $rq=$c.Request; $rp=$c.Response; $f=Join-Path . $rq.Url.LocalPath.TrimStart('/'); if($rq.Url.LocalPath -eq '/'){$f='index.html'}; if(Test-Path $f -PathType Leaf){ $b=[IO.File]::ReadAllBytes($f); $rp.OutputStream.Write($b,0,$b.Length) }else{$rp.StatusCode=404}; $rp.Close() }"
 set SERVER_TYPE=PowerShell Native
 
 :server_started
@@ -60,7 +60,7 @@ goto menu
 
 :play
 echo 正在打开游戏主页...
-start http://localhost:9999/space_shooter.html
+start http://localhost:9999/index.html
 timeout /t 1 >nul
 goto menu
 

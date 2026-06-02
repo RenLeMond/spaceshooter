@@ -64,6 +64,23 @@
         return sanitizeNickname(localStorage.getItem('space_user_nickname'), DEFAULT_NICKNAME);
     }
 
+    function sanitizeAvatar(value) {
+        const icon = String(value || 'fa-user-astronaut').trim();
+        return /^fa-[a-z0-9-]{2,40}$/.test(icon) ? icon : 'fa-user-astronaut';
+    }
+
+    function sanitizeBio(value) {
+        return String(value || '').trim().replace(/[<>"'`\\]/g, '').slice(0, 48);
+    }
+
+    function getProfile() {
+        return {
+            nickname: getNickname(),
+            avatar: sanitizeAvatar(localStorage.getItem('space_user_avatar')),
+            bio: sanitizeBio(localStorage.getItem('space_user_bio'))
+        };
+    }
+
     async function apiFetch(path, options) {
         if (!canUseSameOriginApi()) {
             throw new Error('same_origin_api_disabled');
@@ -106,12 +123,15 @@
         return apiFetch('/api/player?user_id=' + encodeURIComponent(userId));
     }
 
-    async function submitScore(score, shipType, username) {
+    async function submitScore(score, shipType, username, profile) {
         if (!isEnabled()) return { skipped: true, reason: 'disabled' };
+        const localProfile = Object.assign(getProfile(), profile || {});
 
         const payload = {
             user_id: ensureUserId(),
-            username: sanitizeNickname(username, getNickname()),
+            username: sanitizeNickname(username, localProfile.nickname),
+            avatar: sanitizeAvatar(localProfile.avatar),
+            bio: sanitizeBio(localProfile.bio),
             score: Math.max(0, Math.floor(Number(score) || 0)),
             ship_type: ALLOWED_SHIPS.has(shipType) ? shipType : 'default'
         };
@@ -168,7 +188,10 @@
         canUseSameOriginApi: canUseSameOriginApi,
         ensureUserId: ensureUserId,
         sanitizeNickname: sanitizeNickname,
+        sanitizeAvatar: sanitizeAvatar,
+        sanitizeBio: sanitizeBio,
         getNickname: getNickname,
+        getProfile: getProfile,
         checkHealth: checkHealth,
         fetchLeaderboard: fetchLeaderboard,
         fetchPlayer: fetchPlayer,

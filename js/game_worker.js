@@ -47,12 +47,16 @@ self.window = {
                 postMessage({ type: 'saveLocalStorage', key, val });
             }
             if (key === 'space_current_skin') {
-                self.currentSkin = val;
-                postMessage({ type: 'saveLocalStorage', key, val });
+                const skinState = normalizeWorkerSkin(val, self.unlockedSkins);
+                self.unlockedSkins = skinState.unlockedSkins;
+                self.currentSkin = skinState.currentSkin;
+                postMessage({ type: 'saveLocalStorage', key, val: self.currentSkin });
             }
             if (key === 'space_unlocked_skins') {
-                self.unlockedSkins = JSON.parse(val);
-                postMessage({ type: 'saveLocalStorage', key, val });
+                const skinState = normalizeWorkerSkin(self.currentSkin, JSON.parse(val));
+                self.unlockedSkins = skinState.unlockedSkins;
+                self.currentSkin = skinState.currentSkin;
+                postMessage({ type: 'saveLocalStorage', key, val: JSON.stringify(self.unlockedSkins) });
             }
             if (key === 'space_v7_talents') {
                 try { self.talents = JSON.parse(val); } catch (e) {}
@@ -84,6 +88,19 @@ const sfxProxy = new Proxy({}, {
     }
 });
 self.sfx = sfxProxy;
+
+const WORKER_SKIN_IDS = ['default', 'void', 'thunder', 'imperial'];
+
+function normalizeWorkerSkin(currentSkin, unlockedSkins) {
+    const skins = Array.isArray(unlockedSkins)
+        ? unlockedSkins.filter(id => WORKER_SKIN_IDS.includes(id))
+        : ['default'];
+    if (!skins.includes('default')) skins.unshift('default');
+    return {
+        unlockedSkins: skins,
+        currentSkin: skins.includes(currentSkin) ? currentSkin : 'default'
+    };
+}
 
 // 导入星海猎手所有核心引擎文件 (不加载 sound.js，直接使用上面的 Proxy 代理，规避 AudioContext 报错)
 // 继承 main.js 注入到 Worker URL 的 ?v=ASSET_VERSION，保证引擎文件与主线程一起失效旧缓存
@@ -431,13 +448,18 @@ self.onmessage = function(e) {
     switch (data.type) {
         case 'init':
             // 接收 OffscreenCanvas 以及本地持久化数据
-            self.unlockedSkins = data.unlockedSkins || ["default"];
-            self.currentSkin = data.currentSkin || 'default';
+            const initSkinState = normalizeWorkerSkin(data.currentSkin || 'default', data.unlockedSkins || ["default"]);
+            self.unlockedSkins = initSkinState.unlockedSkins;
+            self.currentSkin = initSkinState.currentSkin;
             self.bestScore = data.bestScore || 0;
             self.talents = data.talents || { A: 0, B: 0, C: 0, D: 0, E: 0 };
             self.permanentCores = data.permanentCores || 0;
             
             engineInstance = new GameEngineWorker();
+            engineInstance.unlockedSkins = Array.isArray(self.unlockedSkins) ? self.unlockedSkins : ["default"];
+            engineInstance.currentSkin = self.currentSkin || 'default';
+            engineInstance.bestScore = self.bestScore || 0;
+            engineInstance.talents = self.talents || { A: 0, B: 0, C: 0, D: 0, E: 0 };
             
             // 覆盖 canvas 和 ctx 引用
             engineInstance.canvas = data.canvas;
@@ -488,6 +510,13 @@ self.onmessage = function(e) {
             
         case 'startGame':
             if (engineInstance) {
+                if (data.currentSkin) {
+                    const startSkinState = normalizeWorkerSkin(data.currentSkin, self.unlockedSkins);
+                    self.unlockedSkins = startSkinState.unlockedSkins;
+                    self.currentSkin = startSkinState.currentSkin;
+                    engineInstance.unlockedSkins = startSkinState.unlockedSkins;
+                    engineInstance.currentSkin = startSkinState.currentSkin;
+                }
                 engineInstance.isRunning = true;
                 engineInstance.isPaused = false;
                 engineInstance.resetGame(false);
@@ -590,8 +619,11 @@ self.onmessage = function(e) {
             if (engineInstance) {
                 engineInstance.scrap = data.scrap;
                 engineInstance.hangar = data.hangar;
-                engineInstance.unlockedSkins = data.unlockedSkins;
-                engineInstance.currentSkin = data.currentSkin;
+                const upgradeSkinState = normalizeWorkerSkin(data.currentSkin, data.unlockedSkins);
+                self.unlockedSkins = upgradeSkinState.unlockedSkins;
+                self.currentSkin = upgradeSkinState.currentSkin;
+                engineInstance.unlockedSkins = upgradeSkinState.unlockedSkins;
+                engineInstance.currentSkin = upgradeSkinState.currentSkin;
                 if (data.talents) {
                     engineInstance.talents = data.talents;
                     self.talents = data.talents;
@@ -639,6 +671,13 @@ self.onmessage = function(e) {
             
         case 'resetGame':
             if (engineInstance) {
+                if (data.currentSkin) {
+                    const resetSkinState = normalizeWorkerSkin(data.currentSkin, self.unlockedSkins);
+                    self.unlockedSkins = resetSkinState.unlockedSkins;
+                    self.currentSkin = resetSkinState.currentSkin;
+                    engineInstance.unlockedSkins = resetSkinState.unlockedSkins;
+                    engineInstance.currentSkin = resetSkinState.currentSkin;
+                }
                 engineInstance.isRunning = true;
                 engineInstance.isPaused = false;
                 engineInstance.resetGame(data.shouldStart);

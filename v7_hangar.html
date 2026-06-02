@@ -2,6 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+    <link rel="shortcut icon" href="favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>《星海猎手 V7：构装晶核与无尽深空》永久先驱者天赋星盘机库</title>
     <!-- Tailwind CSS & Icons & Fonts -->
@@ -826,44 +828,75 @@
             }
 
             .talent-matrix-stage > div {
-                max-width: min(292px, 88vw) !important;
+                max-width: 100% !important;
             }
 
             .talent-module-board {
-                width: min(100%, 330px);
-                height: 360px;
+                width: 100%;
+                height: auto;
+                min-height: 0;
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+                padding: 12px;
+                overflow: visible;
+            }
+
+            .talent-module-board::before,
+            .talent-module-board::after {
+                display: none;
+            }
+
+            .talent-core-dock {
+                position: relative;
+                left: auto;
+                top: auto;
+                transform: none;
+                width: 100%;
+                min-height: 80px;
+                grid-column: 1 / -1;
+                order: 0;
             }
 
             .talent-module {
-                width: 118px;
-                min-height: 68px;
+                position: relative;
+                left: auto !important;
+                right: auto !important;
+                top: auto !important;
+                bottom: auto !important;
+                transform: none !important;
+                width: 100%;
+                min-height: 74px;
                 padding: 9px;
                 gap: 8px;
             }
 
-            .talent-module.talent-A { left: 0; top: 28px; }
-            .talent-module.talent-B { right: 0; top: 28px; }
-            .talent-module.talent-C { right: 0; top: 140px; }
-            .talent-module.talent-E { left: 0; top: 140px; }
-            .talent-module.talent-D { bottom: 18px; }
-
-            .talent-core-dock {
-                width: 92px;
-                min-height: 78px;
+            .talent-module.talent-A { order: 1; }
+            .talent-module.talent-B { order: 2; }
+            .talent-module.talent-C { order: 3; }
+            .talent-module.talent-E { order: 4; }
+            .talent-module.talent-D {
+                order: 5;
+                grid-column: 1 / -1;
             }
 
-            .talent-conduit.line-A { --w: 82px; --r: -134deg; }
-            .talent-conduit.line-B { --w: 82px; --r: -46deg; }
-            .talent-conduit.line-C { --w: 66px; --r: 0deg; }
-            .talent-conduit.line-D { --w: 90px; --r: 90deg; }
-            .talent-conduit.line-E { --w: 66px; --r: 180deg; }
+            .talent-conduit {
+                display: none;
+            }
 
             .matrix-axis-label {
-                font-size: 3.8px;
+                display: none;
             }
 
-            .talent-node .node-name {
-                font-size: 4.4px;
+            .talent-module .module-title {
+                white-space: normal;
+                overflow: visible;
+                text-overflow: clip;
+                padding-right: 8px;
+            }
+
+            .talent-module .module-sub {
+                letter-spacing: 0.06em;
             }
 
             #talentDetailCard {
@@ -985,7 +1018,7 @@
             }
 
             .talent-module-board {
-                width: min(100%, 324px);
+                width: 100%;
             }
 
             section.neon-border-gold,
@@ -996,6 +1029,27 @@
 
             #skinHangarGrid {
                 grid-template-columns: minmax(0, 1fr) !important;
+            }
+        }
+
+        @media (max-width: 380px) {
+            nav.sticky > div:last-child {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .talent-module-board {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 9px;
+                padding: 10px;
+            }
+
+            .talent-module.talent-D {
+                grid-column: auto;
+            }
+
+            .skin-card-meta {
+                flex-direction: column;
+                align-items: flex-start;
             }
         }
     </style>
@@ -1029,7 +1083,7 @@
             <a href="leaderboard.html" class="px-4 py-2 border border-cyan-500/30 hover:border-cyan-400 transition text-cyan-300 text-[10px] font-black rounded-xl tracking-wider uppercase bg-cyan-500/5 active:scale-95">
                 全球排行 <i class="fa-solid fa-trophy ml-1.5"></i>
             </a>
-            <a href="space_shooter.html?v=7.0.17" class="px-4 py-2 border border-cyan-500/30 hover:border-cyan-400 transition text-cyan-400 text-[10px] font-black rounded-xl tracking-wider uppercase bg-cyan-500/5 active:scale-95">
+            <a href="space_shooter.html?v=7.0.18" class="px-4 py-2 border border-cyan-500/30 hover:border-cyan-400 transition text-cyan-400 text-[10px] font-black rounded-xl tracking-wider uppercase bg-cyan-500/5 active:scale-95">
                 进入折跃战区 <i class="fa-solid fa-plane-departure ml-1.5"></i>
             </a>
         </div>

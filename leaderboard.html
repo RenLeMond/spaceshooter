@@ -2,8 +2,10 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+    <link rel="shortcut icon" href="favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>星海猎手 V7 - 全球联机排行榜 · Cloudflare D1</title>
+    <title>星海猎手 V7 - 全球联机排行榜</title>
     <meta name="description" content="星海猎手 V7 官方全球联机排行榜。同步本地最高分，查阅全服星海勇士排名。">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -628,6 +630,10 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
+        .user-ship-ico i {
+            line-height: 1;
+        }
+
         .user-ship-ico.skin-void {
             border-color: rgba(217, 70, 239, 0.3);
             color: #d946ef;
@@ -676,7 +682,7 @@
             text-align: right;
         }
 
-        /* Simulated Console Log Box */
+        /* Legacy terminal styles kept harmless for cached markup fallback */
         .terminal-container {
             margin-top: 24px;
             background: #020617;
@@ -973,400 +979,534 @@
         .color-sql-type { color: #10b981; }
         .color-sql-param { color: #f59e0b; }
         .color-comment { color: #6b7280; font-style: italic; }
+
+        .profile-avatar {
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .profile-field {
+            margin-bottom: 16px;
+        }
+
+        .profile-field label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .profile-field textarea {
+            width: 100%;
+            box-sizing: border-box;
+            resize: none;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 10px 12px;
+            background: rgba(3, 7, 18, 0.48);
+            color: #fff;
+            font: inherit;
+            line-height: 1.5;
+        }
+
+        .profile-field textarea:focus {
+            outline: none;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 12px rgba(34, 211, 238, 0.16);
+        }
+
+        .pilot-id-row,
+        .cloud-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px;
+            margin-bottom: 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(3, 7, 18, 0.34);
+        }
+
+        .pilot-id-row span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-muted);
+            font-family: 'Orbitron', monospace;
+            font-size: 10px;
+        }
+
+        .pilot-id-row button {
+            border: 1px solid rgba(34, 211, 238, 0.24);
+            border-radius: 10px;
+            padding: 8px 10px;
+            color: var(--neon-cyan);
+            background: rgba(34, 211, 238, 0.08);
+            font-size: 10px;
+            font-weight: 800;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .cloud-card strong {
+            display: block;
+            margin-top: 2px;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .cloud-card p {
+            margin: 4px 0 0;
+            color: var(--text-muted);
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
+        .binding-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 900;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .badge-guest {
+            color: var(--neon-amber);
+            background: rgba(251, 191, 36, 0.08);
+            border-color: rgba(251, 191, 36, 0.24);
+        }
+
+        .badge-bound {
+            color: var(--neon-emerald);
+            background: rgba(16, 185, 129, 0.08);
+            border-color: rgba(16, 185, 129, 0.24);
+        }
+
+        .bind-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .bound-actions {
+            display: none;
+            margin-bottom: 12px;
+        }
+
+        .ship-showcase,
+        .talent-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .ship-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 9px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-muted);
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .ship-chip.active-ship {
+            color: #fff;
+            border-color: rgba(34, 211, 238, 0.36);
+            background: rgba(34, 211, 238, 0.08);
+        }
+
+        .talent-dot {
+            display: inline-block;
+            width: 14px;
+            height: 5px;
+            margin-right: 3px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.22);
+        }
+
+        .talent-dot.active.cyan { background: var(--neon-cyan); box-shadow: 0 0 8px var(--neon-cyan); }
+        .talent-dot.active.rose { background: var(--neon-rose); box-shadow: 0 0 8px var(--neon-rose); }
+        .talent-dot.active.emerald { background: var(--neon-emerald); box-shadow: 0 0 8px var(--neon-emerald); }
+
+        .avatar-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .avatar-select-card {
+            min-height: 78px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            background: rgba(3, 7, 18, 0.42);
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .avatar-select-card i {
+            font-size: 22px;
+            color: var(--neon-cyan);
+        }
+
+        .avatar-select-card span {
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .avatar-select-card.active {
+            border-color: var(--neon-cyan);
+            background: rgba(34, 211, 238, 0.1);
+            color: #fff;
+        }
+
+        .custom-toast {
+            position: fixed;
+            left: 50%;
+            bottom: 22px;
+            transform: translate(-50%, 24px);
+            z-index: 120;
+            opacity: 0;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 999px;
+            color: #dffbff;
+            background: rgba(3, 7, 18, 0.9);
+            border: 1px solid rgba(34, 211, 238, 0.28);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.45);
+            transition: var(--transition-smooth);
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .custom-toast.active {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+
+        .custom-toast.success { border-color: rgba(16, 185, 129, 0.4); }
+        .custom-toast.error { border-color: rgba(244, 63, 94, 0.4); }
+
+        .history-panel {
+            margin-bottom: 44px;
+        }
+
+        .match-history-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .match-item {
+            display: grid;
+            grid-template-columns: 44px 1fr 110px 86px;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.025);
+        }
+
+        .match-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            color: var(--neon-cyan);
+            background: rgba(34, 211, 238, 0.08);
+            border: 1px solid rgba(34, 211, 238, 0.16);
+        }
+
+        .match-main strong,
+        .match-score {
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+        }
+
+        .match-main span,
+        .match-meta,
+        .match-time {
+            color: var(--text-muted);
+            font-size: 10px;
+            line-height: 1.4;
+        }
+
+        .match-score {
+            text-align: right;
+            color: var(--neon-cyan);
+        }
+
+        .match-empty {
+            padding: 30px 18px;
+            text-align: center;
+            color: var(--text-muted);
+            border: 1px dashed rgba(255,255,255,0.08);
+            border-radius: 16px;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 14px;
+            }
+
+            header {
+                padding-bottom: 16px;
+                margin-bottom: 18px;
+            }
+
+            .logo-icon {
+                width: 42px;
+                height: 42px;
+            }
+
+            .logo-titles h1 {
+                font-size: 20px;
+            }
+
+            .nav-actions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+
+            .status-badge {
+                grid-column: 1 / -1;
+                justify-content: center;
+            }
+
+            .back-btn {
+                justify-content: center;
+                padding: 9px 10px;
+            }
+
+            .glass-panel {
+                padding: 16px;
+                border-radius: 18px;
+            }
+
+            .profile-row {
+                align-items: flex-start;
+                padding: 12px;
+            }
+
+            .stats-grid {
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 12px 8px;
+            }
+
+            .stat-value {
+                font-size: 17px;
+            }
+
+            .leaderboard-list {
+                max-height: none;
+            }
+
+            .leaderboard-item {
+                grid-template-columns: 34px 1fr auto;
+                padding: 11px;
+            }
+
+            .score-column {
+                font-size: 13px;
+            }
+
+            .user-column {
+                gap: 8px;
+                min-width: 0;
+            }
+
+            .user-name,
+            .user-ship-name {
+                max-width: 126px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .match-item {
+                grid-template-columns: 38px 1fr auto;
+                gap: 10px;
+            }
+
+            .match-time {
+                grid-column: 2 / -1;
+            }
+
+            .avatar-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
             <div class="logo-wrap">
-                <div class="logo-icon"><i class="fa-solid fa-satellite-dish"></i></div>
+                <div class="logo-icon"><i class="fa-solid fa-ranking-star"></i></div>
                 <div class="logo-titles">
-                    <h1>星海猎手 V7</h1>
-                    <p>联机排行榜 · Cloudflare D1</p>
+                    <h1>全球排行</h1>
+                    <p>星海猎手 V7 飞行员名人堂</p>
                 </div>
             </div>
             <div class="nav-actions">
-                <div class="status-badge" id="syncStatus" title="联机 API 连接状态">
+                <div class="status-badge" id="syncStatus" title="联机服务状态">
                     <div class="status-dot"></div>
-                    <span id="syncStatusText">探测联机 API 中…</span>
+                    <span id="syncStatusText">连接中</span>
                 </div>
-                <a href="v7_hangar.html?v=7.0.17" class="back-btn"><i class="fa-solid fa-user-astronaut"></i> 永久机库</a>
-                <a href="space_shooter.html" class="back-btn" id="backToGameBtn"><i class="fa-solid fa-plane-departure"></i> 进入游戏</a>
+                <a href="v7_hangar.html?v=7.0.18" class="back-btn"><i class="fa-solid fa-user-astronaut"></i> 永久机库</a>
+                <a href="space_shooter.html?v=7.0.18" class="back-btn" id="backToGameBtn"><i class="fa-solid fa-plane-departure"></i> 进入游戏</a>
             </div>
         </header>
-        <div class="demo-banner" role="note">
-            <i class="fa-solid fa-flask"></i>
-            <div>
-                <strong>离线演示回退</strong> — 无法连接 Cloudflare Worker 时自动使用 Mock 内存数据。
-                在 <code style="color:#67e8f9;">js/leaderboard_config.js</code> 配置 <code style="color:#67e8f9;">apiBase</code> 并部署 Worker 后接入真实 D1。
-            </div>
-        </div>
+
         <div class="dashboard-grid">
-            <div class="glass-panel" id="userCenterPanel">
+            <section class="glass-panel" id="userCenterPanel">
                 <div class="panel-heading">
-                    <div class="panel-title"><i class="fa-solid fa-user-astronaut"></i> 飞行员控制台</div>
-                    <span class="panel-subtitle">LOCAL STATS</span>
+                    <div class="panel-title"><i class="fa-solid fa-id-card-clip"></i> 飞行员档案</div>
+                    <span class="panel-subtitle">PROFILE</span>
                 </div>
+
                 <div class="profile-row">
-                    <div class="profile-avatar" id="avatarBox">
-                        <i class="fa-solid fa-jet-fighter-up"></i>
+                    <button class="profile-avatar" id="avatarBox" type="button" title="更换头像">
+                        <i class="fa-solid fa-user-astronaut" id="currentAvatarIcon"></i>
                         <div class="ship-badge" id="avatarShipBadge" title="当前涂装">D</div>
-                    </div>
+                    </button>
                     <div class="profile-info">
-                        <span class="player-tag">PLAYER IDENTITY</span>
-                        <input type="text" id="playerNameInput" class="player-name-input" placeholder="输入云端昵称..." maxlength="12" autocomplete="off">
+                        <span class="player-tag">飞行员呼号</span>
+                        <input type="text" id="playerNameInput" class="player-name-input" placeholder="输入排行榜昵称" maxlength="12" autocomplete="off">
                         <div class="rank-pill" id="playerRankPill">
                             <i class="fa-solid fa-ranking-star"></i>
                             <span id="playerRankText">全球排名 —</span>
                         </div>
                     </div>
                 </div>
+
+                <div class="profile-field">
+                    <label for="pilotSignature">飞行签名</label>
+                    <textarea id="pilotSignature" maxlength="48" rows="2" placeholder="写一句会显示在你的个人资料里的宣言"></textarea>
+                </div>
+
+                <div class="pilot-id-row">
+                    <span id="pilotIdText">usr_--------</span>
+                    <button id="btnCopyId" type="button"><i class="fa-regular fa-copy"></i> 复制 ID</button>
+                </div>
+
                 <div class="stats-grid">
                     <div class="stat-card neon-border-cyan">
                         <span class="stat-label">本地最高记录</span>
                         <div class="stat-value color-cyan" id="localHighScoreText">—</div>
-                        <div class="stat-footer">📂 缓存: space_best_score</div>
+                        <div class="stat-footer">来自游戏存档</div>
                     </div>
                     <div class="stat-card neon-border-amber">
-                        <span class="stat-label">云端同步记录</span>
-                        <div class="stat-value color-amber" id="cloudHighScoreText">—</div>
-                        <div class="stat-footer" id="cloudSyncFooter">📡 等待 API 连接</div>
+                        <span class="stat-label">星核余额</span>
+                        <div class="stat-value color-amber" id="permanentCoresText">0</div>
+                        <div class="stat-footer">永久机库资产</div>
                     </div>
                 </div>
-                <button class="primary-action-btn" id="btnOpenSimModal"><i class="fa-solid fa-gamepad animate-pulse"></i> 模拟一局游戏结算</button>
-                <button class="secondary-action-btn" id="btnSyncLocalScore"><i class="fa-solid fa-cloud-arrow-up"></i> 将本地最高分同步至云端 D1</button>
-                <button class="secondary-action-btn" id="btnRefreshLocal" type="button"><i class="fa-solid fa-rotate"></i> 重新读取游戏本地存档</button>
-                <div class="terminal-container">
-                    <div class="terminal-header">
-                        <div class="terminal-dots">
-                            <span class="terminal-dot dot-r"></span>
-                            <span class="terminal-dot dot-y"></span>
-                            <span class="terminal-dot dot-g"></span>
-                        </div>
-                        <span>D1 CONSOLE LOGS</span>
+
+                <div class="cloud-card">
+                    <div>
+                        <span class="player-tag">账号绑定</span>
+                        <strong id="bindStatusText">游客档案</strong>
+                        <p id="boundAccountEmail">绑定用户名或邮箱后，资料会随排行榜同步。</p>
                     </div>
-                    <div class="terminal-body" id="consoleLogs">
-                        <div class="terminal-line"><span class="terminal-prompt">[SYSTEM]</span> 初始化联机控制台…</div>
-                    </div>
+                    <span class="binding-badge badge-guest" id="bindStatusBadge"><i class="fa-solid fa-circle-exclamation"></i> 游客</span>
                 </div>
-            </div>
-            <div class="glass-panel" id="leaderboardPanel">
+
+                <div class="bind-form" id="bindForm">
+                    <input type="text" id="bindEmail" class="form-input" placeholder="用户名或邮箱" autocomplete="username">
+                    <input type="password" id="bindPassword" class="form-input" placeholder="绑定密码" autocomplete="new-password">
+                    <button class="secondary-action-btn" id="btnBindAccount" type="button"><i class="fa-solid fa-link"></i> 绑定档案</button>
+                </div>
+                <div class="bound-actions" id="boundDetails">
+                    <button class="secondary-action-btn" id="btnUnbindAccount" type="button"><i class="fa-solid fa-link-slash"></i> 解除绑定</button>
+                </div>
+
+                <button class="primary-action-btn" id="btnSyncLocalScore"><i class="fa-solid fa-cloud-arrow-up"></i> 同步最高分</button>
+                <button class="secondary-action-btn" id="btnRefreshLocal" type="button"><i class="fa-solid fa-rotate"></i> 刷新档案与排行</button>
+
+                <div class="ship-showcase" id="unlockedShipsList"></div>
+                <div class="talent-strip" id="talentStrip">
+                    <span id="talent-A"></span>
+                    <span id="talent-B"></span>
+                    <span id="talent-C"></span>
+                    <span id="talent-D"></span>
+                    <span id="talent-E"></span>
+                </div>
+            </section>
+
+            <section class="glass-panel" id="leaderboardPanel">
                 <div class="panel-heading">
-                    <div class="panel-title"><i class="fa-solid fa-trophy"></i> 全球星海名人堂 Top 50</div>
-                    <span class="panel-subtitle">GLOBAL RANKINGS</span>
+                    <div class="panel-title"><i class="fa-solid fa-trophy"></i> 全球星海名人堂</div>
+                    <span class="panel-subtitle">TOP 50</span>
                 </div>
                 <div class="leaderboard-list" id="leaderboardList"></div>
-            </div>
+            </section>
         </div>
-        <div class="glass-panel docs-section" id="docsPanel">
+
+        <section class="glass-panel history-panel">
             <div class="panel-heading">
-                <div class="panel-title"><i class="fa-solid fa-code"></i> 部署与接入指南</div>
-                <span class="panel-subtitle">workers/leaderboard</span>
+                <div class="panel-title"><i class="fa-solid fa-clock-rotate-left"></i> 我的最近对局</div>
+                <span class="panel-subtitle">LOCAL MATCHES</span>
             </div>
-            <div class="tab-headers" id="tabHeaders">
-                <button class="tab-header active" data-tab="sql">D1 Schema</button>
-                <button class="tab-header" data-tab="workers">Worker API</button>
-                <button class="tab-header" data-tab="frontend">Client Config</button>
-            </div>
-            <div class="tab-content active" id="tab-sql">
-                <div class="code-container">
-                    <div class="code-header"><span>schema.sql</span><button class="copy-btn" onclick="copyCode('code-sql')"><i class="fa-regular fa-copy"></i> 复制</button></div>
-                    <pre id="code-sql"><code>-- 星海猎手 V7 全球排行榜 D1 Schema
-	-- 初始化: wrangler d1 execute e92c11bf-8429-471d-93ea-9fe086c3b3f5 --remote --file=./schema.sql
-
-CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    username TEXT NOT NULL,
-    is_guest INTEGER NOT NULL DEFAULT 1,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS leaderboards (
-    user_id TEXT PRIMARY KEY,
-    score INTEGER NOT NULL DEFAULT 0 CHECK (score >= 0),
-    ship_type TEXT NOT NULL DEFAULT 'default',
-    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
-	CREATE INDEX IF NOT EXISTS idx_leaderboards_score ON leaderboards(score DESC);
-
-	CREATE TABLE IF NOT EXISTS request_rate_limits (
-	    key TEXT PRIMARY KEY,
-	    count INTEGER NOT NULL DEFAULT 0,
-	    window_start INTEGER NOT NULL
-	);
-
-	CREATE INDEX IF NOT EXISTS idx_request_rate_limits_window ON request_rate_limits(window_start);
-	</code></pre>
-                </div>
-            </div>
-            <div class="tab-content" id="tab-workers">
-                <div class="code-container">
-                    <div class="code-header"><span>src/index.js</span><button class="copy-btn" onclick="copyCode('code-workers')"><i class="fa-regular fa-copy"></i> 复制</button></div>
-                    <pre id="code-workers"><code>const ALLOWED_SHIPS = new Set(['default', 'void', 'thunder', 'imperial']);
-const USER_ID_RE = /^usr_[a-z0-9]{8,32}$/;
-
-export default {
-  async fetch(request, env) {
-    const corsHeaders = buildCorsHeaders(request, env);
-
-    if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders });
-    }
-
-    try {
-      const url = new URL(request.url);
-
-      if (url.pathname === '/api/health') {
-        await env.DB.prepare('SELECT 1').first();
-        return jsonResponse({ ok: true, service: 'starsea-leaderboard' }, corsHeaders);
-      }
-
-      if (url.pathname === '/api/leaderboard' &amp;&amp; request.method === 'GET') {
-        const limit = clampInt(url.searchParams.get('limit'), 1, 50, 50);
-        const rows = await getLeaderboardRows(env.DB, limit);
-        return jsonResponse({ entries: rows }, corsHeaders);
-      }
-
-      if (url.pathname === '/api/player' &amp;&amp; request.method === 'GET') {
-        const userId = url.searchParams.get('user_id') || '';
-        if (!USER_ID_RE.test(userId)) {
-          return jsonResponse({ error: 'invalid user_id' }, corsHeaders, 400);
-        }
-        const player = await getPlayerRecord(env.DB, userId);
-        return jsonResponse(player || { user_id: userId, score: 0, ship_type: 'default', rank: null }, corsHeaders);
-      }
-
-	      if (url.pathname === '/api/submit-score' &amp;&amp; request.method === 'POST') {
-	        if (isBodyTooLarge(request)) {
-	          return jsonResponse({ error: 'payload_too_large' }, corsHeaders, 413);
-	        }
-	        const payload = await readJson(request);
-        const userId = String(payload.user_id || '');
-        const username = sanitizeUsername(payload.username);
-        const score = clampInt(payload.score, 0, 999999999, 0);
-        const shipType = ALLOWED_SHIPS.has(payload.ship_type) ? payload.ship_type : 'default';
-
-        if (!USER_ID_RE.test(userId)) {
-          return jsonResponse({ error: 'invalid user_id' }, corsHeaders, 400);
-        }
-        if (!username) {
-          return jsonResponse({ error: 'invalid username' }, corsHeaders, 400);
-        }
-
-        const result = await upsertScore(env.DB, userId, username, score, shipType);
-        return jsonResponse({ success: true, ...result }, corsHeaders);
-      }
-
-      return jsonResponse({ error: 'not found' }, corsHeaders, 404);
-    } catch (err) {
-      console.error(err);
-      return jsonResponse({ error: 'internal_error', message: String(err.message || err) }, corsHeaders, 500);
-    }
-  }
-};
-
-function buildCorsHeaders(request, env) {
-  const origin = request.headers.get('Origin') || '';
-  const allowed = parseAllowedOrigins(env.ALLOWED_ORIGINS);
-  const allowOrigin = allowed.includes('*')
-    ? '*'
-    : (allowed.includes(origin) ? origin : allowed[0] || '*');
-
-  return {
-    'Access-Control-Allow-Origin': allowOrigin,
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Max-Age': '86400'
-  };
-}
-
-function parseAllowedOrigins(value) {
-  return String(value || '*')
-    .split(',')
-    .map(item => item.trim())
-    .filter(Boolean);
-}
-
-function jsonResponse(body, corsHeaders, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      ...corsHeaders
-    }
-  });
-}
-
-	async function readJson(request) {
-	  try {
-	    return await request.json();
-	  } catch {
-	    return {};
-	  }
-	}
-
-	function isBodyTooLarge(request) {
-	  const contentLength = request.headers.get('Content-Length');
-	  if (!contentLength) return false;
-	  const bytes = Number.parseInt(contentLength, 10);
-	  return Number.isFinite(bytes) &amp;&amp; bytes &gt; 4096;
-	}
-
-function clampInt(value, min, max, fallback) {
-  const num = Number.parseInt(value, 10);
-  if (!Number.isFinite(num)) return fallback;
-  return Math.min(max, Math.max(min, num));
-}
-
-function sanitizeUsername(value) {
-  return String(value || '')
-    .trim()
-    .replace(/[&lt;>"'`\\]/g, '')
-    .slice(0, 12);
-}
-
-async function getLeaderboardRows(db, limit) {
-  const { results } = await db.prepare(`
-    SELECT
-      l.user_id,
-      u.username,
-      l.score,
-      l.ship_type,
-      l.updated_at
-    FROM leaderboards l
-    JOIN users u ON u.id = l.user_id
-    ORDER BY l.score DESC, l.updated_at ASC
-    LIMIT ?1
-  `).bind(limit).all();
-
-  return (results || []).map((row, index) => ({
-    rank: index + 1,
-    user_id: row.user_id,
-    username: row.username,
-    score: row.score,
-    ship_type: row.ship_type,
-    updated_at: row.updated_at
-  }));
-}
-
-async function getPlayerRecord(db, userId) {
-  const row = await db.prepare(`
-    SELECT l.user_id, u.username, l.score, l.ship_type, l.updated_at
-    FROM leaderboards l
-    JOIN users u ON u.id = l.user_id
-    WHERE l.user_id = ?1
-  `).bind(userId).first();
-
-  if (!row) return null;
-
-	  const rankRow = await db.prepare(`
-	    SELECT COUNT(*) + 1 AS rank
-	    FROM leaderboards
-	    WHERE score > ?1
-	       OR (score = ?1 AND (updated_at &lt; ?2 OR (updated_at = ?2 AND user_id &lt; ?3)))
-	  `).bind(row.score, row.updated_at, row.user_id).first();
-
-  return {
-    user_id: row.user_id,
-    username: row.username,
-    score: row.score,
-    ship_type: row.ship_type,
-    updated_at: row.updated_at,
-    rank: rankRow ? rankRow.rank : null
-  };
-}
-
-async function upsertScore(db, userId, username, score, shipType) {
-  const previous = await db.prepare(`
-    SELECT score FROM leaderboards WHERE user_id = ?1
-  `).bind(userId).first();
-
-  await db.prepare(`
-    INSERT INTO users (id, username, is_guest)
-    VALUES (?1, ?2, 1)
-    ON CONFLICT(id) DO UPDATE SET username = excluded.username
-  `).bind(userId, username).run();
-
-  await db.prepare(`
-    INSERT INTO leaderboards (user_id, score, ship_type, updated_at)
-    VALUES (?1, ?2, ?3, datetime('now'))
-    ON CONFLICT(user_id) DO UPDATE SET
-      score = CASE WHEN excluded.score > leaderboards.score THEN excluded.score ELSE leaderboards.score END,
-      ship_type = CASE WHEN excluded.score > leaderboards.score THEN excluded.ship_type ELSE leaderboards.ship_type END,
-      updated_at = CASE WHEN excluded.score > leaderboards.score THEN datetime('now') ELSE leaderboards.updated_at END
-  `).bind(userId, score, shipType).run();
-
-  const current = await db.prepare(`
-    SELECT score, ship_type, updated_at FROM leaderboards WHERE user_id = ?1
-  `).bind(userId).first();
-
-  const previousScore = previous ? previous.score : 0;
-  const currentScore = current ? current.score : score;
-
-  return {
-    updated: currentScore > previousScore,
-    previous_score: previousScore,
-    score: currentScore,
-    ship_type: current ? current.ship_type : shipType,
-    updated_at: current ? current.updated_at : null
-  };
-}
-</code></pre>
-                </div>
-            </div>
-            <div class="tab-content" id="tab-frontend">
-                <div class="code-container">
-                    <div class="code-header"><span>js/leaderboard_config.js</span></div>
-                    <pre id="code-frontend"><code>window.STARSEA_LEADERBOARD = {
-	  apiBase: 'https://e92c11bf-8429-471d-93ea-9fe086c3b3f5.842695824.workers.dev',
-  enabled: true,
-  syncOnGameOver: true,
-  useSameOriginApi: true
-};</code></pre>
-                </div>
-            </div>
-        </div>
+            <div class="match-history-list" id="matchHistoryList"></div>
+        </section>
     </div>
-    <div class="modal" id="simModal">
+
+    <div class="modal" id="avatarModal" aria-hidden="true">
         <div class="glass-panel modal-card">
             <div class="modal-header">
-                <div class="modal-title"><i class="fa-solid fa-gamepad"></i> 战机结算模拟器</div>
-                <button class="close-modal-btn" id="btnCloseModal">&times;</button>
+                <div class="modal-title"><i class="fa-solid fa-user-astronaut"></i> 选择头像</div>
+                <button class="close-modal-btn" id="btnCloseAvatarModal" type="button">&times;</button>
             </div>
-            <div class="form-group">
-                <label class="form-label" for="simUsername">飞行员昵称</label>
-                <input type="text" class="form-input" id="simUsername" maxlength="12" placeholder="星海先驱者">
+            <div class="avatar-grid" id="avatarGrid">
+                <button class="avatar-select-card" data-avatar="fa-user-astronaut" type="button"><i class="fa-solid fa-user-astronaut"></i><span>航员</span></button>
+                <button class="avatar-select-card" data-avatar="fa-helmet-safety" type="button"><i class="fa-solid fa-helmet-safety"></i><span>工程</span></button>
+                <button class="avatar-select-card" data-avatar="fa-jet-fighter-up" type="button"><i class="fa-solid fa-jet-fighter-up"></i><span>王牌</span></button>
+                <button class="avatar-select-card" data-avatar="fa-satellite-dish" type="button"><i class="fa-solid fa-satellite-dish"></i><span>领航</span></button>
+                <button class="avatar-select-card" data-avatar="fa-meteor" type="button"><i class="fa-solid fa-meteor"></i><span>星陨</span></button>
+                <button class="avatar-select-card" data-avatar="fa-crown" type="button"><i class="fa-solid fa-crown"></i><span>王冠</span></button>
             </div>
-            <div class="form-group">
-                <label class="form-label" for="simScore">本局分数 <button class="random-btn" id="btnRandomScore" type="button"><i class="fa-solid fa-dice"></i> 随机</button></label>
-                <input type="number" class="form-input" id="simScore" value="12850" min="0">
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="simShip">战机涂装</label>
-                <select class="form-select" id="simShip">
-                    <option value="default">先驱者默认机型</option>
-                    <option value="void">星渊幻影</option>
-                    <option value="thunder">超维雷霆</option>
-                    <option value="imperial">帝皇余晖</option>
-                </select>
-            </div>
-            <label class="form-check" for="simWriteLocal">
-                <input type="checkbox" id="simWriteLocal">
-                <span class="form-check-copy">
-                    <strong>同时写入游戏本地存档</strong>
-                    <span>勾选后，若分数高于 space_best_score 会更新 localStorage。</span>
-                </span>
-            </label>
             <div class="form-footer">
-                <button class="secondary-action-btn" style="margin:0;" id="btnCancelSim" type="button">放弃</button>
-                <button class="primary-action-btn" style="flex:1.5;" id="btnSubmitSim" type="button">发送模拟结算</button>
+                <button class="secondary-action-btn" id="btnCancelAvatar" type="button">取消</button>
+                <button class="primary-action-btn" id="btnConfirmAvatar" type="button">确认头像</button>
             </div>
         </div>
     </div>
-    <script src="js/leaderboard_config.js"></script>
-    <script src="js/leaderboard_api.js"></script>
-    <script src="js/leaderboard_page.js"></script>
+
+    <div class="custom-toast" id="customToast">
+        <i class="fa-solid fa-circle-info" id="toastIcon"></i>
+        <span id="toastText">已更新</span>
+    </div>
+
+    <script src="js/leaderboard_config.js?v=7.0.18"></script>
+    <script src="js/leaderboard_api.js?v=7.0.18"></script>
+    <script src="js/leaderboard_page.js?v=7.0.18"></script>
 </body>
 </html>

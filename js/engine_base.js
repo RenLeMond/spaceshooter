@@ -1328,19 +1328,21 @@ class GameEngine {
         const handleFireBtnStart = (e) => { e.preventDefault(); this.keys['Space'] = true; };
         const handleFireBtnEnd = () => { this.keys['Space'] = false; };
 
-        leftKeyBtn.addEventListener('touchstart', handleLeftBtnStart, { passive: false });
-        leftKeyBtn.addEventListener('touchend', handleLeftBtnEnd);
-        rightKeyBtn.addEventListener('touchstart', handleRightBtnStart, { passive: false });
-        rightKeyBtn.addEventListener('touchend', handleRightBtnEnd);
-        fireKeyBtn.addEventListener('touchstart', handleFireBtnStart, { passive: false });
-        fireKeyBtn.addEventListener('touchend', handleFireBtnEnd);
+        if (leftKeyBtn && rightKeyBtn && fireKeyBtn) {
+            leftKeyBtn.addEventListener('touchstart', handleLeftBtnStart, { passive: false });
+            leftKeyBtn.addEventListener('touchend', handleLeftBtnEnd);
+            rightKeyBtn.addEventListener('touchstart', handleRightBtnStart, { passive: false });
+            rightKeyBtn.addEventListener('touchend', handleRightBtnEnd);
+            fireKeyBtn.addEventListener('touchstart', handleFireBtnStart, { passive: false });
+            fireKeyBtn.addEventListener('touchend', handleFireBtnEnd);
 
-        leftKeyBtn.addEventListener('mousedown', handleLeftBtnStart);
-        leftKeyBtn.addEventListener('mouseup', handleLeftBtnEnd);
-        rightKeyBtn.addEventListener('mousedown', handleRightBtnStart);
-        rightKeyBtn.addEventListener('mouseup', handleRightBtnEnd);
-        fireKeyBtn.addEventListener('mousedown', handleFireBtnStart);
-        fireKeyBtn.addEventListener('mouseup', handleFireBtnEnd);
+            leftKeyBtn.addEventListener('mousedown', handleLeftBtnStart);
+            leftKeyBtn.addEventListener('mouseup', handleLeftBtnEnd);
+            rightKeyBtn.addEventListener('mousedown', handleRightBtnStart);
+            rightKeyBtn.addEventListener('mouseup', handleRightBtnEnd);
+            fireKeyBtn.addEventListener('mousedown', handleFireBtnStart);
+            fireKeyBtn.addEventListener('mouseup', handleFireBtnEnd);
+        }
 
         this.cleanupControls = () => {
             window.removeEventListener('keydown', handleKeyDown);
@@ -1352,20 +1354,22 @@ class GameEngine {
             this.canvas.removeEventListener('mousedown', onMouseDown);
             window.removeEventListener('mousemove', onMouseMove);
             window.removeEventListener('mouseup', onMouseUp);
-            
-            leftKeyBtn.removeEventListener('touchstart', handleLeftBtnStart);
-            leftKeyBtn.removeEventListener('touchend', handleLeftBtnEnd);
-            rightKeyBtn.removeEventListener('touchstart', handleRightBtnStart);
-            rightKeyBtn.removeEventListener('touchend', handleRightBtnEnd);
-            fireKeyBtn.removeEventListener('touchstart', handleFireBtnStart);
-            fireKeyBtn.removeEventListener('touchend', handleFireBtnEnd);
-            
-            leftKeyBtn.removeEventListener('mousedown', handleLeftBtnStart);
-            leftKeyBtn.removeEventListener('mouseup', handleLeftBtnEnd);
-            rightKeyBtn.removeEventListener('mousedown', handleRightBtnStart);
-            rightKeyBtn.removeEventListener('mouseup', handleRightBtnEnd);
-            fireKeyBtn.removeEventListener('mousedown', handleFireBtnStart);
-            fireKeyBtn.removeEventListener('mouseup', handleFireBtnEnd);
+
+            if (leftKeyBtn && rightKeyBtn && fireKeyBtn) {
+                leftKeyBtn.removeEventListener('touchstart', handleLeftBtnStart);
+                leftKeyBtn.removeEventListener('touchend', handleLeftBtnEnd);
+                rightKeyBtn.removeEventListener('touchstart', handleRightBtnStart);
+                rightKeyBtn.removeEventListener('touchend', handleRightBtnEnd);
+                fireKeyBtn.removeEventListener('touchstart', handleFireBtnStart);
+                fireKeyBtn.removeEventListener('touchend', handleFireBtnEnd);
+
+                leftKeyBtn.removeEventListener('mousedown', handleLeftBtnStart);
+                leftKeyBtn.removeEventListener('mouseup', handleLeftBtnEnd);
+                rightKeyBtn.removeEventListener('mousedown', handleRightBtnStart);
+                rightKeyBtn.removeEventListener('mouseup', handleRightBtnEnd);
+                fireKeyBtn.removeEventListener('mousedown', handleFireBtnStart);
+                fireKeyBtn.removeEventListener('mouseup', handleFireBtnEnd);
+            }
         };
     }
 

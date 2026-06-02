@@ -2,7 +2,7 @@
 // 资源缓存版本号 — 同步于 space_shooter.html 的所有 ?v= 查询参数。
 // Worker 链 (game_worker.js + importScripts 的 6 个引擎文件) 通过 self.location.search 自动继承该版本，
 // 后续 bump 仅需改本常量 + HTML 的 ?v= 两处即可全量失效旧缓存。
-const ASSET_VERSION = '7.0.16';
+const ASSET_VERSION = '7.0.18';
 
 window.onload = function() {
     const canvas = document.getElementById('gameCanvas');
@@ -91,9 +91,23 @@ window.onload = function() {
         }
         
         // 从 localStorage 中读取本地持久化状态数据
+        const MAIN_SKIN_IDS = ['default', 'void', 'thunder', 'imperial'];
         let mainUnlockedSkins = safeReadJSON('space_unlocked_skins', ['default']);
         if (!Array.isArray(mainUnlockedSkins)) mainUnlockedSkins = ['default'];
         let mainCurrentSkin = safeReadString('space_current_skin', 'default');
+        function refreshMainSkinState() {
+            const storedSkins = safeReadJSON('space_unlocked_skins', ['default']);
+            mainUnlockedSkins = Array.isArray(storedSkins)
+                ? storedSkins.filter(id => MAIN_SKIN_IDS.includes(id))
+                : ['default'];
+            if (!mainUnlockedSkins.includes('default')) mainUnlockedSkins.unshift('default');
+            const storedSkin = safeReadString('space_current_skin', 'default');
+            mainCurrentSkin = mainUnlockedSkins.includes(storedSkin) ? storedSkin : 'default';
+            localStorage.setItem('space_unlocked_skins', JSON.stringify(mainUnlockedSkins));
+            localStorage.setItem('space_current_skin', mainCurrentSkin);
+            return mainCurrentSkin;
+        }
+        refreshMainSkinState();
         let mainBestScore = safeReadInt('space_best_score', 0);
         let mainScrap = 0;
         let mainHangar = { turretLevel: 0, engineLevel: 0, wingsLevel: 0 };
@@ -128,6 +142,25 @@ window.onload = function() {
                     toast.style.opacity = '0';
                 }, 1500);
             }
+        }
+
+        function recordLocalMatchHistory(match) {
+            try {
+                const key = 'space_match_history';
+                const raw = localStorage.getItem(key);
+                const list = raw ? JSON.parse(raw) : [];
+                const history = Array.isArray(list) ? list : [];
+                history.unshift({
+                    id: `match_${Date.now().toString(36)}`,
+                    score: Math.max(0, Math.floor(Number(match.score) || 0)),
+                    wave: Math.max(1, Math.floor(Number(match.wave) || 1)),
+                    skin: match.skin || 'default',
+                    isNewBest: !!match.isNewBest,
+                    permanentCoresEarned: Math.max(0, Math.floor(Number(match.permanentCoresEarned) || 0)),
+                    playedAt: new Date().toISOString()
+                });
+                localStorage.setItem(key, JSON.stringify(history.slice(0, 20)));
+            } catch (_) {}
         }
 
         window.addEventListener('starsea-leaderboard-sync-error', function (event) {
@@ -538,6 +571,13 @@ window.onload = function() {
                     
                 case 'gameOver':
                     mainPermanentCores = addPermanentCores(msg.permanentCoresEarned || 0);
+                    recordLocalMatchHistory({
+                        score: msg.score,
+                        wave: msg.wave,
+                        skin: msg.currentSkin || mainCurrentSkin,
+                        isNewBest: !!msg.isNewBest,
+                        permanentCoresEarned: msg.permanentCoresEarned || 0
+                    });
                     if (msg.isNewBest && window.StarseaLeaderboard && typeof window.StarseaLeaderboard.syncScoreToCloud === 'function') {
                         window.StarseaLeaderboard.syncScoreToCloud(msg.bestScore, msg.currentSkin || mainCurrentSkin);
                     }
@@ -558,7 +598,7 @@ window.onload = function() {
                     updateMainHangarUI();
                     break;
                     
-                case 'togglePause':
+                case 'togglePause': {
                     const pauseScreen = document.getElementById('pauseScreen');
                     if (pauseScreen) {
                         if (msg.isPaused) {
@@ -568,8 +608,9 @@ window.onload = function() {
                         }
                     }
                     break;
+                }
                     
-                case 'endBenchmark':
+                case 'endBenchmark': {
                     const metrics = msg.metrics;
                     const benchScoreVal = document.getElementById('benchScoreVal');
                     const benchFpsVal = document.getElementById('benchFpsVal');
@@ -585,8 +626,9 @@ window.onload = function() {
                     if (benchModal) benchModal.classList.remove('hidden');
                     sfx.playPowerup();
                     break;
+                }
 
-                case 'levelUpTrigger':
+                case 'levelUpTrigger': {
                     const rogueUpgradeScreen = document.getElementById('rogueUpgradeScreen');
                     const rogueLevelVal = document.getElementById('rogueLevelVal');
                     const rogueCardsContainer = document.getElementById('rogueCardsContainer');
@@ -597,8 +639,9 @@ window.onload = function() {
                         renderMainRogueUpgradeCards(rogueCardsContainer, msg.elementSlots || [], msg.comboKey || '', msg.equippedMods || []);
                     }
                     break;
+                }
 
-                case 'hazardOverlay':
+                case 'hazardOverlay': {
                     const hazardOverlayEl = document.getElementById('hazardOverlay');
                     const hazardAlertBoxEl = document.getElementById('hazardAlertBox');
                     if (hazardOverlayEl) {
@@ -621,6 +664,7 @@ window.onload = function() {
                         }
                     }
                     break;
+                }
             }
         };
         
@@ -669,6 +713,7 @@ window.onload = function() {
             sfx.init();
             document.getElementById('startScreen').classList.add('hidden');
             document.getElementById('hud').classList.remove('opacity-0');
+            refreshMainSkinState();
             
             const mobileControls = document.getElementById('mobileControls');
             if (mobileControls) {
@@ -679,7 +724,7 @@ window.onload = function() {
                 }
             }
             
-            worker.postMessage({ type: 'startGame' });
+            worker.postMessage({ type: 'startGame', currentSkin: mainCurrentSkin });
         });
         
         // 暂停菜单按键监听
@@ -689,11 +734,13 @@ window.onload = function() {
         });
         document.getElementById('restartFromPauseBtn').addEventListener('click', () => {
             document.getElementById('pauseScreen').classList.add('hidden');
-            worker.postMessage({ type: 'resetGame', shouldStart: true });
+            refreshMainSkinState();
+            worker.postMessage({ type: 'resetGame', shouldStart: true, currentSkin: mainCurrentSkin });
         });
         document.getElementById('retryBtn').addEventListener('click', () => {
             document.getElementById('gameOverScreen').classList.add('hidden');
-            worker.postMessage({ type: 'resetGame', shouldStart: true });
+            refreshMainSkinState();
+            worker.postMessage({ type: 'resetGame', shouldStart: true, currentSkin: mainCurrentSkin });
         });
         document.getElementById('backToMenuBtn').addEventListener('click', () => {
             document.getElementById('pauseScreen').classList.add('hidden');
@@ -963,20 +1010,26 @@ function renderMainRogueUpgradeCards(container, elementSlots, comboKey, equipped
         const themeClass = mod.class === '超维共鸣' ? 'rogue-amber' : (mod.class === '混沌魔改' ? 'rogue-rose' : 'rogue-cyan');
         card.className = `rogue-card ${themeClass}`;
 
+        // 静态 HTML 骨架中不含用户数据；mod.title / mod.class / mod.desc 通过 textContent 注入防止 XSS
+        // mod.icon 只允许字母、数字、连字符，过滤其他字符后再写入 class 属性
+        const safeIcon = String(mod.icon || '').replace(/[^a-z0-9-]/gi, '');
         card.innerHTML = `
             <div class="rogue-scan"></div>
-            <div class="rogue-icon"><i class="fa-solid ${mod.icon}"></i></div>
+            <div class="rogue-icon"><i class="fa-solid ${safeIcon}"></i></div>
             <div class="rogue-body pointer-events-none">
                 <div class="flex items-center justify-between">
-                    <span class="rogue-name">${mod.title}</span>
-                    <span class="rogue-class-tag">${mod.class}</span>
+                    <span class="rogue-name"></span>
+                    <span class="rogue-class-tag"></span>
                 </div>
-                <p class="rogue-desc mt-1">${mod.desc}</p>
+                <p class="rogue-desc mt-1"></p>
             </div>
             <div class="rogue-action-hint pointer-events-none">
                 <i class="fa-solid fa-circle-chevron-right animate-pulse"></i>
             </div>
         `;
+        card.querySelector('.rogue-name').textContent = mod.title;
+        card.querySelector('.rogue-class-tag').textContent = mod.class;
+        card.querySelector('.rogue-desc').textContent = mod.desc;
         
         card.addEventListener('click', () => {
             if (window.gameWorker) {

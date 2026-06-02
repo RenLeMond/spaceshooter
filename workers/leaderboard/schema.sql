@@ -4,9 +4,12 @@
 CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     username TEXT NOT NULL,
+    avatar TEXT NOT NULL DEFAULT 'fa-user-astronaut',
+    bio TEXT NOT NULL DEFAULT '',
     is_guest INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
 
 CREATE TABLE IF NOT EXISTS leaderboards (
     user_id TEXT PRIMARY KEY,
