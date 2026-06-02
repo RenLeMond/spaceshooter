@@ -919,8 +919,8 @@ canvas {
 }
 
 .campaign-mode-btn {
-    min-height: 32px;
-    border-radius: 8px;
+    min-height: 36px;
+    border-radius: 10px;
     border: 1px solid rgba(148, 163, 184, 0.14);
     background: rgba(10, 20, 42, 0.42);
     color: rgba(148, 163, 184, 0.8);
@@ -931,6 +931,7 @@ canvas {
     align-items: center;
     justify-content: center;
     gap: 4px;
+    padding: 5px 7px;
     transition: all 0.2s ease;
 }
 
@@ -1149,7 +1150,8 @@ canvas {
         grid-template-columns: 1fr;
         gap: 4px;
     }
-    .control-mode-btn {
+    .control-mode-btn,
+    .campaign-mode-btn {
         min-height: 36px;
     }
     .home-entry-dock {
@@ -1188,7 +1190,8 @@ canvas {
         padding: 8px;
         gap: 6px;
     }
-    .control-mode-btn {
+    .control-mode-btn,
+    .campaign-mode-btn {
         min-height: 40px;
         padding: 4px 6px;
     }
