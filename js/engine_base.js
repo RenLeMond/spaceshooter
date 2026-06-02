@@ -339,6 +339,7 @@ class GameEngine {
         }
 
         this.bestScoreText.innerText = String(this.bestScore).padStart(6, '0');
+        this.bindLeaderboardSyncFeedback();
     }
 
     resizeCanvas() {
@@ -511,6 +512,15 @@ class GameEngine {
         this.toastTimeout = setTimeout(() => {
             toast.style.opacity = '0';
         }, 1500);
+    }
+
+    bindLeaderboardSyncFeedback() {
+        if (this.leaderboardSyncFeedbackBound) return;
+        this.leaderboardSyncFeedbackBound = true;
+        window.addEventListener('starsea-leaderboard-sync-error', (event) => {
+            const message = event && event.detail && event.detail.message ? `: ${event.detail.message}` : '';
+            this.showToast(`云端同步失败，请至排行榜页手动同步${message}`);
+        });
     }
 
 
@@ -1075,6 +1085,9 @@ class GameEngine {
         if (this.score > this.bestScore) {
             this.bestScore = this.score;
             localStorage.setItem('space_best_score', this.bestScore);
+            if (window.StarseaLeaderboard && typeof window.StarseaLeaderboard.syncScoreToCloud === 'function') {
+                window.StarseaLeaderboard.syncScoreToCloud(this.bestScore, this.currentSkin);
+            }
         }
 
         document.getElementById('endScore').innerText = String(this.score).padStart(6, '0');

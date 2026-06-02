@@ -195,14 +195,14 @@
                 opacity: 0;
             }
             15% {
-                transform: translate(-50%, -100%) scale(1.3);
+                transform: translate(calc(-50% + var(--dx, 0px) * 0.15), -100%) scale(1.3);
                 opacity: 1;
             }
             30% {
-                transform: translate(-50%, -120%) scale(1.0);
+                transform: translate(calc(-50% + var(--dx, 0px) * 0.3), -120%) scale(1.0);
             }
             100% {
-                transform: translate(-50%, -240%) scale(0.85);
+                transform: translate(calc(-50% + var(--dx, 0px)), -240%) scale(0.85);
                 opacity: 0;
             }
         }
@@ -230,18 +230,39 @@
         </div>
         <div class="hidden lg:flex items-center gap-6 text-xs font-black tracking-widest uppercase text-gray-400">
             <a href="space_shooter.html" class="hover:text-cyan-400 transition flex items-center gap-1"><i class="fa-solid fa-gamepad"></i> 战斗终端</a>
+            <a href="v7_hangar.html?v=7.0.17" class="hover:text-cyan-400 transition flex items-center gap-1"><i class="fa-solid fa-screwdriver-wrench text-fuchsia-400"></i> 永久机库</a>
             <a href="v6_roadmap.html" class="hover:text-cyan-400 transition flex items-center gap-1"><i class="fa-solid fa-wand-magic-sparkles text-fuchsia-400"></i> V6星能折跃</a>
             <a href="game_manual.html" class="hover:text-cyan-400 transition flex items-center gap-1"><i class="fa-solid fa-book"></i> 战略说明书</a>
             <a href="version_history.html" class="hover:text-cyan-400 transition flex items-center gap-1"><i class="fa-solid fa-clock-rotate-left"></i> 超时空编年史</a>
             <a href="game_design.html" class="hover:text-cyan-400 transition flex items-center gap-1"><i class="fa-solid fa-circle-nodes"></i> 设计白皮书</a>
+            <a href="leaderboard.html" class="hover:text-cyan-400 transition flex items-center gap-1"><i class="fa-solid fa-trophy text-cyan-400"></i> 全球排行</a>
         </div>
-        <a href="space_shooter.html" class="px-4 py-2 bg-gradient-to-r from-cyan-600 via-purple-600 to-rose-500 hover:from-cyan-500 hover:to-rose-400 transition text-white text-xs font-black rounded-xl tracking-widest uppercase active:scale-95 shadow-md shadow-cyan-600/15">
-            启动折跃终端 <i class="fa-solid fa-play ml-1.5 animate-pulse"></i>
-        </a>
+        <div class="flex items-center gap-3">
+            <a href="space_shooter.html" class="hidden sm:inline-block px-4 py-2 bg-gradient-to-r from-cyan-600 via-purple-600 to-rose-500 hover:from-cyan-500 hover:to-rose-400 transition text-white text-xs font-black rounded-xl tracking-widest uppercase active:scale-95 shadow-md shadow-cyan-600/15">
+                启动折跃终端 <i class="fa-solid fa-play ml-1.5 animate-pulse"></i>
+            </a>
+            <button id="mobileMenuBtn" class="lg:hidden text-gray-400 hover:text-cyan-400 text-lg active:scale-95 transition" type="button" aria-label="Toggle Menu">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
     </nav>
 
+    <!-- Mobile Menu Overlay -->
+    <div id="mobileMenu" class="hidden fixed inset-0 z-50 bg-gray-950/95 backdrop-blur-lg flex flex-col items-center justify-center gap-6 text-base font-black tracking-widest uppercase text-gray-300">
+        <button id="mobileMenuCloseBtn" class="absolute top-6 right-6 text-gray-400 hover:text-rose-400 text-xl active:scale-95 transition" type="button" aria-label="Close Menu">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <a href="space_shooter.html" class="hover:text-cyan-400 transition flex items-center gap-2"><i class="fa-solid fa-gamepad"></i> 战斗终端</a>
+        <a href="v7_hangar.html?v=7.0.17" class="hover:text-cyan-400 transition flex items-center gap-2"><i class="fa-solid fa-screwdriver-wrench text-fuchsia-400"></i> 永久机库</a>
+        <a href="v6_roadmap.html" class="hover:text-cyan-400 transition flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-fuchsia-400"></i> V6星能折跃</a>
+        <a href="game_manual.html" class="hover:text-cyan-400 transition flex items-center gap-2"><i class="fa-solid fa-book"></i> 战略说明书</a>
+        <a href="version_history.html" class="hover:text-cyan-400 transition flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left"></i> 超时空编年史</a>
+        <a href="game_design.html" class="hover:text-cyan-400 transition flex items-center gap-2"><i class="fa-solid fa-circle-nodes"></i> 设计白皮书</a>
+        <a href="leaderboard.html" class="hover:text-cyan-400 transition flex items-center gap-2"><i class="fa-solid fa-trophy text-cyan-400"></i> 全球排行</a>
+    </div>
+
     <!-- 主架构容器 -->
-    <main class="max-w-6xl mx-auto px-4 mt-16 space-y-32 relative z-10">
+    <main class="max-w-6xl mx-auto px-4 mt-16 space-y-16 md:space-y-32 relative z-10">
 
         <!-- 装饰旋转星网雷达 -->
         <div class="absolute -right-32 top-0 w-[500px] h-[500px] border border-white/5 rounded-full pointer-events-none flex items-center justify-center opacity-20">
@@ -256,9 +277,9 @@
                 <i class="fa-solid fa-wand-magic-sparkles animate-pulse"></i> NEXT-GEN ROGUELIKE BATTLEFIELD
             </div>
             
-            <h1 class="text-5xl md:text-7xl font-black tracking-tight leading-none text-white">
+            <h1 class="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight leading-none text-white">
                 星海猎手 V7 <br>
-                <span class="text-3xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-rose-400 font-extrabold block mt-3">
+                <span class="text-2xl sm:text-3xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-rose-400 font-extrabold block mt-3">
                     构装晶核 与 无尽深空
                 </span>
             </h1>
@@ -267,11 +288,11 @@
                 欢迎来到《星海猎手 V7》大版本前瞻演练场。本次迭代通过实装<strong>「局内3选1超维模组」</strong>、<strong>「无尽突变星系事件」</strong>与<strong>「先遣者六角星盘天赋矩阵」</strong>，将深度 Build 构筑玩法与 0-GC 极客双核底座推向了终极纬度。
             </p>
 
-            <div class="flex flex-wrap justify-center gap-4 pt-4">
-                <a href="#modSimulator" class="px-6 py-3.5 bg-gradient-to-r from-cyan-600 via-purple-600 to-rose-500 hover:from-cyan-500 hover:to-rose-400 active:scale-95 transition text-white text-xs font-black rounded-2xl tracking-widest uppercase shadow-lg shadow-cyan-600/25">
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4 px-4 sm:px-0">
+                <a href="#modSimulator" class="w-full sm:w-auto text-center px-6 py-3.5 bg-gradient-to-r from-cyan-600 via-purple-600 to-rose-500 hover:from-cyan-500 hover:to-rose-400 active:scale-95 transition text-white text-xs font-black rounded-2xl tracking-widest uppercase shadow-lg shadow-cyan-600/25">
                     实测局内 3选1 模组 <i class="fa-solid fa-atom ml-1.5 animate-pulse"></i>
                 </a>
-                <a href="#talentSimulator" class="px-6 py-3.5 v7-glass-card hover:border-cyan-500/40 text-gray-300 text-xs font-black rounded-2xl tracking-widest uppercase active:scale-95">
+                <a href="#talentSimulator" class="w-full sm:w-auto text-center px-6 py-3.5 v7-glass-card hover:border-cyan-500/40 text-gray-300 text-xs font-black rounded-2xl tracking-widest uppercase active:scale-95">
                     开启动态天赋星盘 <i class="fa-solid fa-circle-nodes ml-1.5 text-cyan-400"></i>
                 </a>
             </div>
@@ -301,7 +322,7 @@
                         </div>
                     </div>
                     <!-- 数据统计 -->
-                    <div class="flex gap-6 text-center">
+                    <div class="flex flex-wrap gap-4 sm:gap-6 justify-center text-center">
                         <div>
                             <span class="text-[9px] font-black text-gray-500 uppercase block">累积伤害增幅</span>
                             <span class="text-lg font-black text-cyan-400 neon-text-cyan" id="damageMultiplierText">+0%</span>
@@ -316,8 +337,8 @@
                         </div>
                     </div>
                     <!-- 控制按钮 -->
-                    <div class="flex gap-2">
-                        <button onclick="rerollSimulatorCards()" class="px-4 py-2.5 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 active:scale-95 text-white text-[10px] font-black rounded-xl tracking-widest uppercase transition flex items-center gap-1.5 shadow-md shadow-cyan-600/10">
+                    <div class="flex gap-2 w-full md:w-auto justify-center">
+                        <button onclick="rerollSimulatorCards()" class="w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 active:scale-95 text-white text-[10px] font-black rounded-xl tracking-widest uppercase transition flex items-center justify-center gap-1.5 shadow-md shadow-cyan-600/10">
                             <i class="fa-solid fa-arrows-rotate animate-spin-slow"></i> 极客重置/刷新模组
                         </button>
                     </div>
@@ -351,7 +372,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center max-w-5xl mx-auto">
                 
                 <!-- 左：六角形 SVG 渲染星盘区 -->
-                <div class="lg:col-span-6 v7-glass-card rounded-3xl p-6 border border-white/5 bg-gray-950/50 flex flex-col items-center justify-center min-h-[420px]">
+                <div class="lg:col-span-6 v7-glass-card rounded-3xl p-6 border border-white/5 bg-gray-950/50 flex flex-col items-center justify-center min-h-[320px] sm:min-h-[420px]">
                     <span class="text-[9px] font-black text-purple-400 uppercase tracking-wider block mb-4 self-start"><i class="fa-solid fa-compass animate-pulse mr-1"></i> 实时全息星图 (Holographic Matrix Grid)</span>
                     
                     <div class="relative w-full max-w-[340px]">
@@ -395,15 +416,15 @@
                 <!-- 右：节点详情与废料状态区 -->
                 <div class="lg:col-span-6 space-y-6">
                     <!-- 废料管理器 -->
-                    <div class="v7-glass-card rounded-2xl p-5 border border-white/5 flex justify-between items-center bg-gray-950/80">
-                        <div class="flex items-center gap-3">
+                    <div class="v7-glass-card rounded-2xl p-5 border border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left bg-gray-950/80">
+                        <div class="flex flex-col sm:flex-row items-center gap-3">
                             <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-lg"><i class="fa-solid fa-cube animate-pulse"></i></div>
                             <div>
                                 <span class="text-[9px] font-black text-gray-500 block uppercase">可用合金废料 (Available Scrap)</span>
                                 <span class="text-2xl font-black text-amber-400 neon-text-amber" id="scrapBalanceText">500</span>
                             </div>
                         </div>
-                        <button onclick="resetTalentMatrix()" class="px-4 py-2 border border-white/10 hover:border-rose-500/30 text-gray-300 hover:text-rose-400 text-xs font-black rounded-xl tracking-wider active:scale-95 transition bg-white/5">
+                        <button onclick="resetTalentMatrix()" class="w-full sm:w-auto px-4 py-2 border border-white/10 hover:border-rose-500/30 text-gray-300 hover:text-rose-400 text-xs font-black rounded-xl tracking-wider active:scale-95 transition bg-white/5">
                             <i class="fa-solid fa-trash-can mr-1"></i> 重置并返还
                         </button>
                     </div>
@@ -422,9 +443,9 @@
                                 这是机体的核心能量源。所有天赋节点都必须通过与先驱者核心的量子激光线保持导通才能点亮和被激活。
                             </p>
                         </div>
-                        <div class="mt-6 pt-4 border-t border-white/5 flex justify-between items-center">
+                        <div class="mt-6 pt-4 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-3 text-center">
                             <span class="text-[9px] font-black text-gray-500 uppercase tracking-widest">TAP NODES TO UPGRADE</span>
-                            <button id="upgradeTalentBtn" disabled class="px-5 py-2.5 bg-gray-900 border border-white/10 text-gray-500 text-xs font-black rounded-xl tracking-widest uppercase transition">
+                            <button id="upgradeTalentBtn" disabled class="w-full sm:w-auto px-5 py-2.5 bg-gray-900 border border-white/10 text-gray-500 text-xs font-black rounded-xl tracking-widest uppercase transition">
                                 核心默认常态激活
                             </button>
                         </div>
@@ -959,6 +980,20 @@
             }
 
             clickCoreNode();
+        }
+
+        // Mobile Menu Logic
+        const menuBtn = document.getElementById('mobileMenuBtn');
+        const closeBtn = document.getElementById('mobileMenuCloseBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        
+        if (menuBtn && closeBtn && mobileMenu) {
+            menuBtn.onclick = () => mobileMenu.classList.remove('hidden');
+            closeBtn.onclick = () => mobileMenu.classList.add('hidden');
+            // Close when clicking links
+            mobileMenu.querySelectorAll('a').forEach(link => {
+                link.onclick = () => mobileMenu.classList.add('hidden');
+            });
         }
 
         // Initialize on load

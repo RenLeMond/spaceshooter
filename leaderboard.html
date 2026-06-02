@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星海猎手 V7 - 全球联机排行榜 · Cloudflare D1</title>
+    <meta name="description" content="星海猎手 V7 官方全球联机排行榜。同步本地最高分，查阅全服星海勇士排名。">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+        :root {
+            --bg-space: #030712;
+            --card-bg: rgba(15, 23, 42, 0.6);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-glow: rgba(34, 211, 238, 0.15);
+            --neon-cyan: #22d3ee;
+            --neon-cyan-glow: rgba(34, 211, 238, 0.35);
+            --neon-amber: #fbbf24;
+            --neon-amber-glow: rgba(251, 191, 36, 0.35);
+            --neon-rose: #f43f5e;
+            --neon-rose-glow: rgba(244, 63, 94, 0.35);
+            --neon-emerald: #10b981;
+            --neon-emerald-glow: rgba(16, 185, 129, 0.35);
+            --text-primary: #f3f4f6;
+            --text-muted: #9ca3af;
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Ambient Stars Background */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-space);
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(30, 27, 75, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(15, 23, 42, 0.5) 0%, transparent 50%),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='%23ffffff' fill-opacity='0.15'%3E%3Cpath d='M 10 15 L 11 15 L 11 16 L 10 16 Z M 40 50 L 41 50 L 41 51 L 40 51 Z M 70 20 L 71 20 L 71 21 L 70 21 Z M 25 70 L 26 70 L 26 71 L 25 71 Z'/%3E%3C/g%3E%3C/svg%3E");
+            font-family: 'Outfit', sans-serif;
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(3, 7, 18, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(34, 211, 238, 0.2);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(34, 211, 238, 0.4);
+        }
+
+        /* Container Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Top Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 32px;
+        }
+
+        .logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(34, 211, 238, 0.1);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--neon-cyan);
+            box-shadow: 0 0 15px var(--neon-cyan-glow);
+            animation: pulse-glow 2s infinite alternate;
+        }
+
+        .logo-titles h1 {
+            margin: 0;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 0.1em;
+            background: linear-gradient(135deg, #ffffff 0%, var(--neon-cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-titles p {
+            margin: 2px 0 0 0;
+            font-size: 10px;
+            color: var(--text-muted);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .status-badge {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.35);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 10px;
+            font-weight: bold;
+            color: var(--neon-amber);
+            letter-spacing: 0.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.1);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--neon-amber);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--neon-amber);
+            animation: blink 1.5s infinite;
+        }
+
+        .demo-banner {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px 18px;
+            margin-bottom: 24px;
+            border-radius: 16px;
+            border: 1px solid rgba(251, 191, 36, 0.25);
+            background: rgba(251, 191, 36, 0.06);
+            font-size: 12px;
+            line-height: 1.6;
+            color: #fde68a;
+        }
+
+        .demo-banner i {
+            margin-top: 2px;
+            font-size: 16px;
+            color: var(--neon-amber);
+            flex-shrink: 0;
+        }
+
+        .demo-banner strong {
+            color: #fff;
+        }
+
+        .rank-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--neon-cyan);
+            border: 1px solid rgba(34, 211, 238, 0.25);
+            background: rgba(34, 211, 238, 0.08);
+        }
+
+        .leaderboard-empty {
+            padding: 48px 24px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .leaderboard-empty i {
+            display: block;
+            font-size: 28px;
+            margin-bottom: 12px;
+            color: rgba(34, 211, 238, 0.35);
+        }
+
+        .form-check {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(3, 7, 18, 0.45);
+            cursor: pointer;
+        }
+
+        .form-check input {
+            margin-top: 2px;
+            accent-color: var(--neon-cyan);
+        }
+
+        .form-check-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-check-copy strong {
+            font-size: 12px;
+            color: #fff;
+        }
+
+        .form-check-copy span {
+            font-size: 10px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 8px 16px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition-smooth);
+        }
+
+        .back-btn:hover {
+            background: rgba(34, 211, 238, 0.08);
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+            box-shadow: 0 0 10px var(--neon-cyan-glow);
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition-smooth);
+        }
+
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        /* Dashboard Grid Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.6fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
+            .nav-actions {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .leaderboard-item {
+                grid-template-columns: 40px 1fr 88px;
+                gap: 8px;
+            }
+
+            .date-column {
+                display: none;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Panel Headings */
+        .panel-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 12px;
+        }
+
+        .panel-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-transform: uppercase;
+        }
+
+        .panel-title i {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 8px var(--neon-cyan-glow);
+        }
+
+        .panel-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Profile & Score Center */
+        .profile-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: rgba(3, 7, 18, 0.4);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .profile-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+            border: 1px dashed rgba(34, 211, 238, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: var(--neon-cyan);
+            position: relative;
+        }
+
+        .profile-avatar .ship-badge {
+            position: absolute;
+            bottom: -4px;
+            right: -4px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #22d3ee;
+            border: 2px solid var(--bg-space);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: var(--bg-space);
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .player-tag {
+            font-size: 10px;
+            color: var(--neon-cyan);
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .player-name-input {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 800;
+            color: #ffffff;
+            width: 100%;
+            padding: 2px 0;
+            transition: var(--transition-smooth);
+        }
+
+        .player-name-input:focus {
+            outline: none;
+            border-color: var(--neon-cyan);
+            text-shadow: 0 0 10px var(--neon-cyan-glow);
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: rgba(3, 7, 18, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            position: relative;
+        }
+
+        .stat-card.neon-border-cyan {
+            border-color: rgba(34, 211, 238, 0.2);
+            background: radial-gradient(circle at top, rgba(34, 211, 238, 0.03) 0%, transparent 100%);
+        }
+
+        .stat-card.neon-border-amber {
+            border-color: rgba(251, 191, 36, 0.2);
+            background: radial-gradient(circle at top, rgba(251, 191, 36, 0.03) 0%, transparent 100%);
+        }
+
+        .stat-label {
+            font-size: 9px;
+            color: var(--text-muted);
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 20px;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value.color-cyan {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 10px rgba(34, 211, 238, 0.2);
+        }
+
+        .stat-value.color-amber {
+            color: var(--neon-amber);
+            text-shadow: 0 0 10px rgba(251, 191, 36, 0.2);
+        }
+
+        .stat-footer {
+            font-size: 9px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* Action Buttons */
+        .primary-action-btn {
+            background: linear-gradient(135deg, var(--neon-cyan) 0%, #3b82f6 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 14px 20px;
+            color: #000000;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 13px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            width: 100%;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(34, 211, 238, 0.2);
+        }
+
+        .primary-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(34, 211, 238, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .primary-action-btn:active {
+            transform: translateY(0);
+        }
+
+        .secondary-action-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 20px;
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            font-weight: bold;
+            font-size: 13px;
+            width: 100%;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .secondary-action-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Leaderboard Panel Layout */
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 480px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .leaderboard-item {
+            display: grid;
+            grid-template-columns: 48px 1fr 120px 100px;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            transition: var(--transition-smooth);
+            position: relative;
+        }
+
+        .leaderboard-item:hover {
+            background: rgba(34, 211, 238, 0.03);
+            border-color: rgba(34, 211, 238, 0.15);
+            transform: translateX(4px);
+        }
+
+        .leaderboard-item.highlight-user {
+            background: rgba(34, 211, 238, 0.08);
+            border-color: rgba(34, 211, 238, 0.4);
+            box-shadow: inset 0 0 15px rgba(34, 211, 238, 0.1);
+        }
+
+        .rank-column {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 15px;
+        }
+
+        /* Rank Badges */
+        .rank-gold {
+            color: #fbbf24;
+            text-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+            font-size: 18px;
+        }
+
+        .rank-silver {
+            color: #e5e7eb;
+            text-shadow: 0 0 8px rgba(229, 231, 235, 0.5);
+            font-size: 17px;
+        }
+
+        .rank-bronze {
+            color: #d97706;
+            text-shadow: 0 0 8px rgba(217, 119, 6, 0.5);
+            font-size: 16px;
+        }
+
+        .rank-normal {
+            color: var(--text-muted);
+        }
+
+        .user-column {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-ship-ico {
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .user-ship-ico.skin-void {
+            border-color: rgba(217, 70, 239, 0.3);
+            color: #d946ef;
+        }
+
+        .user-ship-ico.skin-thunder {
+            border-color: rgba(250, 204, 21, 0.3);
+            color: #facc15;
+        }
+
+        .user-ship-ico.skin-imperial {
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .user-ship-name {
+            font-size: 9px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 1px;
+        }
+
+        .score-column {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 800;
+            font-size: 15px;
+            text-align: right;
+            letter-spacing: 0.05em;
+            color: #ffffff;
+        }
+
+        .date-column {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-align: right;
+        }
+
+        /* Simulated Console Log Box */
+        .terminal-container {
+            margin-top: 24px;
+            background: #020617;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            background: #0b1329;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 9px;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--text-muted);
+            letter-spacing: 0.1em;
+        }
+
+        .terminal-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .terminal-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .terminal-dot.dot-r { background: #ef4444; }
+        .terminal-dot.dot-y { background: #facc15; }
+        .terminal-dot.dot-g { background: #10b981; }
+
+        .terminal-body {
+            padding: 16px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            color: #a7f3d0;
+            height: 120px;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+
+        .terminal-line {
+            margin-bottom: 4px;
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+        }
+
+        .terminal-prompt {
+            color: var(--neon-cyan);
+            user-select: none;
+        }
+
+        .terminal-sql {
+            color: #a5f3fc;
+        }
+
+        /* Integration Documentation Section */
+        .docs-section {
+            margin-top: 40px;
+            margin-bottom: 50px;
+        }
+
+        .tab-headers {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+
+        .tab-header {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            padding: 12px 24px;
+            color: var(--text-muted);
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            white-space: nowrap;
+        }
+
+        .tab-header:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .tab-header.active {
+            color: var(--neon-cyan);
+            border-color: var(--neon-cyan);
+            text-shadow: 0 0 8px var(--neon-cyan-glow);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fade-in 0.3s ease-in-out;
+        }
+
+        .code-container {
+            position: relative;
+            background: #020617;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .code-header {
+            background: #0b1329;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 4px 10px;
+            color: var(--text-primary);
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .copy-btn:hover {
+            background: var(--neon-cyan);
+            color: #000000;
+        }
+
+        pre {
+            margin: 0;
+            padding: 20px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            font-size: 12.5px;
+            line-height: 1.6;
+            color: #e2e8f0;
+        }
+
+        /* Interactive Simulation Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(3, 7, 18, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: var(--transition-smooth);
+        }
+
+        .modal.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-card {
+            width: 400px;
+            max-width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 12px;
+        }
+
+        .modal-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            font-weight: 900;
+            color: var(--neon-cyan);
+            letter-spacing: 0.1em;
+        }
+
+        .close-modal-btn {
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .close-modal-btn:hover {
+            color: var(--neon-rose);
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .form-input, .form-select {
+            background: rgba(3, 7, 18, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: #ffffff;
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+            transition: var(--transition-smooth);
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 10px var(--neon-cyan-glow);
+        }
+
+        .random-btn {
+            background: rgba(34, 211, 238, 0.1);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 6px;
+            padding: 4px 10px;
+            color: var(--neon-cyan);
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            margin-left: 8px;
+        }
+
+        .random-btn:hover {
+            background: var(--neon-cyan);
+            color: #000000;
+        }
+
+        .form-footer {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        /* Animations */
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 10px rgba(34, 211, 238, 0.2); border-color: rgba(34, 211, 238, 0.5); }
+            100% { box-shadow: 0 0 25px rgba(34, 211, 238, 0.6); border-color: rgba(34, 211, 238, 1); }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Code syntax coloring */
+        .color-sql-keyword { color: #f43f5e; font-weight: bold; }
+        .color-sql-table { color: #38bdf8; }
+        .color-sql-type { color: #10b981; }
+        .color-sql-param { color: #f59e0b; }
+        .color-comment { color: #6b7280; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-wrap">
+                <div class="logo-icon"><i class="fa-solid fa-satellite-dish"></i></div>
+                <div class="logo-titles">
+                    <h1>星海猎手 V7</h1>
+                    <p>联机排行榜 · Cloudflare D1</p>
+                </div>
+            </div>
+            <div class="nav-actions">
+                <div class="status-badge" id="syncStatus" title="联机 API 连接状态">
+                    <div class="status-dot"></div>
+                    <span id="syncStatusText">探测联机 API 中…</span>
+                </div>
+                <a href="v7_hangar.html?v=7.0.17" class="back-btn"><i class="fa-solid fa-user-astronaut"></i> 永久机库</a>
+                <a href="space_shooter.html" class="back-btn" id="backToGameBtn"><i class="fa-solid fa-plane-departure"></i> 进入游戏</a>
+            </div>
+        </header>
+        <div class="demo-banner" role="note">
+            <i class="fa-solid fa-flask"></i>
+            <div>
+                <strong>离线演示回退</strong> — 无法连接 Cloudflare Worker 时自动使用 Mock 内存数据。
+                在 <code style="color:#67e8f9;">js/leaderboard_config.js</code> 配置 <code style="color:#67e8f9;">apiBase</code> 并部署 Worker 后接入真实 D1。
+            </div>
+        </div>
+        <div class="dashboard-grid">
+            <div class="glass-panel" id="userCenterPanel">
+                <div class="panel-heading">
+                    <div class="panel-title"><i class="fa-solid fa-user-astronaut"></i> 飞行员控制台</div>
+                    <span class="panel-subtitle">LOCAL STATS</span>
+                </div>
+                <div class="profile-row">
+                    <div class="profile-avatar" id="avatarBox">
+                        <i class="fa-solid fa-jet-fighter-up"></i>
+                        <div class="ship-badge" id="avatarShipBadge" title="当前涂装">D</div>
+                    </div>
+                    <div class="profile-info">
+                        <span class="player-tag">PLAYER IDENTITY</span>
+                        <input type="text" id="playerNameInput" class="player-name-input" placeholder="输入云端昵称..." maxlength="12" autocomplete="off">
+                        <div class="rank-pill" id="playerRankPill">
+                            <i class="fa-solid fa-ranking-star"></i>
+                            <span id="playerRankText">全球排名 —</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card neon-border-cyan">
+                        <span class="stat-label">本地最高记录</span>
+                        <div class="stat-value color-cyan" id="localHighScoreText">—</div>
+                        <div class="stat-footer">📂 缓存: space_best_score</div>
+                    </div>
+                    <div class="stat-card neon-border-amber">
+                        <span class="stat-label">云端同步记录</span>
+                        <div class="stat-value color-amber" id="cloudHighScoreText">—</div>
+                        <div class="stat-footer" id="cloudSyncFooter">📡 等待 API 连接</div>
+                    </div>
+                </div>
+                <button class="primary-action-btn" id="btnOpenSimModal"><i class="fa-solid fa-gamepad animate-pulse"></i> 模拟一局游戏结算</button>
+                <button class="secondary-action-btn" id="btnSyncLocalScore"><i class="fa-solid fa-cloud-arrow-up"></i> 将本地最高分同步至云端 D1</button>
+                <button class="secondary-action-btn" id="btnRefreshLocal" type="button"><i class="fa-solid fa-rotate"></i> 重新读取游戏本地存档</button>
+                <div class="terminal-container">
+                    <div class="terminal-header">
+                        <div class="terminal-dots">
+                            <span class="terminal-dot dot-r"></span>
+                            <span class="terminal-dot dot-y"></span>
+                            <span class="terminal-dot dot-g"></span>
+                        </div>
+                        <span>D1 CONSOLE LOGS</span>
+                    </div>
+                    <div class="terminal-body" id="consoleLogs">
+                        <div class="terminal-line"><span class="terminal-prompt">[SYSTEM]</span> 初始化联机控制台…</div>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-panel" id="leaderboardPanel">
+                <div class="panel-heading">
+                    <div class="panel-title"><i class="fa-solid fa-trophy"></i> 全球星海名人堂 Top 50</div>
+                    <span class="panel-subtitle">GLOBAL RANKINGS</span>
+                </div>
+                <div class="leaderboard-list" id="leaderboardList"></div>
+            </div>
+        </div>
+        <div class="glass-panel docs-section" id="docsPanel">
+            <div class="panel-heading">
+                <div class="panel-title"><i class="fa-solid fa-code"></i> 部署与接入指南</div>
+                <span class="panel-subtitle">workers/leaderboard</span>
+            </div>
+            <div class="tab-headers" id="tabHeaders">
+                <button class="tab-header active" data-tab="sql">D1 Schema</button>
+                <button class="tab-header" data-tab="workers">Worker API</button>
+                <button class="tab-header" data-tab="frontend">Client Config</button>
+            </div>
+            <div class="tab-content active" id="tab-sql">
+                <div class="code-container">
+                    <div class="code-header"><span>schema.sql</span><button class="copy-btn" onclick="copyCode('code-sql')"><i class="fa-regular fa-copy"></i> 复制</button></div>
+                    <pre id="code-sql"><code>-- 星海猎手 V7 全球排行榜 D1 Schema
+	-- 初始化: wrangler d1 execute e92c11bf-8429-471d-93ea-9fe086c3b3f5 --remote --file=./schema.sql
+
+CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    username TEXT NOT NULL,
+    is_guest INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS leaderboards (
+    user_id TEXT PRIMARY KEY,
+    score INTEGER NOT NULL DEFAULT 0 CHECK (score >= 0),
+    ship_type TEXT NOT NULL DEFAULT 'default',
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+	CREATE INDEX IF NOT EXISTS idx_leaderboards_score ON leaderboards(score DESC);
+
+	CREATE TABLE IF NOT EXISTS request_rate_limits (
+	    key TEXT PRIMARY KEY,
+	    count INTEGER NOT NULL DEFAULT 0,
+	    window_start INTEGER NOT NULL
+	);
+
+	CREATE INDEX IF NOT EXISTS idx_request_rate_limits_window ON request_rate_limits(window_start);
+	</code></pre>
+                </div>
+            </div>
+            <div class="tab-content" id="tab-workers">
+                <div class="code-container">
+                    <div class="code-header"><span>src/index.js</span><button class="copy-btn" onclick="copyCode('code-workers')"><i class="fa-regular fa-copy"></i> 复制</button></div>
+                    <pre id="code-workers"><code>const ALLOWED_SHIPS = new Set(['default', 'void', 'thunder', 'imperial']);
+const USER_ID_RE = /^usr_[a-z0-9]{8,32}$/;
+
+export default {
+  async fetch(request, env) {
+    const corsHeaders = buildCorsHeaders(request, env);
+
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
+    }
+
+    try {
+      const url = new URL(request.url);
+
+      if (url.pathname === '/api/health') {
+        await env.DB.prepare('SELECT 1').first();
+        return jsonResponse({ ok: true, service: 'starsea-leaderboard' }, corsHeaders);
+      }
+
+      if (url.pathname === '/api/leaderboard' &amp;&amp; request.method === 'GET') {
+        const limit = clampInt(url.searchParams.get('limit'), 1, 50, 50);
+        const rows = await getLeaderboardRows(env.DB, limit);
+        return jsonResponse({ entries: rows }, corsHeaders);
+      }
+
+      if (url.pathname === '/api/player' &amp;&amp; request.method === 'GET') {
+        const userId = url.searchParams.get('user_id') || '';
+        if (!USER_ID_RE.test(userId)) {
+          return jsonResponse({ error: 'invalid user_id' }, corsHeaders, 400);
+        }
+        const player = await getPlayerRecord(env.DB, userId);
+        return jsonResponse(player || { user_id: userId, score: 0, ship_type: 'default', rank: null }, corsHeaders);
+      }
+
+	      if (url.pathname === '/api/submit-score' &amp;&amp; request.method === 'POST') {
+	        if (isBodyTooLarge(request)) {
+	          return jsonResponse({ error: 'payload_too_large' }, corsHeaders, 413);
+	        }
+	        const payload = await readJson(request);
+        const userId = String(payload.user_id || '');
+        const username = sanitizeUsername(payload.username);
+        const score = clampInt(payload.score, 0, 999999999, 0);
+        const shipType = ALLOWED_SHIPS.has(payload.ship_type) ? payload.ship_type : 'default';
+
+        if (!USER_ID_RE.test(userId)) {
+          return jsonResponse({ error: 'invalid user_id' }, corsHeaders, 400);
+        }
+        if (!username) {
+          return jsonResponse({ error: 'invalid username' }, corsHeaders, 400);
+        }
+
+        const result = await upsertScore(env.DB, userId, username, score, shipType);
+        return jsonResponse({ success: true, ...result }, corsHeaders);
+      }
+
+      return jsonResponse({ error: 'not found' }, corsHeaders, 404);
+    } catch (err) {
+      console.error(err);
+      return jsonResponse({ error: 'internal_error', message: String(err.message || err) }, corsHeaders, 500);
+    }
+  }
+};
+
+function buildCorsHeaders(request, env) {
+  const origin = request.headers.get('Origin') || '';
+  const allowed = parseAllowedOrigins(env.ALLOWED_ORIGINS);
+  const allowOrigin = allowed.includes('*')
+    ? '*'
+    : (allowed.includes(origin) ? origin : allowed[0] || '*');
+
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Max-Age': '86400'
+  };
+}
+
+function parseAllowedOrigins(value) {
+  return String(value || '*')
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean);
+}
+
+function jsonResponse(body, corsHeaders, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      ...corsHeaders
+    }
+  });
+}
+
+	async function readJson(request) {
+	  try {
+	    return await request.json();
+	  } catch {
+	    return {};
+	  }
+	}
+
+	function isBodyTooLarge(request) {
+	  const contentLength = request.headers.get('Content-Length');
+	  if (!contentLength) return false;
+	  const bytes = Number.parseInt(contentLength, 10);
+	  return Number.isFinite(bytes) &amp;&amp; bytes &gt; 4096;
+	}
+
+function clampInt(value, min, max, fallback) {
+  const num = Number.parseInt(value, 10);
+  if (!Number.isFinite(num)) return fallback;
+  return Math.min(max, Math.max(min, num));
+}
+
+function sanitizeUsername(value) {
+  return String(value || '')
+    .trim()
+    .replace(/[&lt;>"'`\\]/g, '')
+    .slice(0, 12);
+}
+
+async function getLeaderboardRows(db, limit) {
+  const { results } = await db.prepare(`
+    SELECT
+      l.user_id,
+      u.username,
+      l.score,
+      l.ship_type,
+      l.updated_at
+    FROM leaderboards l
+    JOIN users u ON u.id = l.user_id
+    ORDER BY l.score DESC, l.updated_at ASC
+    LIMIT ?1
+  `).bind(limit).all();
+
+  return (results || []).map((row, index) => ({
+    rank: index + 1,
+    user_id: row.user_id,
+    username: row.username,
+    score: row.score,
+    ship_type: row.ship_type,
+    updated_at: row.updated_at
+  }));
+}
+
+async function getPlayerRecord(db, userId) {
+  const row = await db.prepare(`
+    SELECT l.user_id, u.username, l.score, l.ship_type, l.updated_at
+    FROM leaderboards l
+    JOIN users u ON u.id = l.user_id
+    WHERE l.user_id = ?1
+  `).bind(userId).first();
+
+  if (!row) return null;
+
+	  const rankRow = await db.prepare(`
+	    SELECT COUNT(*) + 1 AS rank
+	    FROM leaderboards
+	    WHERE score > ?1
+	       OR (score = ?1 AND (updated_at &lt; ?2 OR (updated_at = ?2 AND user_id &lt; ?3)))
+	  `).bind(row.score, row.updated_at, row.user_id).first();
+
+  return {
+    user_id: row.user_id,
+    username: row.username,
+    score: row.score,
+    ship_type: row.ship_type,
+    updated_at: row.updated_at,
+    rank: rankRow ? rankRow.rank : null
+  };
+}
+
+async function upsertScore(db, userId, username, score, shipType) {
+  const previous = await db.prepare(`
+    SELECT score FROM leaderboards WHERE user_id = ?1
+  `).bind(userId).first();
+
+  await db.prepare(`
+    INSERT INTO users (id, username, is_guest)
+    VALUES (?1, ?2, 1)
+    ON CONFLICT(id) DO UPDATE SET username = excluded.username
+  `).bind(userId, username).run();
+
+  await db.prepare(`
+    INSERT INTO leaderboards (user_id, score, ship_type, updated_at)
+    VALUES (?1, ?2, ?3, datetime('now'))
+    ON CONFLICT(user_id) DO UPDATE SET
+      score = CASE WHEN excluded.score > leaderboards.score THEN excluded.score ELSE leaderboards.score END,
+      ship_type = CASE WHEN excluded.score > leaderboards.score THEN excluded.ship_type ELSE leaderboards.ship_type END,
+      updated_at = CASE WHEN excluded.score > leaderboards.score THEN datetime('now') ELSE leaderboards.updated_at END
+  `).bind(userId, score, shipType).run();
+
+  const current = await db.prepare(`
+    SELECT score, ship_type, updated_at FROM leaderboards WHERE user_id = ?1
+  `).bind(userId).first();
+
+  const previousScore = previous ? previous.score : 0;
+  const currentScore = current ? current.score : score;
+
+  return {
+    updated: currentScore > previousScore,
+    previous_score: previousScore,
+    score: currentScore,
+    ship_type: current ? current.ship_type : shipType,
+    updated_at: current ? current.updated_at : null
+  };
+}
+</code></pre>
+                </div>
+            </div>
+            <div class="tab-content" id="tab-frontend">
+                <div class="code-container">
+                    <div class="code-header"><span>js/leaderboard_config.js</span></div>
+                    <pre id="code-frontend"><code>window.STARSEA_LEADERBOARD = {
+	  apiBase: 'https://e92c11bf-8429-471d-93ea-9fe086c3b3f5.842695824.workers.dev',
+  enabled: true,
+  syncOnGameOver: true,
+  useSameOriginApi: true
+};</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="simModal">
+        <div class="glass-panel modal-card">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fa-solid fa-gamepad"></i> 战机结算模拟器</div>
+                <button class="close-modal-btn" id="btnCloseModal">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="simUsername">飞行员昵称</label>
+                <input type="text" class="form-input" id="simUsername" maxlength="12" placeholder="星海先驱者">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="simScore">本局分数 <button class="random-btn" id="btnRandomScore" type="button"><i class="fa-solid fa-dice"></i> 随机</button></label>
+                <input type="number" class="form-input" id="simScore" value="12850" min="0">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="simShip">战机涂装</label>
+                <select class="form-select" id="simShip">
+                    <option value="default">先驱者默认机型</option>
+                    <option value="void">星渊幻影</option>
+                    <option value="thunder">超维雷霆</option>
+                    <option value="imperial">帝皇余晖</option>
+                </select>
+            </div>
+            <label class="form-check" for="simWriteLocal">
+                <input type="checkbox" id="simWriteLocal">
+                <span class="form-check-copy">
+                    <strong>同时写入游戏本地存档</strong>
+                    <span>勾选后，若分数高于 space_best_score 会更新 localStorage。</span>
+                </span>
+            </label>
+            <div class="form-footer">
+                <button class="secondary-action-btn" style="margin:0;" id="btnCancelSim" type="button">放弃</button>
+                <button class="primary-action-btn" style="flex:1.5;" id="btnSubmitSim" type="button">发送模拟结算</button>
+            </div>
+        </div>
+    </div>
+    <script src="js/leaderboard_config.js"></script>
+    <script src="js/leaderboard_api.js"></script>
+    <script src="js/leaderboard_page.js"></script>
+</body>
+</html>

@@ -306,7 +306,8 @@ class GameEngineWorker extends GameEngine {
             bossTiersDefeated: this.bossTiersDefeatedThisRun || []
         });
         // 计算最佳分数
-        if (this.score > this.bestScore) {
+        const isNewBest = this.score > this.bestScore;
+        if (isNewBest) {
             this.bestScore = this.score;
             localStorage.setItem('space_best_score', this.bestScore);
         }
@@ -316,6 +317,8 @@ class GameEngineWorker extends GameEngine {
             score: this.score,
             wave: this.wave,
             bestScore: this.bestScore,
+            isNewBest: isNewBest,
+            currentSkin: this.currentSkin,
             permanentCoresEarned: this.isBenchmarking ? 0 : coreReward.total
         });
     }

@@ -129,6 +129,11 @@ window.onload = function() {
                 }, 1500);
             }
         }
+
+        window.addEventListener('starsea-leaderboard-sync-error', function (event) {
+            const message = event && event.detail && event.detail.message ? ': ' + event.detail.message : '';
+            mainShowToast('云端同步失败，请至排行榜页手动同步' + message);
+        });
         
         // v2 升级卡更新器：联动等级点 / level-tag / button / is-maxed 卡态
         function renderUpgradeCard(cardId, progressId, tagId, btnId, level, maxLevel, cost, scrap, labels) {
@@ -533,6 +538,9 @@ window.onload = function() {
                     
                 case 'gameOver':
                     mainPermanentCores = addPermanentCores(msg.permanentCoresEarned || 0);
+                    if (msg.isNewBest && window.StarseaLeaderboard && typeof window.StarseaLeaderboard.syncScoreToCloud === 'function') {
+                        window.StarseaLeaderboard.syncScoreToCloud(msg.bestScore, msg.currentSkin || mainCurrentSkin);
+                    }
                     document.getElementById('endScore').innerText = String(msg.score).padStart(6, '0');
                     document.getElementById('endWave').innerText = msg.wave;
                     document.getElementById('endBest').innerText = String(msg.bestScore).padStart(6, '0');
