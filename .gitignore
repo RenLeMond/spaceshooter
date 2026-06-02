@@ -1,3 +1,10 @@
 workers/leaderboard/node_modules/
 workers/leaderboard/.wrangler/
 node_modules/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
