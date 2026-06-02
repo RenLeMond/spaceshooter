@@ -752,8 +752,8 @@
             nav.sticky > div:last-child {
                 width: 100%;
                 display: grid;
-                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-                gap: 8px;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 6px;
             }
 
             #reactorBtn,
@@ -761,11 +761,12 @@
                 width: 100%;
                 min-height: 40px;
                 justify-content: center;
-                padding: 9px 8px;
-                font-size: 9px;
+                padding: 8px 6px;
+                font-size: 8px;
                 line-height: 1.15;
                 text-align: center;
                 white-space: normal;
+                gap: 4px;
             }
 
             main {
@@ -1034,7 +1035,8 @@
 
         @media (max-width: 380px) {
             nav.sticky > div:last-child {
-                grid-template-columns: minmax(0, 1fr);
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 5px;
             }
 
             .talent-module-board {
@@ -1083,7 +1085,7 @@
             <a href="leaderboard.html" class="px-4 py-2 border border-cyan-500/30 hover:border-cyan-400 transition text-cyan-300 text-[10px] font-black rounded-xl tracking-wider uppercase bg-cyan-500/5 active:scale-95">
                 全球排行 <i class="fa-solid fa-trophy ml-1.5"></i>
             </a>
-            <a href="space_shooter.html?v=7.0.19" class="px-4 py-2 border border-cyan-500/30 hover:border-cyan-400 transition text-cyan-400 text-[10px] font-black rounded-xl tracking-wider uppercase bg-cyan-500/5 active:scale-95">
+            <a href="space_shooter.html?v=7.0.20" class="px-4 py-2 border border-cyan-500/30 hover:border-cyan-400 transition text-cyan-400 text-[10px] font-black rounded-xl tracking-wider uppercase bg-cyan-500/5 active:scale-95">
                 进入折跃战区 <i class="fa-solid fa-plane-departure ml-1.5"></i>
             </a>
         </div>
@@ -1103,8 +1105,8 @@
                             <span class="text-xs font-black text-cyan-400 tracking-widest uppercase flex items-center gap-1.5">
                                 <i class="fa-solid fa-circle-nodes"></i> 永久天赋先驱矩阵
                             </span>
-                            <span class="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/30 rounded text-[9px] font-black text-cyan-400" id="scrapDisplay">
-                                STAR CORES: 0
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-500/10 border border-cyan-500/30 rounded-lg text-[10px] font-black text-cyan-300 shadow-[0_0_16px_rgba(34,211,238,0.14)]" id="scrapDisplay">
+                                <i class="fa-solid fa-gem"></i> 星核余额 0
                             </span>
                         </div>
 

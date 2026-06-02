@@ -106,6 +106,7 @@
     }
 
     function loadLocalData() {
+        state.userId = API ? API.ensureUserId() : state.userId;
         state.bestScore = Math.max(0, parseInt(localStorage.getItem('space_best_score'), 10) || 0);
         state.permanentCores = Math.max(0, parseInt(localStorage.getItem('space_permanent_cores'), 10) || 0);
         state.skin = localStorage.getItem('space_current_skin') || 'default';
@@ -252,10 +253,10 @@
         } catch (_) {}
         el.matchHistoryList.replaceChildren();
         if (!history.length) {
-            el.matchHistoryList.innerHTML = '<div class="match-empty">还没有本地对局记录。完成游戏后，这里会显示最近 20 局。</div>';
+            el.matchHistoryList.innerHTML = '<div class="match-empty">还没有本地对局记录。完成游戏后，这里会显示最近 10 局。</div>';
             return;
         }
-        history.slice(0, 20).forEach(match => {
+        history.slice(0, 10).forEach(match => {
             const ship = SHIP_META[match.skin] || SHIP_META.default;
             const item = document.createElement('div');
             item.className = 'match-item';
@@ -282,7 +283,14 @@
         if (!value) return '-';
         const date = new Date(value);
         if (Number.isNaN(date.getTime())) return '-';
-        return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
+        return date.toLocaleString('zh-CN', {
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
     }
 
     async function refreshLeaderboard() {
@@ -337,7 +345,10 @@
                 avatar: state.avatar,
                 bio: state.bio
             });
-            showToast('最高分与飞行员资料已同步', 'success');
+            if (API.getSessionToken && API.getSessionToken()) {
+                await API.saveCloudSave(API.collectLocalCloudSave());
+            }
+            showToast('最高分、飞行员资料与云存档已同步', 'success');
             await refreshLeaderboard();
         } catch (err) {
             showToast('同步失败，请稍后重试', 'error');
@@ -345,24 +356,43 @@
         }
     }
 
-    function bindAccount() {
+    async function bindAccount() {
         const account = el.bindEmail.value.trim();
         const password = el.bindPassword.value.trim();
         if (account.length < 4 || password.length < 6) {
             showToast('请输入至少 4 位账号和 6 位密码', 'error');
             return;
         }
-        state.isBound = true;
-        state.boundAccount = account;
-        localStorage.setItem('space_user_is_bound', 'true');
-        localStorage.setItem('space_user_bound_email', account);
-        if (state.nickname === DEFAULT_NICKNAME) {
-            state.nickname = sanitizeNickname(account.split('@')[0]);
-            localStorage.setItem('space_user_nickname', state.nickname);
+        if (!API || typeof API.bindAccount !== 'function') {
+            showToast('账号服务暂不可用', 'error');
+            return;
         }
-        renderProfile();
-        showToast('飞行员档案已绑定', 'success');
-        syncLocalScore();
+        try {
+            const result = await API.bindAccount(account, password, API.collectLocalCloudSave());
+            if (result && result.error) {
+                showToast(result.error === 'invalid_credentials' ? '密码不正确' : '绑定失败', 'error');
+                return;
+            }
+            state.isBound = true;
+            state.boundAccount = account;
+            localStorage.setItem('space_user_is_bound', 'true');
+            localStorage.setItem('space_user_bound_email', account);
+            loadLocalData();
+            if (state.nickname === DEFAULT_NICKNAME) {
+                state.nickname = sanitizeNickname(account.split('@')[0]);
+                localStorage.setItem('space_user_nickname', state.nickname);
+                if (API.saveCloudSave && API.collectLocalCloudSave) {
+                    await API.saveCloudSave(API.collectLocalCloudSave());
+                }
+            }
+            loadLocalData();
+            renderProfile();
+            showToast(result.mode === 'registered' ? '账号已注册并同步云存档' : '账号已登录，云存档已同步', 'success');
+            await refreshLeaderboard();
+        } catch (err) {
+            showToast(err && err.data && err.data.error === 'invalid_credentials' ? '密码不正确' : '绑定失败，请稍后重试', 'error');
+            setStatus('offline');
+        }
     }
 
     function unbindAccount() {
@@ -370,6 +400,7 @@
         state.boundAccount = '';
         localStorage.setItem('space_user_is_bound', 'false');
         localStorage.removeItem('space_user_bound_email');
+        localStorage.removeItem('space_account_token');
         renderProfile();
         showToast('已恢复为游客档案', 'success');
     }

@@ -1,10 +1,12 @@
 const ALLOWED_SHIPS = new Set(['default', 'void', 'thunder', 'imperial']);
 const USER_ID_RE = /^usr_[a-z0-9]{8,32}$/;
 const MAX_JSON_BODY_BYTES = 4096;
-const DEFAULT_ALLOWED_ORIGINS = 'https://renlimeng.qzz.io,https://rlmbest.xyz,http://localhost:8787,http://127.0.0.1:8787,http://localhost:8080,http://127.0.0.1:8080,http://localhost:9999,http://127.0.0.1:9999';
+const DEFAULT_ALLOWED_ORIGINS = 'https://renlimeng.qzz.io,https://rlmbest.xyz,http://localhost:5173,http://127.0.0.1:5173,http://localhost:8787,http://127.0.0.1:8787,http://localhost:8080,http://127.0.0.1:8080,http://localhost:9999,http://127.0.0.1:9999';
 const RATE_LIMITS = {
   '/api/leaderboard': { limit: 120, windowSeconds: 60 },
-  '/api/submit-score': { limit: 20, windowSeconds: 60 }
+  '/api/submit-score': { limit: 20, windowSeconds: 60 },
+  '/api/auth/bind': { limit: 12, windowSeconds: 60 },
+  '/api/cloud-save': { limit: 40, windowSeconds: 60 }
 };
 let profileColumnsChecked = false;
 
@@ -51,6 +53,29 @@ export default {
         return jsonResponse(player || { user_id: userId, score: 0, ship_type: 'default', rank: null }, corsHeaders);
       }
 
+      if (url.pathname === '/api/auth/bind' && request.method === 'POST') {
+        const payload = await readJson(request);
+        const result = await bindAccount(env.DB, payload);
+        if (result.error) {
+          return jsonResponse({ success: false, error: result.error }, corsHeaders, result.error === 'invalid_credentials' ? 401 : 400);
+        }
+        return jsonResponse({ success: true, ...result }, corsHeaders);
+      }
+
+      if (url.pathname === '/api/cloud-save') {
+        const session = await requireSession(env.DB, request);
+        if (!session) return jsonResponse({ error: 'unauthorized' }, corsHeaders, 401);
+        if (request.method === 'GET') {
+          const save = await loadCloudSave(env.DB, session.user_id);
+          return jsonResponse({ success: true, user_id: session.user_id, save }, corsHeaders);
+        }
+        if (request.method === 'POST') {
+          const payload = await readJson(request);
+          const save = await upsertCloudSave(env.DB, session.user_id, payload.save || {});
+          return jsonResponse({ success: true, user_id: session.user_id, save }, corsHeaders);
+        }
+      }
+
       if (url.pathname === '/api/submit-score' && request.method === 'POST') {
         const payload = await readJson(request);
         const userId = String(payload.user_id || '');
@@ -92,7 +117,7 @@ function buildCorsHeaders(request, env) {
   return {
     'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Max-Age': '86400'
   };
 }
@@ -176,6 +201,78 @@ async function checkRateLimit(db, request, pathname, config) {
 async function ensureProfileColumns(db) {
   if (profileColumnsChecked) return;
   try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS request_rate_limits (
+        key TEXT PRIMARY KEY,
+        count INTEGER NOT NULL DEFAULT 0,
+        window_start INTEGER NOT NULL
+      )
+    `).run();
+  } catch (_) {}
+  try {
+    await db.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_request_rate_limits_window
+      ON request_rate_limits(window_start)
+    `).run();
+  } catch (_) {}
+  try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS accounts (
+        account_id TEXT PRIMARY KEY,
+        account_key TEXT NOT NULL UNIQUE,
+        account_label TEXT NOT NULL,
+        password_salt TEXT NOT NULL,
+        password_hash TEXT NOT NULL,
+        user_id TEXT NOT NULL UNIQUE,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `).run();
+  } catch (_) {}
+  try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS account_sessions (
+        token TEXT PRIMARY KEY,
+        account_id TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `).run();
+  } catch (_) {}
+  try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS player_cloud_saves (
+        user_id TEXT PRIMARY KEY,
+        permanent_cores INTEGER NOT NULL DEFAULT 0,
+        talents_json TEXT NOT NULL DEFAULT '{}',
+        unlocked_skins_json TEXT NOT NULL DEFAULT '["default"]',
+        current_skin TEXT NOT NULL DEFAULT 'default',
+        best_score INTEGER NOT NULL DEFAULT 0,
+        profile_json TEXT NOT NULL DEFAULT '{}',
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `).run();
+  } catch (_) {}
+  try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS match_history (
+        match_id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        score INTEGER NOT NULL DEFAULT 0,
+        wave INTEGER NOT NULL DEFAULT 1,
+        skin TEXT NOT NULL DEFAULT 'default',
+        is_new_best INTEGER NOT NULL DEFAULT 0,
+        permanent_cores_earned INTEGER NOT NULL DEFAULT 0,
+        played_at TEXT NOT NULL
+      )
+    `).run();
+  } catch (_) {}
+  try {
+    await db.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_match_history_user_time
+      ON match_history(user_id, played_at DESC)
+    `).run();
+  } catch (_) {}
+  try {
     await db.prepare("ALTER TABLE users ADD COLUMN avatar TEXT NOT NULL DEFAULT 'fa-user-astronaut'").run();
   } catch (_) {}
   try {
@@ -213,6 +310,316 @@ function sanitizeBio(value) {
     .trim()
     .replace(/[<>"'`\\]/g, '')
     .slice(0, 48);
+}
+
+function sanitizeAccount(value) {
+  return String(value || '')
+    .trim()
+    .replace(/[<>"'`\\]/g, '')
+    .slice(0, 64);
+}
+
+function accountKey(value) {
+  return sanitizeAccount(value).toLowerCase();
+}
+
+function sanitizePassword(value) {
+  const password = String(value || '');
+  return password.length >= 6 && password.length <= 128 ? password : '';
+}
+
+function createServerUserId() {
+  return 'usr_' + randomTokenPart(16);
+}
+
+function createId(prefix) {
+  return `${prefix}_${randomTokenPart(24)}`;
+}
+
+function randomTokenPart(length) {
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  let token = '';
+  for (let i = 0; i < bytes.length; i++) token += alphabet[bytes[i] % alphabet.length];
+  return token;
+}
+
+async function hashPassword(password, salt) {
+  const input = new TextEncoder().encode(`${salt}:${password}`);
+  const digest = await crypto.subtle.digest('SHA-256', input);
+  return Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+async function bindAccount(db, payload) {
+  const label = sanitizeAccount(payload.account);
+  const key = accountKey(label);
+  const password = sanitizePassword(payload.password);
+  if (key.length < 4 || !password) {
+    return { error: 'invalid_account' };
+  }
+
+  const existing = await db.prepare(`
+    SELECT account_id, account_key, account_label, password_salt, password_hash, user_id
+    FROM accounts
+    WHERE account_key = ?1
+  `).bind(key).first();
+
+  if (existing) {
+    const hash = await hashPassword(password, existing.password_salt);
+    if (hash !== existing.password_hash) {
+      return { error: 'invalid_credentials' };
+    }
+    const save = await upsertCloudSave(db, existing.user_id, payload.save || {});
+    const token = await createSession(db, existing.account_id);
+    return { mode: 'login', token, user_id: existing.user_id, save };
+  }
+
+  const userId = USER_ID_RE.test(payload.user_id || '') ? payload.user_id : createServerUserId();
+  const accountId = createId('acct');
+  const salt = createId('salt');
+  const hash = await hashPassword(password, salt);
+  await db.prepare(`
+    INSERT INTO accounts (account_id, account_key, account_label, password_salt, password_hash, user_id)
+    VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+  `).bind(accountId, key, label, salt, hash, userId).run();
+  const save = await upsertCloudSave(db, userId, payload.save || {});
+  const token = await createSession(db, accountId);
+  return { mode: 'registered', token, user_id: userId, save };
+}
+
+async function createSession(db, accountId) {
+  const token = createId('sess');
+  await db.prepare(`
+    INSERT INTO account_sessions (token, account_id)
+    VALUES (?1, ?2)
+  `).bind(token, accountId).run();
+  return token;
+}
+
+async function requireSession(db, request) {
+  const auth = request.headers.get('Authorization') || '';
+  const token = auth.replace(/^Bearer\s+/i, '').trim();
+  if (!token) return null;
+  return db.prepare(`
+    SELECT a.user_id
+    FROM account_sessions s
+    JOIN accounts a ON a.account_id = s.account_id
+    WHERE s.token = ?1
+  `).bind(token).first();
+}
+
+async function loadCloudSave(db, userId) {
+  const row = await db.prepare(`
+    SELECT permanent_cores, talents_json, unlocked_skins_json, current_skin, best_score, profile_json, updated_at
+    FROM player_cloud_saves
+    WHERE user_id = ?1
+  `).bind(userId).first();
+  const matches = await loadMatchHistory(db, userId);
+  return normalizeCloudSave(row ? {
+    permanentCores: row.permanent_cores,
+    talents: safeJson(row.talents_json, {}),
+    unlockedSkins: safeJson(row.unlocked_skins_json, ['default']),
+    currentSkin: row.current_skin,
+    bestScore: row.best_score,
+    profile: safeJson(row.profile_json, {}),
+    matchHistory: matches,
+    updatedAt: row.updated_at
+  } : { matchHistory: matches });
+}
+
+async function upsertCloudSave(db, userId, incomingSave) {
+  const current = await loadCloudSave(db, userId);
+  const merged = mergeCloudSave(current, incomingSave || {});
+  await upsertUserProfile(db, userId, merged.profile);
+  await db.prepare(`
+    INSERT INTO player_cloud_saves (
+      user_id, permanent_cores, talents_json, unlocked_skins_json, current_skin, best_score, profile_json, updated_at
+    )
+    VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, datetime('now'))
+    ON CONFLICT(user_id) DO UPDATE SET
+      permanent_cores = excluded.permanent_cores,
+      talents_json = excluded.talents_json,
+      unlocked_skins_json = excluded.unlocked_skins_json,
+      current_skin = excluded.current_skin,
+      best_score = excluded.best_score,
+      profile_json = excluded.profile_json,
+      updated_at = datetime('now')
+  `).bind(
+    userId,
+    merged.permanentCores,
+    JSON.stringify(merged.talents),
+    JSON.stringify(merged.unlockedSkins),
+    merged.currentSkin,
+    merged.bestScore,
+    JSON.stringify(merged.profile)
+  ).run();
+  await upsertMatchHistory(db, userId, merged.matchHistory);
+  return loadCloudSave(db, userId);
+}
+
+async function upsertUserProfile(db, userId, profile) {
+  const normalized = normalizeProfile(profile || {});
+  const username = normalized.nickname || '星海先驱者';
+  await db.prepare(`
+    INSERT INTO users (id, username, avatar, bio, is_guest)
+    VALUES (?1, ?2, ?3, ?4, 1)
+    ON CONFLICT(id) DO UPDATE SET
+      username = excluded.username,
+      avatar = excluded.avatar,
+      bio = excluded.bio
+  `).bind(userId, username, normalized.avatar, normalized.bio).run();
+}
+
+function mergeCloudSave(current, incoming) {
+  const base = normalizeCloudSave(current);
+  const next = normalizeCloudSave(incoming);
+  const talents = {};
+  ['A', 'B', 'C', 'D', 'E'].forEach(key => {
+    talents[key] = Math.max(base.talents[key] || 0, next.talents[key] || 0);
+  });
+  const unlockedSkins = Array.from(new Set([...base.unlockedSkins, ...next.unlockedSkins]))
+    .filter(skin => ALLOWED_SHIPS.has(skin));
+  if (!unlockedSkins.includes('default')) unlockedSkins.unshift('default');
+  const currentSkin = unlockedSkins.includes(next.currentSkin) && next.currentSkin !== 'default'
+    ? next.currentSkin
+    : (unlockedSkins.includes(base.currentSkin) ? base.currentSkin : 'default');
+  return {
+    permanentCores: Math.max(base.permanentCores, next.permanentCores),
+    talents,
+    unlockedSkins,
+    currentSkin,
+    bestScore: Math.max(base.bestScore, next.bestScore),
+    profile: mergeProfile(base.profile, incoming && incoming.profile),
+    matchHistory: mergeMatchHistory(base.matchHistory, next.matchHistory)
+  };
+}
+
+function mergeProfile(baseProfile, incomingProfile) {
+  const base = normalizeProfile(baseProfile || {});
+  const incoming = incomingProfile && typeof incomingProfile === 'object' ? incomingProfile : {};
+  const nickname = sanitizeUsername(incoming.nickname || '');
+  const avatar = incoming.avatar ? sanitizeAvatar(incoming.avatar) : '';
+  const bio = typeof incoming.bio !== 'undefined' ? sanitizeBio(incoming.bio) : '';
+  return {
+    nickname: nickname || base.nickname,
+    avatar: avatar || base.avatar,
+    bio: bio || base.bio
+  };
+}
+
+function normalizeCloudSave(save) {
+  const raw = save || {};
+  const unlockedSkins = Array.isArray(raw.unlockedSkins)
+    ? raw.unlockedSkins.filter(skin => ALLOWED_SHIPS.has(skin))
+    : ['default'];
+  if (!unlockedSkins.includes('default')) unlockedSkins.unshift('default');
+  const talents = raw.talents && typeof raw.talents === 'object' ? raw.talents : {};
+  return {
+    permanentCores: clampInt(raw.permanentCores, 0, 9999999, 0),
+    talents: {
+      A: clampInt(talents.A, 0, 3, 0),
+      B: clampInt(talents.B, 0, 3, 0),
+      C: clampInt(talents.C, 0, 3, 0),
+      D: clampInt(talents.D, 0, 3, 0),
+      E: clampInt(talents.E, 0, 2, 0)
+    },
+    unlockedSkins,
+    currentSkin: unlockedSkins.includes(raw.currentSkin) ? raw.currentSkin : 'default',
+    bestScore: clampInt(raw.bestScore, 0, 9999999, 0),
+    profile: normalizeProfile(raw.profile || {}),
+    matchHistory: normalizeMatchHistory(raw.matchHistory)
+  };
+}
+
+function normalizeProfile(profile) {
+  return {
+    nickname: sanitizeUsername(profile.nickname || ''),
+    avatar: sanitizeAvatar(profile.avatar),
+    bio: sanitizeBio(profile.bio)
+  };
+}
+
+function safeJson(value, fallback) {
+  try {
+    const parsed = JSON.parse(value || '');
+    return parsed == null ? fallback : parsed;
+  } catch (_) {
+    return fallback;
+  }
+}
+
+function normalizeMatchHistory(history) {
+  if (!Array.isArray(history)) return [];
+  return history.map(match => ({
+    id: String(match.id || `match_${Date.now().toString(36)}`).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64),
+    score: clampInt(match.score, 0, 9999999, 0),
+    wave: clampInt(match.wave, 1, 9999, 1),
+    skin: ALLOWED_SHIPS.has(match.skin) ? match.skin : 'default',
+    isNewBest: !!match.isNewBest,
+    permanentCoresEarned: clampInt(match.permanentCoresEarned, 0, 9999999, 0),
+    playedAt: normalizeIsoDate(match.playedAt)
+  })).filter(match => match.id && match.playedAt);
+}
+
+function normalizeIsoDate(value) {
+  const date = new Date(value || Date.now());
+  if (Number.isNaN(date.getTime())) return new Date().toISOString();
+  return date.toISOString();
+}
+
+function mergeMatchHistory(a, b) {
+  const map = new Map();
+  [...normalizeMatchHistory(a), ...normalizeMatchHistory(b)].forEach(match => {
+    map.set(match.id, match);
+  });
+  return Array.from(map.values())
+    .sort((left, right) => String(right.playedAt).localeCompare(String(left.playedAt)));
+}
+
+async function loadMatchHistory(db, userId) {
+  const { results } = await db.prepare(`
+    SELECT match_id, score, wave, skin, is_new_best, permanent_cores_earned, played_at
+    FROM match_history
+    WHERE user_id = ?1
+    ORDER BY played_at DESC
+  `).bind(userId).all();
+  return (results || []).map(row => ({
+    id: row.match_id,
+    score: row.score,
+    wave: row.wave,
+    skin: row.skin,
+    isNewBest: !!row.is_new_best,
+    permanentCoresEarned: row.permanent_cores_earned,
+    playedAt: row.played_at
+  }));
+}
+
+async function upsertMatchHistory(db, userId, history) {
+  for (const match of normalizeMatchHistory(history)) {
+    await db.prepare(`
+      INSERT INTO match_history (
+        match_id, user_id, score, wave, skin, is_new_best, permanent_cores_earned, played_at
+      )
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+      ON CONFLICT(match_id) DO UPDATE SET
+        score = excluded.score,
+        wave = excluded.wave,
+        skin = excluded.skin,
+        is_new_best = excluded.is_new_best,
+        permanent_cores_earned = excluded.permanent_cores_earned,
+        played_at = excluded.played_at
+    `).bind(
+      match.id,
+      userId,
+      match.score,
+      match.wave,
+      match.skin,
+      match.isNewBest ? 1 : 0,
+      match.permanentCoresEarned,
+      match.playedAt
+    ).run();
+  }
 }
 
 async function getLeaderboardRows(db, limit) {

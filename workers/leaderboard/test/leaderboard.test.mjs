@@ -52,6 +52,10 @@ class FakeDb {
     this.users = new Map();
     this.leaderboards = new Map();
     this.rateLimits = new Map();
+    this.accounts = new Map();
+    this.sessions = new Map();
+    this.cloudSaves = new Map();
+    this.matchHistory = new Map();
     this.now = '2026-06-02 12:00:00';
   }
 
@@ -101,6 +105,18 @@ class FakeStatement {
     if (sql.includes('FROM request_rate_limits') && sql.includes('WHERE key')) {
       return this.db.rateLimits.get(this.args[0]) || null;
     }
+    if (sql.includes('FROM accounts') && sql.includes('WHERE account_key')) {
+      return this.db.accounts.get(this.args[0]) || null;
+    }
+    if (sql.includes('FROM account_sessions')) {
+      const row = this.db.sessions.get(this.args[0]);
+      if (!row) return null;
+      const account = [...this.db.accounts.values()].find(item => item.account_id === row.account_id);
+      return account ? { user_id: account.user_id } : null;
+    }
+    if (sql.includes('FROM player_cloud_saves')) {
+      return this.db.cloudSaves.get(this.args[0]) || null;
+    }
     throw new Error('Unhandled first SQL: ' + sql);
   }
 
@@ -112,12 +128,21 @@ class FakeStatement {
         .slice(0, this.args[0]);
       return { results };
     }
+    if (this.sql.includes('FROM match_history')) {
+      const rows = this.db.matchHistory.get(this.args[0]) || [];
+      return { results: typeof this.args[1] === 'number' ? rows.slice(0, this.args[1]) : rows };
+    }
     throw new Error('Unhandled all SQL: ' + this.sql);
   }
 
   async run() {
     const sql = this.sql;
     if (sql.includes('CREATE TABLE IF NOT EXISTS request_rate_limits')) return {};
+    if (sql.includes('CREATE TABLE IF NOT EXISTS accounts')) return {};
+    if (sql.includes('CREATE TABLE IF NOT EXISTS account_sessions')) return {};
+    if (sql.includes('CREATE TABLE IF NOT EXISTS player_cloud_saves')) return {};
+    if (sql.includes('CREATE TABLE IF NOT EXISTS match_history')) return {};
+    if (sql.includes('CREATE INDEX IF NOT EXISTS')) return {};
     if (sql.includes('DELETE FROM request_rate_limits')) return {};
     if (sql.includes('UPDATE request_rate_limits')) {
       const key = this.args[0];
@@ -132,7 +157,32 @@ class FakeStatement {
       return {};
     }
     if (sql.includes('INSERT INTO users')) {
-      this.db.users.set(this.args[0], { username: this.args[1], is_guest: 1 });
+      const existing = this.db.users.get(this.args[0]) || {};
+      this.db.users.set(this.args[0], { ...existing, username: this.args[1], avatar: this.args[2], bio: this.args[3], is_guest: 1 });
+      return {};
+    }
+    if (sql.includes('INSERT INTO accounts')) {
+      const [accountId, accountKey, accountLabel, passwordSalt, passwordHash, userId] = this.args;
+      this.db.accounts.set(accountKey, { account_id: accountId, account_key: accountKey, account_label: accountLabel, password_salt: passwordSalt, password_hash: passwordHash, user_id: userId });
+      return {};
+    }
+    if (sql.includes('INSERT INTO account_sessions')) {
+      const [token, accountId] = this.args;
+      this.db.sessions.set(token, { token, account_id: accountId });
+      return {};
+    }
+    if (sql.includes('INSERT INTO player_cloud_saves')) {
+      const [userId, permanentCores, talentsJson, unlockedSkinsJson, currentSkin, bestScore, profileJson] = this.args;
+      this.db.cloudSaves.set(userId, { user_id: userId, permanent_cores: permanentCores, talents_json: talentsJson, unlocked_skins_json: unlockedSkinsJson, current_skin: currentSkin, best_score: bestScore, profile_json: profileJson, updated_at: this.db.now });
+      return {};
+    }
+    if (sql.includes('INSERT INTO match_history')) {
+      const [matchId, userId, score, wave, skin, isNewBest, permanentCoresEarned, playedAt] = this.args;
+      const rows = this.db.matchHistory.get(userId) || [];
+      const next = rows.filter(row => row.match_id !== matchId);
+      next.unshift({ match_id: matchId, user_id: userId, score, wave, skin, is_new_best: isNewBest, permanent_cores_earned: permanentCoresEarned, played_at: playedAt });
+      next.sort((a, b) => String(b.played_at).localeCompare(String(a.played_at)));
+      this.db.matchHistory.set(userId, next);
       return {};
     }
     if (sql.includes('INSERT INTO leaderboards')) {
@@ -216,4 +266,120 @@ test('Worker rejects oversized submit bodies before parsing JSON', async () => {
   }), { DB: db, ALLOWED_ORIGINS: 'https://renlimeng.qzz.io' });
 
   assert.equal(response.status, 413);
+});
+
+test('Worker registers an account on first bind and returns a session token', async () => {
+  const worker = await loadWorker();
+  const db = new FakeDb();
+  const response = await worker.fetch(new Request('https://example.com/api/auth/bind', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: 'https://renlimeng.qzz.io', 'CF-Connecting-IP': '203.0.113.10' },
+    body: JSON.stringify({
+      account: 'pilot@example.com',
+      password: 'secret123',
+      user_id: 'usr_firstbind',
+      save: {
+        permanentCores: 40,
+        talents: { A: 1 },
+        unlockedSkins: ['default', 'thunder'],
+        currentSkin: 'thunder',
+        bestScore: 9000,
+        profile: { nickname: 'Pilot', avatar: 'fa-crown', bio: 'Ready' },
+        matchHistory: [{ id: 'm1', score: 9000, wave: 3, skin: 'thunder', isNewBest: true, permanentCoresEarned: 4, playedAt: '2026-06-02T09:30:40.000Z' }]
+      }
+    })
+  }), { DB: db, ALLOWED_ORIGINS: 'https://renlimeng.qzz.io' });
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.mode, 'registered');
+  assert.equal(body.user_id, 'usr_firstbind');
+  assert.match(body.token, /^sess_/);
+  assert.equal(db.cloudSaves.get('usr_firstbind').best_score, 9000);
+  assert.equal(db.matchHistory.get('usr_firstbind')[0].match_id, 'm1');
+});
+
+test('Worker logs in on second bind and returns existing cloud save', async () => {
+  const worker = await loadWorker();
+  const db = new FakeDb();
+  const first = await worker.fetch(new Request('https://example.com/api/auth/bind', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: 'https://renlimeng.qzz.io', 'CF-Connecting-IP': '203.0.113.11' },
+    body: JSON.stringify({ account: 'pilot@example.com', password: 'secret123', user_id: 'usr_firstbind', save: { bestScore: 1200, permanentCores: 5 } })
+  }), { DB: db, ALLOWED_ORIGINS: 'https://renlimeng.qzz.io' });
+  assert.equal(first.status, 200);
+  await worker.fetch(new Request('https://example.com/api/cloud-save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${(await first.clone().json()).token}`, Origin: 'https://renlimeng.qzz.io', 'CF-Connecting-IP': '203.0.113.11' },
+    body: JSON.stringify({ save: { profile: { nickname: 'Pilot', avatar: 'fa-crown', bio: 'Cloud' } } })
+  }), { DB: db, ALLOWED_ORIGINS: 'https://renlimeng.qzz.io' });
+
+  const second = await worker.fetch(new Request('https://example.com/api/auth/bind', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: 'https://renlimeng.qzz.io', 'CF-Connecting-IP': '203.0.113.12' },
+    body: JSON.stringify({ account: 'pilot@example.com', password: 'secret123', user_id: 'usr_otherdevice', save: { bestScore: 500, permanentCores: 99 } })
+  }), { DB: db, ALLOWED_ORIGINS: 'https://renlimeng.qzz.io' });
+
+  assert.equal(second.status, 200);
+  const body = await second.json();
+  assert.equal(body.mode, 'login');
+  assert.equal(body.user_id, 'usr_firstbind');
+  assert.equal(body.save.bestScore, 1200);
+  assert.equal(body.save.permanentCores, 99);
+  assert.equal(body.save.profile.nickname, 'Pilot');
+  assert.equal(body.save.profile.avatar, 'fa-crown');
+});
+
+test('Worker cloud save endpoint persists match history with second-level timestamps', async () => {
+  const worker = await loadWorker();
+  const db = new FakeDb();
+  const auth = await worker.fetch(new Request('https://example.com/api/auth/bind', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: 'https://renlimeng.qzz.io', 'CF-Connecting-IP': '203.0.113.13' },
+    body: JSON.stringify({ account: 'pilot@example.com', password: 'secret123', user_id: 'usr_cloudsave' })
+  }), { DB: db, ALLOWED_ORIGINS: 'https://renlimeng.qzz.io' });
+  const token = (await auth.json()).token;
+
+  const saveResponse = await worker.fetch(new Request('https://example.com/api/cloud-save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, Origin: 'https://renlimeng.qzz.io', 'CF-Connecting-IP': '203.0.113.14' },
+    body: JSON.stringify({ save: { bestScore: 7000, permanentCores: 12, matchHistory: [{ id: 'm2', score: 7000, wave: 5, skin: 'void', playedAt: '2026-06-02T09:31:22.000Z' }] } })
+  }), { DB: db, ALLOWED_ORIGINS: 'https://renlimeng.qzz.io' });
+  assert.equal(saveResponse.status, 200);
+
+  const loadResponse = await worker.fetch(new Request('https://example.com/api/cloud-save', {
+    headers: { Authorization: `Bearer ${token}`, Origin: 'https://renlimeng.qzz.io', 'CF-Connecting-IP': '203.0.113.15' }
+  }), { DB: db, ALLOWED_ORIGINS: 'https://renlimeng.qzz.io' });
+
+  assert.equal(loadResponse.status, 200);
+  const body = await loadResponse.json();
+  assert.equal(body.save.bestScore, 7000);
+  assert.equal(body.save.matchHistory[0].playedAt, '2026-06-02T09:31:22.000Z');
+});
+
+test('Worker keeps full match history in D1 instead of trimming stored rows', async () => {
+  const worker = await loadWorker();
+  const db = new FakeDb();
+  const auth = await worker.fetch(new Request('https://example.com/api/auth/bind', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: 'https://renlimeng.qzz.io', 'CF-Connecting-IP': '203.0.113.16' },
+    body: JSON.stringify({ account: 'full-history@example.com', password: 'secret123', user_id: 'usr_fullhistory' })
+  }), { DB: db, ALLOWED_ORIGINS: 'https://renlimeng.qzz.io' });
+  const token = (await auth.json()).token;
+  const matchHistory = Array.from({ length: 25 }, (_, index) => ({
+    id: `full_${index}`,
+    score: 1000 + index,
+    wave: index + 1,
+    skin: 'default',
+    playedAt: new Date(Date.UTC(2026, 5, 2, 10, 0, index)).toISOString()
+  }));
+
+  const saveResponse = await worker.fetch(new Request('https://example.com/api/cloud-save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, Origin: 'https://renlimeng.qzz.io', 'CF-Connecting-IP': '203.0.113.17' },
+    body: JSON.stringify({ save: { matchHistory } })
+  }), { DB: db, ALLOWED_ORIGINS: 'https://renlimeng.qzz.io' });
+
+  assert.equal(saveResponse.status, 200);
+  assert.equal(db.matchHistory.get('usr_fullhistory').length, 25);
 });

@@ -2,7 +2,7 @@
 // 资源缓存版本号 — 同步于 space_shooter.html 的所有 ?v= 查询参数。
 // Worker 链 (game_worker.js + importScripts 的 6 个引擎文件) 通过 self.location.search 自动继承该版本，
 // 后续 bump 仅需改本常量 + HTML 的 ?v= 两处即可全量失效旧缓存。
-const ASSET_VERSION = '7.0.19';
+const ASSET_VERSION = '7.0.20';
 
 window.onload = function() {
     const canvas = document.getElementById('gameCanvas');
@@ -150,7 +150,7 @@ window.onload = function() {
                 const raw = localStorage.getItem(key);
                 const list = raw ? JSON.parse(raw) : [];
                 const history = Array.isArray(list) ? list : [];
-                history.unshift({
+                const record = {
                     id: `match_${Date.now().toString(36)}`,
                     score: Math.max(0, Math.floor(Number(match.score) || 0)),
                     wave: Math.max(1, Math.floor(Number(match.wave) || 1)),
@@ -158,9 +158,12 @@ window.onload = function() {
                     isNewBest: !!match.isNewBest,
                     permanentCoresEarned: Math.max(0, Math.floor(Number(match.permanentCoresEarned) || 0)),
                     playedAt: new Date().toISOString()
-                });
-                localStorage.setItem(key, JSON.stringify(history.slice(0, 20)));
+                };
+                history.unshift(record);
+                localStorage.setItem(key, JSON.stringify(history));
+                return record;
             } catch (_) {}
+            return null;
         }
 
         window.addEventListener('starsea-leaderboard-sync-error', function (event) {
@@ -578,6 +581,9 @@ window.onload = function() {
                         isNewBest: !!msg.isNewBest,
                         permanentCoresEarned: msg.permanentCoresEarned || 0
                     });
+                    if (window.StarseaLeaderboard && typeof window.StarseaLeaderboard.syncCloudSaveFromLocal === 'function') {
+                        window.StarseaLeaderboard.syncCloudSaveFromLocal();
+                    }
                     if (msg.isNewBest && window.StarseaLeaderboard && typeof window.StarseaLeaderboard.syncScoreToCloud === 'function') {
                         window.StarseaLeaderboard.syncScoreToCloud(msg.bestScore, msg.currentSkin || mainCurrentSkin);
                     }
