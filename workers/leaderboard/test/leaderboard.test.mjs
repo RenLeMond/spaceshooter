@@ -330,6 +330,62 @@ test('Worker logs in on second bind and returns existing cloud save', async () =
   assert.equal(body.save.profile.avatar, 'fa-crown');
 });
 
+test('Worker treats profile username as nickname when syncing account data', async () => {
+  const worker = await loadWorker();
+  const db = new FakeDb();
+  const response = await worker.fetch(new Request('https://example.com/api/auth/bind', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: 'https://renlimeng.qzz.io', 'CF-Connecting-IP': '203.0.113.18' },
+    body: JSON.stringify({
+      account: 'username-profile@example.com',
+      password: 'secret123',
+      user_id: 'usr_profilealias',
+      save: {
+        profile: { username: 'AliasPilot', avatar: 'fa-rocket', bio: 'Alias path' }
+      }
+    })
+  }), { DB: db, ALLOWED_ORIGINS: 'https://renlimeng.qzz.io' });
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.save.profile.nickname, 'AliasPilot');
+  assert.equal(body.save.profile.avatar, 'fa-rocket');
+  assert.equal(db.users.get('usr_profilealias').username, 'AliasPilot');
+});
+
+test('Worker keeps cloud profile when another device sends default profile fields', async () => {
+  const worker = await loadWorker();
+  const db = new FakeDb();
+  const first = await worker.fetch(new Request('https://example.com/api/auth/bind', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: 'https://renlimeng.qzz.io', 'CF-Connecting-IP': '203.0.113.19' },
+    body: JSON.stringify({
+      account: 'profile-keep@example.com',
+      password: 'secret123',
+      user_id: 'usr_profilekeep',
+      save: { profile: { nickname: 'CloudPilot', avatar: 'fa-rocket', bio: 'Cloud bio' } }
+    })
+  }), { DB: db, ALLOWED_ORIGINS: 'https://renlimeng.qzz.io' });
+  assert.equal(first.status, 200);
+
+  const second = await worker.fetch(new Request('https://example.com/api/auth/bind', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: 'https://renlimeng.qzz.io', 'CF-Connecting-IP': '203.0.113.20' },
+    body: JSON.stringify({
+      account: 'profile-keep@example.com',
+      password: 'secret123',
+      user_id: 'usr_otherprofile',
+      save: { profile: { nickname: '星海先驱者', avatar: 'fa-user-astronaut', bio: '' } }
+    })
+  }), { DB: db, ALLOWED_ORIGINS: 'https://renlimeng.qzz.io' });
+
+  assert.equal(second.status, 200);
+  const body = await second.json();
+  assert.equal(body.save.profile.nickname, 'CloudPilot');
+  assert.equal(body.save.profile.avatar, 'fa-rocket');
+  assert.equal(body.save.profile.bio, 'Cloud bio');
+});
+
 test('Worker cloud save endpoint persists match history with second-level timestamps', async () => {
   const worker = await loadWorker();
   const db = new FakeDb();

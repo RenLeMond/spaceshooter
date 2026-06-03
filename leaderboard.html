@@ -23,6 +23,8 @@
             --neon-rose-glow: rgba(244, 63, 94, 0.35);
             --neon-emerald: #10b981;
             --neon-emerald-glow: rgba(16, 185, 129, 0.35);
+            --neon-violet: #a78bfa;
+            --neon-violet-glow: rgba(167, 139, 250, 0.28);
             --text-primary: #f3f4f6;
             --text-muted: #9ca3af;
             --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -43,6 +45,33 @@
             display: flex;
             flex-direction: column;
             overflow-x: hidden;
+            position: relative;
+            isolation: isolate;
+        }
+
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        body::before {
+            background:
+                linear-gradient(rgba(34, 211, 238, 0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(167, 139, 250, 0.04) 1px, transparent 1px),
+                repeating-linear-gradient(180deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 18px);
+            background-size: 48px 48px, 48px 48px, 100% 18px;
+            mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.24));
+        }
+
+        body::after {
+            background:
+                linear-gradient(115deg, transparent 0%, rgba(34, 211, 238, 0.08) 44%, rgba(167, 139, 250, 0.08) 50%, transparent 58%),
+                linear-gradient(180deg, rgba(3, 7, 18, 0) 0%, rgba(3, 7, 18, 0.62) 100%);
+            opacity: 0.62;
         }
 
         /* Custom Scrollbar */
@@ -67,6 +96,8 @@
             padding: 24px;
             width: 100%;
             box-sizing: border-box;
+            position: relative;
+            z-index: 1;
         }
 
         /* Top Header */
@@ -74,9 +105,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 24px;
-            border-bottom: 1px solid var(--border-color);
+            padding: 18px 20px;
+            border: 1px solid rgba(34, 211, 238, 0.12);
+            border-radius: 24px;
             margin-bottom: 32px;
+            background:
+                linear-gradient(135deg, rgba(15, 23, 42, 0.86), rgba(8, 13, 28, 0.64)),
+                rgba(3, 7, 18, 0.72);
+            box-shadow: 0 18px 54px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255,255,255,0.05);
         }
 
         .logo-wrap {
@@ -239,8 +275,8 @@
         }
 
         .back-btn {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border-color);
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.08), rgba(167, 139, 250, 0.06));
+            border: 1px solid rgba(34, 211, 238, 0.18);
             border-radius: 10px;
             padding: 8px 16px;
             color: var(--text-primary);
@@ -254,21 +290,26 @@
         }
 
         .back-btn:hover {
-            background: rgba(34, 211, 238, 0.08);
+            background: rgba(34, 211, 238, 0.12);
             border-color: var(--neon-cyan);
             color: var(--neon-cyan);
-            box-shadow: 0 0 10px var(--neon-cyan-glow);
+            box-shadow: 0 0 18px var(--neon-cyan-glow), inset 0 0 14px rgba(34, 211, 238, 0.08);
         }
 
         /* Glassmorphism Panels */
         .glass-panel {
-            background: var(--card-bg);
+            background:
+                linear-gradient(145deg, rgba(15, 23, 42, 0.78), rgba(3, 7, 18, 0.58)),
+                var(--card-bg);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--border-color);
-            border-radius: 24px;
+            border: 1px solid rgba(34, 211, 238, 0.13);
+            border-radius: 20px;
             padding: 24px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            box-shadow:
+                0 22px 54px rgba(0, 0, 0, 0.34),
+                inset 0 1px 0 rgba(255, 255, 255, 0.055),
+                0 0 0 1px rgba(167, 139, 250, 0.035);
             position: relative;
             overflow: hidden;
             transition: var(--transition-smooth);
@@ -281,7 +322,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, transparent 45%),
+                linear-gradient(90deg, rgba(34, 211, 238, 0.16), transparent 24%, transparent 76%, rgba(167, 139, 250, 0.12));
             pointer-events: none;
         }
 
@@ -492,7 +535,7 @@
 
         /* Action Buttons */
         .primary-action-btn {
-            background: linear-gradient(135deg, var(--neon-cyan) 0%, #3b82f6 100%);
+            background: linear-gradient(135deg, #67e8f9 0%, #60a5fa 46%, #a78bfa 100%);
             border: none;
             border-radius: 12px;
             padding: 14px 20px;
@@ -509,7 +552,7 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            box-shadow: 0 4px 20px rgba(34, 211, 238, 0.2);
+            box-shadow: 0 10px 30px rgba(34, 211, 238, 0.24), 0 0 22px rgba(167, 139, 250, 0.12);
         }
 
         .primary-action-btn:hover {
@@ -561,17 +604,34 @@
             grid-template-columns: 48px 1fr 120px 100px;
             align-items: center;
             padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.03);
-            border-radius: 16px;
+            background:
+                linear-gradient(135deg, rgba(15, 23, 42, 0.82), rgba(3, 7, 18, 0.55)),
+                rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(34, 211, 238, 0.09);
+            border-radius: 14px;
             transition: var(--transition-smooth);
             position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.035);
+        }
+
+        .leaderboard-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 10px;
+            bottom: 10px;
+            width: 3px;
+            border-radius: 999px;
+            background: linear-gradient(180deg, var(--neon-cyan), var(--neon-violet));
+            opacity: 0.46;
         }
 
         .leaderboard-item:hover {
             background: rgba(34, 211, 238, 0.03);
             border-color: rgba(34, 211, 238, 0.15);
             transform: translateX(4px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.26), 0 0 22px rgba(34, 211, 238, 0.08);
         }
 
         .leaderboard-item.highlight-user {
@@ -592,7 +652,7 @@
         /* Rank Badges */
         .rank-gold {
             color: #fbbf24;
-            text-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+            text-shadow: 0 0 12px rgba(251, 191, 36, 0.62);
             font-size: 18px;
         }
 
@@ -621,13 +681,14 @@
         .user-ship-ico {
             width: 32px;
             height: 32px;
-            background: rgba(255, 255, 255, 0.03);
+            background: radial-gradient(circle at 50% 30%, rgba(34, 211, 238, 0.16), rgba(255, 255, 255, 0.03) 68%);
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(34, 211, 238, 0.12);
+            box-shadow: inset 0 0 18px rgba(34, 211, 238, 0.06);
         }
 
         .user-ship-ico i {
@@ -1102,12 +1163,87 @@
             margin-bottom: 12px;
         }
 
+        .hangar-summary {
+            margin-top: 14px;
+            border: 1px solid rgba(34, 211, 238, 0.12);
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.06), rgba(167, 139, 250, 0.04));
+            padding: 12px;
+        }
+
+        .hangar-summary-head,
+        .hangar-summary-grid {
+            display: grid;
+            gap: 8px;
+        }
+
+        .hangar-summary-head {
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .hangar-summary-title {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            color: #dffbff;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.12em;
+        }
+
+        .hangar-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-height: 30px;
+            padding: 0 10px;
+            border-radius: 10px;
+            color: var(--neon-cyan);
+            text-decoration: none;
+            font-size: 10px;
+            font-weight: 900;
+            border: 1px solid rgba(34, 211, 238, 0.24);
+            background: rgba(34, 211, 238, 0.08);
+        }
+
+        .hangar-summary-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .hangar-summary-card {
+            min-width: 0;
+            padding: 9px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(3, 7, 18, 0.36);
+        }
+
+        .hangar-summary-card span {
+            display: block;
+            color: var(--text-muted);
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .hangar-summary-card strong {
+            display: block;
+            margin-top: 4px;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 900;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         .ship-showcase,
         .talent-strip {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 14px;
+            display: none;
         }
 
         .ship-chip {
@@ -1224,8 +1360,8 @@
             gap: 12px;
             padding: 12px 14px;
             border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            background: rgba(255, 255, 255, 0.025);
+            border: 1px solid rgba(34, 211, 238, 0.09);
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.72), rgba(3, 7, 18, 0.45));
         }
 
         .match-icon {
@@ -1290,6 +1426,7 @@
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 gap: 8px;
+                width: 100%;
             }
 
             .status-badge {
@@ -1310,6 +1447,18 @@
             .profile-row {
                 align-items: flex-start;
                 padding: 12px;
+            }
+
+            .hangar-summary-head {
+                grid-template-columns: 1fr;
+            }
+
+            .hangar-link {
+                width: 100%;
+            }
+
+            .hangar-summary-grid {
+                grid-template-columns: 1fr;
             }
 
             .stats-grid {
@@ -1380,8 +1529,8 @@
                     <div class="status-dot"></div>
                     <span id="syncStatusText">连接中</span>
                 </div>
-                <a href="v7_hangar.html?v=7.0.20" class="back-btn"><i class="fa-solid fa-user-astronaut"></i> 永久机库</a>
-                <a href="space_shooter.html?v=7.0.20" class="back-btn" id="backToGameBtn"><i class="fa-solid fa-plane-departure"></i> 进入游戏</a>
+                <a href="v7_hangar.html?v=7.0.22" class="back-btn"><i class="fa-solid fa-user-astronaut"></i> 永久机库</a>
+                <a href="space_shooter.html?v=7.0.22" class="back-btn" id="backToGameBtn"><i class="fa-solid fa-plane-departure"></i> 进入游戏</a>
             </div>
         </header>
 
@@ -1451,6 +1600,26 @@
                 <button class="primary-action-btn" id="btnSyncLocalScore"><i class="fa-solid fa-cloud-arrow-up"></i> 同步最高分</button>
                 <button class="secondary-action-btn" id="btnRefreshLocal" type="button"><i class="fa-solid fa-rotate"></i> 刷新档案与排行</button>
 
+                <div class="hangar-summary" id="hangarSummary">
+                    <div class="hangar-summary-head">
+                        <div class="hangar-summary-title"><i class="fa-solid fa-warehouse"></i> 机库摘要</div>
+                        <a class="hangar-link" href="v7_hangar.html?v=7.0.22"><i class="fa-solid fa-arrow-up-right-from-square"></i> 前往机库</a>
+                    </div>
+                    <div class="hangar-summary-grid">
+                        <div class="hangar-summary-card">
+                            <span>当前出战</span>
+                            <strong id="hangarCurrentShip">先驱者默认</strong>
+                        </div>
+                        <div class="hangar-summary-card">
+                            <span>已解锁涂装</span>
+                            <strong id="hangarUnlockedCount">1 / 4</strong>
+                        </div>
+                        <div class="hangar-summary-card">
+                            <span>永久天赋</span>
+                            <strong id="hangarTalentTotal">LV.0</strong>
+                        </div>
+                    </div>
+                </div>
                 <div class="ship-showcase" id="unlockedShipsList"></div>
                 <div class="talent-strip" id="talentStrip">
                     <span id="talent-A"></span>
@@ -1505,8 +1674,8 @@
         <span id="toastText">已更新</span>
     </div>
 
-    <script src="js/leaderboard_config.js?v=7.0.20"></script>
-    <script src="js/leaderboard_api.js?v=7.0.20"></script>
-    <script src="js/leaderboard_page.js?v=7.0.20"></script>
+    <script src="js/leaderboard_config.js?v=7.0.22"></script>
+    <script src="js/leaderboard_api.js?v=7.0.22"></script>
+    <script src="js/leaderboard_page.js?v=7.0.22"></script>
 </body>
 </html>

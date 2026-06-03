@@ -190,6 +190,11 @@ class GameEngineWorker extends GameEngine {
         if (last.slot2 !== payload.slot2) return true;
         if (last.synergyName !== payload.synergyName) return true;
         if (last.synergyActive !== payload.synergyActive) return true;
+        if (last.currentSkin !== payload.currentSkin) return true;
+        if (last.turretLevel !== payload.turretLevel) return true;
+        if (last.engineLevel !== payload.engineLevel) return true;
+        if (last.wingsLevel !== payload.wingsLevel) return true;
+        if (last.talentSig !== payload.talentSig) return true;
         if (last.bossActive !== payload.bossActive) return true;
         if (last.bossHp !== payload.bossHp) return true;
         if (last.bossMaxHp !== payload.bossMaxHp) return true;
@@ -287,6 +292,11 @@ class GameEngineWorker extends GameEngine {
             slot2: slots[1] || null,
             synergyName: this.player ? this.player.synergyName : '',
             synergyActive: synergyActive,
+            currentSkin: this.currentSkin,
+            turretLevel: this.hangar ? (this.hangar.turretLevel || 0) : 0,
+            engineLevel: this.hangar ? (this.hangar.engineLevel || 0) : 0,
+            wingsLevel: this.hangar ? (this.hangar.wingsLevel || 0) : 0,
+            talentSig: this.talents ? ['A', 'B', 'C', 'D', 'E'].map(k => this.talents[k] || 0).join(',') : '0,0,0,0,0',
             bossActive: !!(this.boss && this.boss.active),
             bossHp: bossHp,
             bossMaxHp: bossMaxHp,

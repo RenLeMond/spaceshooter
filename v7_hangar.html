@@ -735,13 +735,15 @@
             nav.sticky {
                 padding: 12px 14px;
                 gap: 10px;
-                align-items: flex-start;
+                align-items: center;
                 flex-wrap: wrap;
             }
 
             nav.sticky > div:first-child {
                 min-width: 0;
-                flex: 1 1 160px;
+                flex: 1 1 100%;
+                justify-content: center;
+                text-align: left;
             }
 
             nav.sticky > div:first-child .text-base {
@@ -753,20 +755,29 @@
                 width: 100%;
                 display: grid;
                 grid-template-columns: repeat(3, minmax(0, 1fr));
-                gap: 6px;
+                gap: 8px;
+                align-items: stretch;
             }
 
             #reactorBtn,
             nav.sticky > div:last-child a {
                 width: 100%;
-                min-height: 40px;
+                min-height: 42px;
+                display: flex;
+                align-items: center;
                 justify-content: center;
                 padding: 8px 6px;
                 font-size: 8px;
                 line-height: 1.15;
                 text-align: center;
                 white-space: normal;
-                gap: 4px;
+                gap: 5px;
+                margin: 0;
+            }
+
+            #reactorBtn span,
+            nav.sticky > div:last-child a {
+                min-width: 0;
             }
 
             main {
@@ -1036,7 +1047,14 @@
         @media (max-width: 380px) {
             nav.sticky > div:last-child {
                 grid-template-columns: repeat(3, minmax(0, 1fr));
-                gap: 5px;
+                gap: 6px;
+            }
+
+            #reactorBtn,
+            nav.sticky > div:last-child a {
+                min-height: 44px;
+                padding: 7px 4px;
+                font-size: 7.5px;
             }
 
             .talent-module-board {
@@ -1085,7 +1103,7 @@
             <a href="leaderboard.html" class="px-4 py-2 border border-cyan-500/30 hover:border-cyan-400 transition text-cyan-300 text-[10px] font-black rounded-xl tracking-wider uppercase bg-cyan-500/5 active:scale-95">
                 全球排行 <i class="fa-solid fa-trophy ml-1.5"></i>
             </a>
-            <a href="space_shooter.html?v=7.0.20" class="px-4 py-2 border border-cyan-500/30 hover:border-cyan-400 transition text-cyan-400 text-[10px] font-black rounded-xl tracking-wider uppercase bg-cyan-500/5 active:scale-95">
+            <a href="space_shooter.html?v=7.0.22" class="px-4 py-2 border border-cyan-500/30 hover:border-cyan-400 transition text-cyan-400 text-[10px] font-black rounded-xl tracking-wider uppercase bg-cyan-500/5 active:scale-95">
                 进入折跃战区 <i class="fa-solid fa-plane-departure ml-1.5"></i>
             </a>
         </div>
@@ -1532,7 +1550,7 @@
 
         function syncHangarInterface(poweredNodeId = null) {
             const scrapDisplay = document.getElementById('scrapDisplay');
-            if (scrapDisplay) scrapDisplay.innerText = `STAR CORES: ${scrapBalance}`;
+            if (scrapDisplay) scrapDisplay.innerHTML = `<i class="fa-solid fa-gem"></i> 星核余额 ${scrapBalance}`;
             const balanceText = document.getElementById('scrapBalanceText');
             if (balanceText) balanceText.innerText = scrapBalance;
             renderSkinHangar();

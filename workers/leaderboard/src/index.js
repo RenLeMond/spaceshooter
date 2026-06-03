@@ -1,6 +1,8 @@
 const ALLOWED_SHIPS = new Set(['default', 'void', 'thunder', 'imperial']);
 const USER_ID_RE = /^usr_[a-z0-9]{8,32}$/;
 const MAX_JSON_BODY_BYTES = 4096;
+const DEFAULT_NICKNAME = '星海先驱者';
+const DEFAULT_AVATAR = 'fa-user-astronaut';
 const DEFAULT_ALLOWED_ORIGINS = 'https://renlimeng.qzz.io,https://rlmbest.xyz,http://localhost:5173,http://127.0.0.1:5173,http://localhost:8787,http://127.0.0.1:8787,http://localhost:8080,http://127.0.0.1:8080,http://localhost:9999,http://127.0.0.1:9999';
 const RATE_LIMITS = {
   '/api/leaderboard': { limit: 120, windowSeconds: 60 },
@@ -301,8 +303,8 @@ function sanitizeUsername(value) {
 }
 
 function sanitizeAvatar(value) {
-  const icon = String(value || 'fa-user-astronaut').trim();
-  return /^fa-[a-z0-9-]{2,40}$/.test(icon) ? icon : 'fa-user-astronaut';
+  const icon = String(value || DEFAULT_AVATAR).trim();
+  return /^fa-[a-z0-9-]{2,40}$/.test(icon) ? icon : DEFAULT_AVATAR;
 }
 
 function sanitizeBio(value) {
@@ -460,7 +462,7 @@ async function upsertCloudSave(db, userId, incomingSave) {
 
 async function upsertUserProfile(db, userId, profile) {
   const normalized = normalizeProfile(profile || {});
-  const username = normalized.nickname || '星海先驱者';
+  const username = normalized.nickname || DEFAULT_NICKNAME;
   await db.prepare(`
     INSERT INTO users (id, username, avatar, bio, is_guest)
     VALUES (?1, ?2, ?3, ?4, 1)
@@ -498,12 +500,14 @@ function mergeCloudSave(current, incoming) {
 function mergeProfile(baseProfile, incomingProfile) {
   const base = normalizeProfile(baseProfile || {});
   const incoming = incomingProfile && typeof incomingProfile === 'object' ? incomingProfile : {};
-  const nickname = sanitizeUsername(incoming.nickname || '');
+  const nickname = sanitizeUsername(incoming.nickname || incoming.username || '');
   const avatar = incoming.avatar ? sanitizeAvatar(incoming.avatar) : '';
   const bio = typeof incoming.bio !== 'undefined' ? sanitizeBio(incoming.bio) : '';
+  const defaultNicknameShouldNotReplace = base.nickname && base.nickname !== DEFAULT_NICKNAME && nickname === DEFAULT_NICKNAME;
+  const defaultAvatarShouldNotReplace = base.avatar && base.avatar !== DEFAULT_AVATAR && avatar === DEFAULT_AVATAR;
   return {
-    nickname: nickname || base.nickname,
-    avatar: avatar || base.avatar,
+    nickname: nickname && !defaultNicknameShouldNotReplace ? nickname : base.nickname,
+    avatar: avatar && !defaultAvatarShouldNotReplace ? avatar : base.avatar,
     bio: bio || base.bio
   };
 }
@@ -533,8 +537,9 @@ function normalizeCloudSave(save) {
 }
 
 function normalizeProfile(profile) {
+  const nickname = profile.nickname || profile.username || '';
   return {
-    nickname: sanitizeUsername(profile.nickname || ''),
+    nickname: sanitizeUsername(nickname),
     avatar: sanitizeAvatar(profile.avatar),
     bio: sanitizeBio(profile.bio)
   };

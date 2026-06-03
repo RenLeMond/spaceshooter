@@ -56,6 +56,9 @@
         btnUnbindAccount: document.getElementById('btnUnbindAccount'),
         btnSyncLocalScore: document.getElementById('btnSyncLocalScore'),
         btnRefreshLocal: document.getElementById('btnRefreshLocal'),
+        hangarCurrentShip: document.getElementById('hangarCurrentShip'),
+        hangarUnlockedCount: document.getElementById('hangarUnlockedCount'),
+        hangarTalentTotal: document.getElementById('hangarTalentTotal'),
         unlockedShipsList: document.getElementById('unlockedShipsList'),
         leaderboardList: document.getElementById('leaderboardList'),
         matchHistoryList: document.getElementById('matchHistoryList'),
@@ -152,6 +155,7 @@
 
         renderShips();
         renderTalents();
+        renderHangarSummary();
         renderMatchHistory();
     }
 
@@ -196,6 +200,25 @@
                 target.appendChild(dot);
             }
         });
+    }
+
+    function renderHangarSummary() {
+        let unlocked = ['default'];
+        let talents = {};
+        try {
+            const parsed = JSON.parse(localStorage.getItem('space_unlocked_skins') || '["default"]');
+            if (Array.isArray(parsed)) unlocked = parsed;
+        } catch (_) {}
+        try { talents = JSON.parse(localStorage.getItem('space_v7_talents') || '{}') || {}; } catch (_) {}
+        const ship = SHIP_META[state.skin] || SHIP_META.default;
+        const ownedCount = Object.keys(SHIP_META).filter(id => unlocked.includes(id)).length;
+        const totalTalentLv = TALENT_DEFS.reduce((sum, def) => {
+            const level = Math.max(0, Math.min(Number(talents[def.id]) || 0, def.max));
+            return sum + level;
+        }, 0);
+        if (el.hangarCurrentShip) el.hangarCurrentShip.textContent = ship.name;
+        if (el.hangarUnlockedCount) el.hangarUnlockedCount.textContent = `${ownedCount} / ${Object.keys(SHIP_META).length}`;
+        if (el.hangarTalentTotal) el.hangarTalentTotal.textContent = `LV.${totalTalentLv}`;
     }
 
     function renderLeaderboard(entries) {

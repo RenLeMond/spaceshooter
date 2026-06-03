@@ -14,7 +14,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Noto+Sans+SC:wght@300;500;700;900&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=7.0.20">
+    <link rel="stylesheet" href="style.css?v=7.0.22">
 </head>
 <body class="flex items-center justify-center min-h-screen">
 
@@ -94,6 +94,9 @@
                 <div class="hud-action-divider"></div>
 
                 <div class="flex items-center gap-1 pointer-events-auto shrink-0">
+                    <button id="weaponStatsBtn" title="当前武器详情" class="glass-panel w-7 h-7 rounded-lg flex items-center justify-center text-[10px] text-cyan-300 border border-cyan-500/30 active:scale-95">
+                        <i class="fa-solid fa-crosshairs"></i>
+                    </button>
                     <button id="pauseBtn" title="暂停 (Esc / P)" class="glass-panel w-7 h-7 rounded-lg flex items-center justify-center text-[10px] text-gray-300 border border-gray-700 active:scale-95">
                         <i class="fa-solid fa-pause"></i>
                     </button>
@@ -235,7 +238,7 @@
                 <a href="leaderboard.html" class="home-entry-link" aria-label="查看全球排行榜">
                     <i class="fa-solid fa-trophy"></i> 联机排行
                 </a>
-                <a href="v7_hangar.html?v=7.0.20" class="home-entry-link home-entry-link-primary" aria-label="进入永久机库">
+                <a href="v7_hangar.html?v=7.0.22" class="home-entry-link home-entry-link-primary" aria-label="进入永久机库">
                     <i class="fa-solid fa-user-astronaut"></i> 永久机库
                 </a>
             </footer>
@@ -688,10 +691,53 @@
                     <button id="pauseBenchmarkBtn" class="w-full py-3 bg-indigo-950/40 hover:bg-indigo-900/40 border border-indigo-500/40 text-cyan-300 text-xs font-bold rounded-xl active:scale-95 transition flex items-center justify-center gap-1.5">
                         <i class="fa-solid fa-gauge-high text-yellow-400"></i> 极客性能压力测试
                     </button>
+                    <button id="pauseWeaponStatsBtn" class="w-full py-3 bg-cyan-950/35 hover:bg-cyan-900/35 border border-cyan-500/40 text-cyan-200 text-xs font-bold rounded-xl active:scale-95 transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-crosshairs"></i> 查看当前武器详情
+                    </button>
                     <button id="restartFromPauseBtn" class="w-full py-3 glass-panel hover:bg-gray-800 text-gray-300 text-sm font-bold rounded-xl active:scale-95 transition border border-gray-700">
                         重新开始
                     </button>
                 </div>
+            </div>
+        </div>
+
+        <div id="weaponStatsPanel" class="absolute inset-0 z-40 flex flex-col p-5 bg-gray-950/92 backdrop-blur-lg hidden" aria-hidden="true">
+            <div class="weapon-stats-shell">
+                <div class="weapon-stats-head">
+                    <div>
+                        <span class="weapon-stats-kicker"><i class="fa-solid fa-satellite-dish"></i> WEAPON TELEMETRY</span>
+                        <h2 id="weaponStatsTitle">基础高频激光</h2>
+                        <p id="weaponStatsSubtitle">当前武器、天赋与机体增益叠加明细</p>
+                    </div>
+                    <button id="weaponStatsCloseBtn" type="button" class="weapon-stats-close" title="返回">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="weapon-stats-grid">
+                    <div class="weapon-stat-card primary">
+                        <span>主炮命中伤害</span>
+                        <strong id="weaponStatsMeteorDamage">20</strong>
+                        <em id="weaponStatsBossDamage">Boss 20</em>
+                    </div>
+                    <div class="weapon-stat-card">
+                        <span>开火间隔</span>
+                        <strong id="weaponStatsFireRate">180ms</strong>
+                        <em id="weaponStatsFireRateHint">基础频率</em>
+                    </div>
+                    <div class="weapon-stat-card">
+                        <span>弹体 / 穿透</span>
+                        <strong id="weaponStatsProjectile">R4 · P1</strong>
+                        <em id="weaponStatsProjectileHint">半径 / 穿透</em>
+                    </div>
+                    <div class="weapon-stat-card">
+                        <span>吸收范围</span>
+                        <strong id="weaponStatsMagnet">180px</strong>
+                        <em id="weaponStatsMagnetHint">废料与经验晶体</em>
+                    </div>
+                </div>
+
+                <div class="weapon-detail-list" id="weaponStatsDetails"></div>
             </div>
         </div>
 
@@ -806,16 +852,16 @@
     </div>
 
     <!-- Scripts using global script tags for CORS-free local execution -->
-    <script charset="utf-8" src="js/sound.js?v=7.0.20"></script>
-    <script charset="utf-8" src="js/engine_base.js?v=7.0.20"></script>
-    <script charset="utf-8" src="js/engine_physics.js?v=7.0.20"></script>
-    <script charset="utf-8" src="js/engine_entities.js?v=7.0.20"></script>
-    <script charset="utf-8" src="js/engine_boss.js?v=7.0.20"></script>
-    <script charset="utf-8" src="js/engine_renderer.js?v=7.0.20"></script>
-    <script charset="utf-8" src="js/engine_hangar.js?v=7.0.20"></script>
-    <script charset="utf-8" src="js/leaderboard_config.js?v=7.0.20"></script>
-    <script charset="utf-8" src="js/leaderboard_api.js?v=7.0.20"></script>
-    <script charset="utf-8" src="js/main.js?v=7.0.20"></script>
+    <script charset="utf-8" src="js/sound.js?v=7.0.22"></script>
+    <script charset="utf-8" src="js/engine_base.js?v=7.0.22"></script>
+    <script charset="utf-8" src="js/engine_physics.js?v=7.0.22"></script>
+    <script charset="utf-8" src="js/engine_entities.js?v=7.0.22"></script>
+    <script charset="utf-8" src="js/engine_boss.js?v=7.0.22"></script>
+    <script charset="utf-8" src="js/engine_renderer.js?v=7.0.22"></script>
+    <script charset="utf-8" src="js/engine_hangar.js?v=7.0.22"></script>
+    <script charset="utf-8" src="js/leaderboard_config.js?v=7.0.22"></script>
+    <script charset="utf-8" src="js/leaderboard_api.js?v=7.0.22"></script>
+    <script charset="utf-8" src="js/main.js?v=7.0.22"></script>
 
     <!-- V7 Holographic Ship Synchronizer Script -->
     <script>

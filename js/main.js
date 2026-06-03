@@ -2,7 +2,7 @@
 // 资源缓存版本号 — 同步于 space_shooter.html 的所有 ?v= 查询参数。
 // Worker 链 (game_worker.js + importScripts 的 6 个引擎文件) 通过 self.location.search 自动继承该版本，
 // 后续 bump 仅需改本常量 + HTML 的 ?v= 两处即可全量失效旧缓存。
-const ASSET_VERSION = '7.0.20';
+const ASSET_VERSION = '7.0.22';
 
 window.onload = function() {
     const canvas = document.getElementById('gameCanvas');
@@ -450,6 +450,19 @@ window.onload = function() {
                         [msg.slot1, msg.slot2].filter(Boolean),
                         msg.comboKey || ''
                     );
+                    updateWeaponStatsState({
+                        slots: [msg.slot1, msg.slot2].filter(Boolean),
+                        comboKey: msg.comboKey || '',
+                        synergyName: msg.synergyName || '基础高频激光',
+                        equippedMods: msg.equippedMods || [],
+                        currentSkin: msg.currentSkin || mainCurrentSkin,
+                        hangar: {
+                            turretLevel: msg.turretLevel || mainHangar.turretLevel || 0,
+                            engineLevel: msg.engineLevel || mainHangar.engineLevel || 0,
+                            wingsLevel: msg.wingsLevel || mainHangar.wingsLevel || 0
+                        },
+                        talents: mainTalents
+                    });
 
                     // 同步废料字段
                     mainScrap = msg.scrap;
@@ -566,6 +579,7 @@ window.onload = function() {
                     }
                     if (msg.key === 'space_v7_talents' && typeof loadTalents === 'function') {
                         mainTalents = loadTalents();
+                        updateWeaponStatsState({ talents: mainTalents });
                     }
                     if (msg.key === 'space_permanent_cores' && typeof safeReadPermanentCores === 'function') {
                         mainPermanentCores = safeReadPermanentCores();
@@ -602,6 +616,7 @@ window.onload = function() {
                     mainCurrentSkin = msg.currentSkin;
                     document.getElementById('workshopScreen').classList.remove('hidden');
                     updateMainHangarUI();
+                    updateWeaponStatsState({ hangar: mainHangar, currentSkin: mainCurrentSkin, talents: mainTalents });
                     break;
                     
                 case 'togglePause': {
@@ -761,6 +776,7 @@ window.onload = function() {
         document.getElementById('pauseBtn').addEventListener('click', () => {
             worker.postMessage({ type: 'togglePause' });
         });
+        bindWeaponStatsUI();
         document.getElementById('soundToggleBtn').addEventListener('click', (e) => {
             const muted = sfx.toggleMute();
             const icon = e.currentTarget.querySelector('i');
@@ -1055,6 +1071,15 @@ function renderMainRogueUpgradeCards(container, elementSlots, comboKey, equipped
 // ============================================================
 let loadoutState = { equipped: [], slots: [], comboKey: '' };
 let _lastStripSig = null;
+let weaponStatsState = {
+    slots: [],
+    comboKey: '',
+    synergyName: '基础高频激光',
+    equippedMods: [],
+    currentSkin: 'default',
+    hangar: { turretLevel: 0, engineLevel: 0, wingsLevel: 0 },
+    talents: { A: 0, B: 0, C: 0, D: 0, E: 0 }
+};
 
 function getRogueModDefinitions() {
     return (typeof ROGUE_MOD_DEFINITIONS !== 'undefined' && Array.isArray(ROGUE_MOD_DEFINITIONS))
@@ -1075,6 +1100,192 @@ function updateLoadoutUI(equipped, slots, comboKey) {
     if (panel && !panel.classList.contains('hidden')) renderLoadoutPanel();
 }
 window.updateLoadoutUI = updateLoadoutUI;
+
+function updateWeaponStatsState(next) {
+    weaponStatsState = Object.assign({}, weaponStatsState, next || {});
+    if (next && next.hangar) weaponStatsState.hangar = Object.assign({}, weaponStatsState.hangar, next.hangar);
+    if (next && next.talents) weaponStatsState.talents = Object.assign({}, weaponStatsState.talents, next.talents);
+    if (next && next.equippedMods) weaponStatsState.equippedMods = Array.isArray(next.equippedMods) ? next.equippedMods : [];
+    if (next && next.slots) weaponStatsState.slots = Array.isArray(next.slots) ? next.slots : [];
+    const panel = document.getElementById('weaponStatsPanel');
+    if (panel && !panel.classList.contains('hidden')) renderWeaponStatsPanel();
+}
+window.updateWeaponStatsState = updateWeaponStatsState;
+
+function getWeaponBaseStats(slots, comboKey) {
+    const key = comboKey || (slots && slots[0]) || '';
+    const map = {
+        '': { name: '基础高频激光', damage: 20, radius: 4, pierce: 1, shots: 1, desc: '无晶核挂载时的稳定主炮。' },
+        EM: { name: '电磁脉冲枪', damage: 25, radius: 3.5, pierce: 1, shots: 1, desc: '高速电磁弹，适合触发雷暴类构装。' },
+        Frost: { name: '低温裂解枪', damage: 30, radius: 5, pierce: 1, shots: 1, desc: '低温弹体，命中可触发冰暴反应。' },
+        Fire: { name: '热核燃烧炮', damage: 35, radius: 6, pierce: 1, shots: 1, desc: '高热弹体，单发基础伤害较高。' },
+        Rad: { name: '高能恒星辐射光', damage: 40, radius: 8, pierce: 1, shots: 1, desc: '高能辐射弹，弹体更大。' },
+        'EM+Frost': { name: '冰暴超导跃迁枪', damage: 35, radius: 8, pierce: 3, shots: 1, desc: '超导冰弹，穿透能力显著提升。' },
+        'EM+Fire': { name: '雷霆聚变链式炮', damage: 45, radius: 7, pierce: 1, shots: 1, desc: '聚变链式主炮，适合配合雷电追击。' },
+        'EM+Rad': { name: '磁重力爆破核心', damage: 55, radius: 15, pierce: 99, shots: 1, desc: '大范围磁重力弹体，近似无限穿透。' },
+        'Fire+Frost': { name: '升华相差熔岩风暴', damage: 30, radius: 6, pierce: 1, shots: 2, desc: '左右双弹齐射，每发独立造成伤害。' },
+        'Frost+Rad': { name: '绝对静止视界', damage: 40, radius: 10, pierce: 2, shots: 1, desc: '冻结视界弹，半径与穿透均衡。' },
+        'Fire+Rad': { name: '坍缩黑洞星云爆', damage: 80, radius: 18, pierce: 1, shots: 1, desc: '重型爆破主炮，单发伤害最高。' }
+    };
+    return map[key] || map[''];
+}
+
+function computeWeaponStats() {
+    const state = weaponStatsState;
+    const mods = Array.isArray(state.equippedMods) ? state.equippedMods : [];
+    const talents = state.talents || {};
+    const hangar = state.hangar || {};
+    const base = getWeaponBaseStats(state.slots || [], state.comboKey || '');
+    let damage = base.damage;
+    let radius = base.radius;
+    let pierce = base.pierce;
+    let fireInterval = 180;
+    const details = [
+        { icon: 'fa-crosshairs', title: base.name, desc: base.desc, value: base.shots > 1 ? `${base.shots} 发 x ${base.damage}` : `${base.damage}` }
+    ];
+
+    if (mods.includes('antimatter')) {
+        damage = Math.floor(damage * 1.8);
+        details.push({ icon: 'fa-radiation', title: '反物质过载', desc: '主武器基础伤害 +80%，最大 HP -30%。', value: '+80%' });
+    }
+    if (mods.includes('split')) {
+        damage = Math.floor(damage * 0.85);
+        details.push({ icon: 'fa-cubes', title: '多重散射', desc: '主炮伤害 -15%，额外发射左右两发 15 伤害侧向子弹。', value: '侧翼 +2' });
+    }
+    if (mods.includes('heavy')) {
+        radius *= 1.4;
+        pierce += 1;
+        fireInterval = Math.floor(fireInterval * 1.12);
+        details.push({ icon: 'fa-compress', title: '重力巨弹', desc: '弹体半径 +40%，穿透 +1，开火间隔延长约 12%。', value: `R${fmt(radius)} / P${pierce}` });
+    }
+
+    const bLevel = Math.max(0, Math.min(Number(talents.B) || 0, 3));
+    const meteorDamage = damage * (1 + bLevel * 0.04);
+    const bossDamage = damage * (1 + bLevel * 0.01);
+    if (bLevel > 0) {
+        details.push({ icon: 'fa-burst', title: '火控晶核增幅', desc: `永久天赋 B Lv.${bLevel}：陨石伤害 +${bLevel * 4}%，Boss 伤害 +${bLevel}%。`, value: `Lv.${bLevel}` });
+    }
+
+    const turretLevel = Math.max(0, Math.min(Number(hangar.turretLevel) || 0, 3));
+    if (turretLevel > 0) {
+        const wingmen = Math.min(2, turretLevel);
+        const turretDamage = 8 + turretLevel * 4;
+        const wingmanDamage = getWingmanDamage(state.comboKey || '', turretLevel);
+        details.push({ icon: 'fa-gun', title: '纳米智能伴飞僚机', desc: `自动索敌双侧炮每侧 ${turretDamage} 伤害；伴飞僚机 ${wingmen} 架，共享当前晶核组合。`, value: `${wingmen} 架` });
+        details.push({ icon: 'fa-jet-fighter-up', title: '僚机主射击', desc: wingmanDamage.desc, value: wingmanDamage.value });
+    }
+
+    const eLevel = Math.max(0, Math.min(Number(talents.E) || 0, 2));
+    if (eLevel > 0) {
+        const chance = eLevel === 1 ? 12 : 20;
+        details.push({ icon: 'fa-angles-up', title: '僚机副武器齐射', desc: `永久天赋 E Lv.${eLevel}：开火时 ${chance}% 概率追加左右两发 8 伤害侧翼弹。`, value: `${chance}%` });
+    }
+
+    const dLevel = Math.max(0, Math.min(Number(talents.D) || 0, 3));
+    let magnetBase = state.currentSkin === 'imperial' ? 230 : 180;
+    const magnet = magnetBase + dLevel * 35;
+    if (state.currentSkin === 'imperial') {
+        details.push({ icon: 'fa-crown', title: '帝皇余晖机体', desc: '强磁拾取主题机体：基础吸附范围从 180px 提升到 230px。', value: '+50px' });
+    }
+    if (dLevel > 0) {
+        details.push({ icon: 'fa-magnet', title: '磁力量子虹吸', desc: `永久天赋 D Lv.${dLevel}：废料 / 经验吸附半径 +${dLevel * 35}px。`, value: `+${dLevel * 35}px` });
+    }
+
+    const aLevel = Math.max(0, Math.min(Number(talents.A) || 0, 3));
+    if (aLevel > 0) details.push({ icon: 'fa-gauge-high', title: '量子超频催化', desc: `永久天赋 A Lv.${aLevel}：折跃充能效率 +${aLevel * 10}%。`, value: `+${aLevel * 10}%` });
+    const cLevel = Math.max(0, Math.min(Number(talents.C) || 0, 3));
+    if (cLevel > 0) details.push({ icon: 'fa-shield-halved', title: '反物质纳米力场', desc: `永久天赋 C Lv.${cLevel}：碰撞伤害减免 +${cLevel * 8}%。`, value: `-${cLevel * 8}%` });
+
+    return { base, damage, meteorDamage, bossDamage, radius, pierce, fireInterval, magnet, details };
+}
+
+function getWingmanDamage(comboKey, turretLevel) {
+    if (comboKey === 'EM+Fire') return { value: '链电 20', desc: '锁定附近流星触发链式电击，每次 20 伤害。' };
+    if (comboKey === 'Fire+Rad' || comboKey === 'EM+Rad') return { value: '每架 22', desc: '每架发射一枚 22 伤害侧向能量弹。' };
+    if (comboKey === 'Frost+Rad' || comboKey === 'EM+Frost') return { value: '每架 15', desc: '每架发射一枚 15 伤害低温侧向弹。' };
+    return { value: `每架 ${10 + turretLevel * 2}`, desc: `默认伴飞弹每架 ${10 + turretLevel * 2} 伤害。` };
+}
+
+function fmt(num) {
+    return Number.isInteger(num) ? String(num) : num.toFixed(1);
+}
+
+function renderWeaponStatsPanel() {
+    const stats = computeWeaponStats();
+    const titleEl = document.getElementById('weaponStatsTitle');
+    const subtitleEl = document.getElementById('weaponStatsSubtitle');
+    const meteorEl = document.getElementById('weaponStatsMeteorDamage');
+    const bossEl = document.getElementById('weaponStatsBossDamage');
+    const fireEl = document.getElementById('weaponStatsFireRate');
+    const fireHintEl = document.getElementById('weaponStatsFireRateHint');
+    const projectileEl = document.getElementById('weaponStatsProjectile');
+    const projectileHintEl = document.getElementById('weaponStatsProjectileHint');
+    const magnetEl = document.getElementById('weaponStatsMagnet');
+    const magnetHintEl = document.getElementById('weaponStatsMagnetHint');
+    const detailsEl = document.getElementById('weaponStatsDetails');
+    if (!detailsEl) return;
+
+    if (titleEl) titleEl.textContent = stats.base.name;
+    if (subtitleEl) subtitleEl.textContent = stats.base.shots > 1 ? `当前为 ${stats.base.shots} 发齐射，每发独立结算增益` : '当前主炮单发结算增益';
+    if (meteorEl) meteorEl.textContent = stats.base.shots > 1 ? `${stats.base.shots} x ${fmt(stats.meteorDamage)}` : fmt(stats.meteorDamage);
+    if (bossEl) bossEl.textContent = `Boss ${stats.base.shots > 1 ? `${stats.base.shots} x ` : ''}${fmt(stats.bossDamage)}`;
+    if (fireEl) fireEl.textContent = `${stats.fireInterval}ms`;
+    if (fireHintEl) fireHintEl.textContent = stats.fireInterval > 180 ? '重力巨弹降低频率' : '基础频率';
+    if (projectileEl) projectileEl.textContent = `R${fmt(stats.radius)} · P${stats.pierce}`;
+    if (projectileHintEl) projectileHintEl.textContent = '半径 / 穿透';
+    if (magnetEl) magnetEl.textContent = `${stats.magnet}px`;
+    if (magnetHintEl) magnetHintEl.textContent = '废料与经验晶体';
+
+    detailsEl.innerHTML = stats.details.map(item => `
+        <div class="weapon-detail-row">
+            <i class="fa-solid ${item.icon}"></i>
+            <div><strong>${item.title}</strong><span>${item.desc}</span></div>
+            <em>${item.value}</em>
+        </div>
+    `).join('');
+}
+
+function openWeaponStatsPanel(source) {
+    const panel = document.getElementById('weaponStatsPanel');
+    if (!panel) return;
+    renderWeaponStatsPanel();
+    const pauseScreen = document.getElementById('pauseScreen');
+    const openedFromPause = source === 'pause' || (pauseScreen && !pauseScreen.classList.contains('hidden'));
+    panel.dataset.resumeOnClose = openedFromPause ? 'false' : 'true';
+    panel.classList.remove('hidden');
+    panel.setAttribute('aria-hidden', 'false');
+    if (!openedFromPause) loadoutPause();
+    if (typeof sfx !== 'undefined' && sfx.playPowerup) sfx.playPowerup();
+}
+
+function closeWeaponStatsPanel() {
+    const panel = document.getElementById('weaponStatsPanel');
+    if (!panel) return;
+    const shouldResume = panel.dataset.resumeOnClose === 'true';
+    panel.classList.add('hidden');
+    panel.setAttribute('aria-hidden', 'true');
+    if (shouldResume) loadoutResume();
+}
+
+function bindWeaponStatsUI() {
+    const weaponStatsBtn = document.getElementById('weaponStatsBtn');
+    if (weaponStatsBtn && weaponStatsBtn.dataset.bound !== 'true') {
+        weaponStatsBtn.dataset.bound = 'true';
+        weaponStatsBtn.addEventListener('click', () => openWeaponStatsPanel('hud'));
+    }
+    const pauseWeaponStatsBtn = document.getElementById('pauseWeaponStatsBtn');
+    if (pauseWeaponStatsBtn && pauseWeaponStatsBtn.dataset.bound !== 'true') {
+        pauseWeaponStatsBtn.dataset.bound = 'true';
+        pauseWeaponStatsBtn.addEventListener('click', () => openWeaponStatsPanel('pause'));
+    }
+    const weaponStatsCloseBtn = document.getElementById('weaponStatsCloseBtn');
+    if (weaponStatsCloseBtn && weaponStatsCloseBtn.dataset.bound !== 'true') {
+        weaponStatsCloseBtn.dataset.bound = 'true';
+        weaponStatsCloseBtn.addEventListener('click', closeWeaponStatsPanel);
+    }
+}
+
+bindWeaponStatsUI();
 
 function renderLoadoutStrip() {
     const strip = document.getElementById('loadoutStrip');
