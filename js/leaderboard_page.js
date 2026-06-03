@@ -230,7 +230,10 @@
 
         let ownRank = null;
         list.forEach(entry => {
-            if (entry.user_id === state.userId) ownRank = entry.rank;
+            if (entry.user_id === state.userId) {
+                // 同一玩家可能上榜多次（多条 leaderboard_entries），取排名最高（rank 最小）的
+                if (ownRank === null || entry.rank < ownRank) ownRank = entry.rank;
+            }
             const ship = SHIP_META[entry.ship_type] || SHIP_META.default;
             const avatarIcon = sanitizeAvatar(entry.avatar || ship.icon);
             const item = document.createElement('div');
@@ -302,7 +305,11 @@
 
     function formatDate(value) {
         if (!value) return '-';
-        const date = new Date(value);
+        // 兼容旧的 SQLite datetime 格式（无时区后缀），视为 UTC
+        const normalized = typeof value === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value)
+            ? value.replace(' ', 'T') + 'Z'
+            : value;
+        const date = new Date(normalized);
         if (Number.isNaN(date.getTime())) return '-';
         return date.toLocaleString('zh-CN', {
             month: '2-digit',

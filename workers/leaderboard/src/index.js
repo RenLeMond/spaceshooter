@@ -468,7 +468,7 @@ async function upsertCloudSave(db, userId, incomingSave) {
     INSERT INTO player_cloud_saves (
       user_id, permanent_cores, talents_json, unlocked_skins_json, current_skin, best_score, profile_json, updated_at
     )
-    VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, datetime('now'))
+    VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
     ON CONFLICT(user_id) DO UPDATE SET
       permanent_cores = excluded.permanent_cores,
       talents_json = excluded.talents_json,
@@ -476,7 +476,7 @@ async function upsertCloudSave(db, userId, incomingSave) {
       current_skin = excluded.current_skin,
       best_score = excluded.best_score,
       profile_json = excluded.profile_json,
-      updated_at = datetime('now')
+      updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
   `).bind(
     userId,
     merged.permanentCores,
@@ -818,16 +818,16 @@ async function upsertScore(db, userId, username, score, shipType, avatar, bio) {
   const entryId = createId('lbe');
   const leaderboardEntryWrite = db.prepare(`
     INSERT INTO leaderboard_entries (entry_id, user_id, score, ship_type, updated_at)
-    VALUES (?1, ?2, ?3, ?4, datetime('now'))
+    VALUES (?1, ?2, ?3, ?4, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
   `).bind(entryId, userId, score, shipType);
 
   const legacyLeaderboardWrite = db.prepare(`
     INSERT INTO leaderboards (user_id, score, ship_type, updated_at)
-    VALUES (?1, ?2, ?3, datetime('now'))
+    VALUES (?1, ?2, ?3, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
     ON CONFLICT(user_id) DO UPDATE SET
       score = CASE WHEN excluded.score > leaderboards.score THEN excluded.score ELSE leaderboards.score END,
       ship_type = CASE WHEN excluded.score > leaderboards.score THEN excluded.ship_type ELSE leaderboards.ship_type END,
-      updated_at = CASE WHEN excluded.score > leaderboards.score THEN datetime('now') ELSE leaderboards.updated_at END
+      updated_at = CASE WHEN excluded.score > leaderboards.score THEN strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ELSE leaderboards.updated_at END
   `).bind(userId, score, shipType);
 
   if (typeof db.batch === 'function') {
