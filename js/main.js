@@ -2,7 +2,7 @@
 // 资源缓存版本号 — 同步于 space_shooter.html 的所有 ?v= 查询参数。
 // Worker 链 (game_worker.js + importScripts 的 6 个引擎文件) 通过 self.location.search 自动继承该版本，
 // 后续 bump 仅需改本常量 + HTML 的 ?v= 两处即可全量失效旧缓存。
-const ASSET_VERSION = '7.0.23';
+const ASSET_VERSION = '7.0.25';
 
 window.onload = function() {
     const canvas = document.getElementById('gameCanvas');
@@ -1175,12 +1175,32 @@ function computeWeaponStats() {
     }
 
     const turretLevel = Math.max(0, Math.min(Number(hangar.turretLevel) || 0, 3));
+    if (mods.includes('drone')) {
+        details.push({ icon: 'fa-shield-halved', title: '先驱无人机', desc: '机载构装额外加挂一架智能索敌巡航能盾僚机，并入当前僚机火力体系。', value: '僚机 +1' });
+    }
     if (turretLevel > 0) {
         const wingmen = Math.min(2, turretLevel);
         const turretDamage = 8 + turretLevel * 4;
         const wingmanDamage = getWingmanDamage(state.comboKey || '', turretLevel);
         details.push({ icon: 'fa-gun', title: '纳米智能伴飞僚机', desc: `自动索敌双侧炮每侧 ${turretDamage} 伤害；伴飞僚机 ${wingmen} 架，共享当前晶核组合。`, value: `${wingmen} 架` });
         details.push({ icon: 'fa-jet-fighter-up', title: '僚机主射击', desc: wingmanDamage.desc, value: wingmanDamage.value });
+    }
+
+    const engineLevel = Math.max(0, Math.min(Number(hangar.engineLevel) || 0, 3));
+    if (engineLevel > 0) {
+        details.push({ icon: 'fa-fire-flame-curved', title: '等离子尾喷', desc: `尾迹烧伤会持续灼烧后方近距离陨石；每次触发造成 ${fmt(engineLevel * 0.8)} 点伤害。`, value: `Lv.${engineLevel}` });
+    }
+
+    const wingsLevel = Math.max(0, Math.min(Number(hangar.wingsLevel) || 0, 1));
+    if (wingsLevel > 0) {
+        details.push({ icon: 'fa-shield-virus', title: '切割能盾翼', desc: '护盾激活时撞击陨石会直接切割摧毁目标，并获得 +4 废料与额外分数。', value: '护盾切割' });
+    }
+
+    if (mods.includes('tesla')) {
+        details.push({ icon: 'fa-bolt', title: '特斯拉雷电', desc: '所有主炮子弹命中后有 40% 概率触发 350px 链式高频雷暴。', value: '40%' });
+    }
+    if (mods.includes('implosion')) {
+        details.push({ icon: 'fa-circle-notch', title: '折跃重力星轨', desc: '战术折跃会在起点与终点留下引力聚能轨迹，拉扯并压制附近陨石。', value: 'Shift' });
     }
 
     const eLevel = Math.max(0, Math.min(Number(talents.E) || 0, 2));
@@ -1192,6 +1212,12 @@ function computeWeaponStats() {
     const dLevel = Math.max(0, Math.min(Number(talents.D) || 0, 3));
     let magnetBase = state.currentSkin === 'imperial' ? 230 : 180;
     const magnet = magnetBase + dLevel * 35;
+    if (state.currentSkin === 'void') {
+        details.push({ icon: 'fa-ghost', title: '星渊幻影机体', desc: '引力弹弓触发时释放 800px 引力海啸波，推挤并扰动大范围陨石。', value: '800px' });
+    }
+    if (state.currentSkin === 'thunder') {
+        details.push({ icon: 'fa-bolt-lightning', title: '超维雷霆机体', desc: 'EM+Fire 僚机链电索敌距离 +30%，由 400px 提升到 520px。', value: '+30%' });
+    }
     if (state.currentSkin === 'imperial') {
         details.push({ icon: 'fa-crown', title: '帝皇余晖机体', desc: '强磁拾取主题机体：基础吸附范围从 180px 提升到 230px。', value: '+50px' });
     }

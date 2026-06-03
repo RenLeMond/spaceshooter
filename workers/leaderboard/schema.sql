@@ -21,6 +21,18 @@ CREATE TABLE IF NOT EXISTS leaderboards (
 
 CREATE INDEX IF NOT EXISTS idx_leaderboards_score ON leaderboards(score DESC);
 
+CREATE TABLE IF NOT EXISTS leaderboard_entries (
+    entry_id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    score INTEGER NOT NULL DEFAULT 0 CHECK (score >= 0),
+    ship_type TEXT NOT NULL DEFAULT 'default',
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_leaderboard_entries_score ON leaderboard_entries(score DESC, updated_at ASC);
+CREATE INDEX IF NOT EXISTS idx_leaderboard_entries_user_score ON leaderboard_entries(user_id, score DESC);
+
 CREATE TABLE IF NOT EXISTS request_rate_limits (
     key TEXT PRIMARY KEY,
     count INTEGER NOT NULL DEFAULT 0,

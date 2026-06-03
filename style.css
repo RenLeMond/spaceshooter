@@ -156,15 +156,15 @@ canvas {
 
 /* Gameplay HUD compact pass: keep combat readable and leave more playfield open. */
 #hud {
-    padding: 12px 14px 0 !important;
-    gap: 7px !important;
+    padding: 8px 12px 0 !important;
+    gap: 4px !important;
 }
 #hud > div:first-child {
-    min-height: 34px;
-    padding-bottom: 2px;
+    min-height: 30px;
+    padding-bottom: 0;
 }
 #hud #scoreText {
-    font-size: 18px;
+    font-size: 16px;
     line-height: 1;
 }
 #hud .glass-panel {
@@ -173,28 +173,36 @@ canvas {
     -webkit-backdrop-filter: blur(12px);
 }
 #hud .hud-action-row {
-    min-height: 40px;
-    padding: 5px 8px !important;
-    border-radius: 14px;
+    min-height: 34px;
+    padding: 3px 6px !important;
+    border-radius: 12px;
+}
+#hud .h-2\.5 {
+    height: 8px !important;
 }
 #hud #slot1,
 #hud #slot2 {
-    height: 22px;
-    min-width: 22px;
-    border-radius: 7px;
+    height: 20px;
+    min-width: 20px;
+    border-radius: 6px;
 }
 #hud #pauseBtn,
 #hud #weaponStatsBtn,
 #hud #soundToggleBtn {
-    width: 28px;
-    height: 28px;
-    border-radius: 10px;
+    width: 26px;
+    height: 26px;
+    border-radius: 9px;
 }
 #hud #bombBtn {
-    width: 34px;
-    height: 34px;
-    border-radius: 12px;
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
     background: rgba(120, 53, 15, 0.34);
+}
+#hud #bossHpGroup {
+    padding: 6px 8px !important;
+    gap: 3px !important;
+    border-radius: 10px;
 }
 
 .weapon-stats-shell {
@@ -1339,18 +1347,18 @@ canvas {
 /* 移动自适应 */
 @media (max-width: 420px) {
     #hud {
-        padding: 12px 16px 0 !important;
-        gap: 6px !important;
+        padding: 8px 10px 0 !important;
+        gap: 4px !important;
     }
     #hud > div:first-child {
-        min-height: 32px;
+        min-height: 28px;
     }
     #hud #scoreText {
-        font-size: 18px;
+        font-size: 16px;
     }
     #hud .hud-action-row {
-        min-height: 38px;
-        padding: 4px 7px !important;
+        min-height: 32px;
+        padding: 3px 5px !important;
     }
     #hud #synergyName {
         max-width: 92px;

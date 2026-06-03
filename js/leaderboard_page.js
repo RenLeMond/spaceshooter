@@ -52,9 +52,8 @@
         bindEmail: document.getElementById('bindEmail'),
         bindPassword: document.getElementById('bindPassword'),
         btnBindAccount: document.getElementById('btnBindAccount'),
+        btnLogoutAccount: document.getElementById('btnLogoutAccount'),
         boundDetails: document.getElementById('boundDetails'),
-        btnSyncLocalScore: document.getElementById('btnSyncLocalScore'),
-        btnRefreshLocal: document.getElementById('btnRefreshLocal'),
         hangarCurrentShip: document.getElementById('hangarCurrentShip'),
         hangarUnlockedCount: document.getElementById('hangarUnlockedCount'),
         hangarTalentTotal: document.getElementById('hangarTalentTotal'),
@@ -224,7 +223,7 @@
         const list = entries || [];
         el.leaderboardList.replaceChildren();
         if (!list.length) {
-            el.leaderboardList.innerHTML = '<div class="leaderboard-empty"><i class="fa-solid fa-satellite-dish"></i> 暂无可显示的排行榜记录。完成一局游戏后同步最高分即可上榜。</div>';
+            el.leaderboardList.innerHTML = '<div class="leaderboard-empty"><i class="fa-solid fa-satellite-dish"></i> 暂无可显示的排行榜记录。完成一局游戏后会自动上榜。</div>';
             el.playerRankText.textContent = '全球排名 -';
             return;
         }
@@ -361,29 +360,6 @@
         el.syncStatus.style.borderColor = 'rgba(251, 191, 36, 0.35)';
     }
 
-    async function syncLocalScore() {
-        if (!API || !API.isEnabled()) {
-            showToast('联机服务暂不可用', 'error');
-            return;
-        }
-        loadLocalData();
-        renderProfile();
-        try {
-            await API.submitScore(state.bestScore, state.skin, state.nickname, {
-                avatar: state.avatar,
-                bio: state.bio
-            });
-            if (API.getSessionToken && API.getSessionToken()) {
-                await API.saveCloudSave(API.collectLocalCloudSave());
-            }
-            showToast('最高分、飞行员资料与云存档已同步', 'success');
-            await refreshLeaderboard();
-        } catch (err) {
-            showToast('同步失败，请稍后重试', 'error');
-            setStatus('offline');
-        }
-    }
-
     async function syncProfileAndScore(options) {
         options = options || {};
         if (!API || !API.isEnabled()) {
@@ -409,6 +385,18 @@
             setStatus('offline');
             return false;
         }
+    }
+
+    function logoutAccount() {
+        localStorage.removeItem('space_account_token');
+        localStorage.removeItem('space_user_is_bound');
+        localStorage.removeItem('space_user_bound_email');
+        state.isBound = false;
+        state.boundAccount = '';
+        loadLocalData();
+        renderProfile();
+        refreshLeaderboard();
+        showToast('已退出当前账号，可登录其他档案', 'success');
     }
 
     async function bindAccount() {
@@ -502,11 +490,9 @@
             syncProfileAndScore({ toast: '头像已更新并同步' });
         });
         el.btnBindAccount.addEventListener('click', bindAccount);
-        el.btnSyncLocalScore.addEventListener('click', syncLocalScore);
-        el.btnRefreshLocal.addEventListener('click', () => refreshProfileAndLeaderboard());
+        if (el.btnLogoutAccount) el.btnLogoutAccount.addEventListener('click', logoutAccount);
         window.addEventListener('focus', () => {
-            loadLocalData();
-            renderProfile();
+            refreshProfileAndLeaderboard();
         });
     }
 

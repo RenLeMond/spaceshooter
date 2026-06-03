@@ -11,6 +11,7 @@ const RATE_LIMITS = {
   '/api/cloud-save': { limit: 40, windowSeconds: 60 }
 };
 let profileColumnsChecked = false;
+let leaderboardEntriesChecked = false;
 
 export default {
   async fetch(request, env) {
@@ -23,6 +24,7 @@ export default {
     try {
       const url = new URL(request.url);
       await ensureProfileColumns(env.DB);
+      await ensureLeaderboardEntries(env.DB);
       if (url.pathname === '/api/submit-score' && request.method === 'POST' && isBodyTooLarge(request)) {
         return jsonResponse({ error: 'payload_too_large' }, corsHeaders, 413);
       }
@@ -281,6 +283,34 @@ async function ensureProfileColumns(db) {
     await db.prepare("ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''").run();
   } catch (_) {}
   profileColumnsChecked = true;
+}
+
+async function ensureLeaderboardEntries(db) {
+  if (leaderboardEntriesChecked) return;
+  try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS leaderboard_entries (
+        entry_id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        score INTEGER NOT NULL DEFAULT 0,
+        ship_type TEXT NOT NULL DEFAULT 'default',
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `).run();
+  } catch (_) {}
+  try {
+    await db.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_leaderboard_entries_score
+      ON leaderboard_entries(score DESC, updated_at ASC)
+    `).run();
+  } catch (_) {}
+  try {
+    await db.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_leaderboard_entries_user_score
+      ON leaderboard_entries(user_id, score DESC)
+    `).run();
+  } catch (_) {}
+  leaderboardEntriesChecked = true;
 }
 
 function getClientIp(request) {
@@ -630,6 +660,37 @@ async function upsertMatchHistory(db, userId, history) {
 async function getLeaderboardRows(db, limit) {
   const { results } = await db.prepare(`
     SELECT
+      e.entry_id,
+      e.user_id,
+      u.username,
+      u.avatar,
+      u.bio,
+      e.score,
+      e.ship_type,
+      e.updated_at
+    FROM leaderboard_entries e
+    JOIN users u ON u.id = e.user_id
+    WHERE e.score > 0
+    ORDER BY e.score DESC, e.updated_at ASC, e.entry_id ASC
+    LIMIT ?1
+  `).bind(limit).all();
+
+  if (results && results.length) {
+    return results.map((row, index) => ({
+      rank: index + 1,
+      entry_id: row.entry_id,
+      user_id: row.user_id,
+      username: row.username,
+      avatar: row.avatar || 'fa-user-astronaut',
+      bio: row.bio || '',
+      score: row.score,
+      ship_type: row.ship_type,
+      updated_at: row.updated_at
+    }));
+  }
+
+  const legacy = await db.prepare(`
+    SELECT
       l.user_id,
       u.username,
       u.avatar,
@@ -639,11 +700,11 @@ async function getLeaderboardRows(db, limit) {
       l.updated_at
     FROM leaderboards l
     JOIN users u ON u.id = l.user_id
-    ORDER BY l.score DESC, l.updated_at ASC
+    ORDER BY l.score DESC, l.updated_at ASC, l.user_id ASC
     LIMIT ?1
   `).bind(limit).all();
 
-  return (results || []).map((row, index) => ({
+  return (legacy.results || []).map((row, index) => ({
     rank: index + 1,
     user_id: row.user_id,
     username: row.username,
@@ -656,21 +717,43 @@ async function getLeaderboardRows(db, limit) {
 }
 
 async function getPlayerRecord(db, userId) {
-  const row = await db.prepare(`
-    SELECT l.user_id, u.username, u.avatar, u.bio, l.score, l.ship_type, l.updated_at
-    FROM leaderboards l
-    JOIN users u ON u.id = l.user_id
-    WHERE l.user_id = ?1
+  let usingEntries = true;
+  let row = await db.prepare(`
+    SELECT e.entry_id, e.user_id, u.username, u.avatar, u.bio, e.score, e.ship_type, e.updated_at
+    FROM leaderboard_entries e
+    JOIN users u ON u.id = e.user_id
+    WHERE e.user_id = ?1
+    ORDER BY e.score DESC, e.updated_at ASC, e.entry_id ASC
+    LIMIT 1
   `).bind(userId).first();
+
+  let tieId = row ? row.entry_id : userId;
+
+  if (!row) {
+    usingEntries = false;
+    row = await db.prepare(`
+      SELECT l.user_id, u.username, u.avatar, u.bio, l.score, l.ship_type, l.updated_at
+      FROM leaderboards l
+      JOIN users u ON u.id = l.user_id
+      WHERE l.user_id = ?1
+    `).bind(userId).first();
+  }
 
   if (!row) return null;
 
-  const rankRow = await db.prepare(`
-    SELECT COUNT(*) + 1 AS rank
-    FROM leaderboards
-    WHERE score > ?1
-       OR (score = ?1 AND (updated_at < ?2 OR (updated_at = ?2 AND user_id < ?3)))
-  `).bind(row.score, row.updated_at, row.user_id).first();
+  const rankRow = usingEntries
+    ? await db.prepare(`
+      SELECT COUNT(*) + 1 AS rank
+      FROM leaderboard_entries
+      WHERE score > ?1
+         OR (score = ?1 AND (updated_at < ?2 OR (updated_at = ?2 AND entry_id < ?3)))
+    `).bind(row.score, row.updated_at, tieId).first()
+    : await db.prepare(`
+      SELECT COUNT(*) + 1 AS rank
+      FROM leaderboards
+      WHERE score > ?1
+         OR (score = ?1 AND (updated_at < ?2 OR (updated_at = ?2 AND user_id < ?3)))
+    `).bind(row.score, row.updated_at, row.user_id).first();
 
   return {
     user_id: row.user_id,
@@ -685,9 +768,19 @@ async function getPlayerRecord(db, userId) {
 }
 
 async function upsertScore(db, userId, username, score, shipType, avatar, bio) {
-  const previous = await db.prepare(`
+  const previousEntry = await db.prepare(`
+    SELECT score FROM leaderboard_entries
+    WHERE user_id = ?1
+    ORDER BY score DESC
+    LIMIT 1
+  `).bind(userId).first();
+  const previousLegacy = await db.prepare(`
     SELECT score FROM leaderboards WHERE user_id = ?1
   `).bind(userId).first();
+  const previousScore = Math.max(
+    previousEntry ? previousEntry.score : 0,
+    previousLegacy ? previousLegacy.score : 0
+  );
 
   const userWrite = db.prepare(`
     INSERT INTO users (id, username, avatar, bio, is_guest)
@@ -698,7 +791,7 @@ async function upsertScore(db, userId, username, score, shipType, avatar, bio) {
       bio = excluded.bio
   `).bind(userId, username, avatar, bio);
 
-  if (score <= 0 && !previous) {
+  if (score <= 0 && previousScore <= 0) {
     await runUserWrite(db, userWrite, userId, username);
     return {
       updated: false,
@@ -710,7 +803,7 @@ async function upsertScore(db, userId, username, score, shipType, avatar, bio) {
   }
 
   // Server-side plausibility check: single-session score gain capped at 3,000,000
-  const prevBest = previous ? previous.score : 0;
+  const prevBest = previousScore;
   if (score - prevBest > 3000000) {
     return {
       suspicious: true,
@@ -722,7 +815,13 @@ async function upsertScore(db, userId, username, score, shipType, avatar, bio) {
     };
   }
 
-  const leaderboardWrite = db.prepare(`
+  const entryId = createId('lbe');
+  const leaderboardEntryWrite = db.prepare(`
+    INSERT INTO leaderboard_entries (entry_id, user_id, score, ship_type, updated_at)
+    VALUES (?1, ?2, ?3, ?4, datetime('now'))
+  `).bind(entryId, userId, score, shipType);
+
+  const legacyLeaderboardWrite = db.prepare(`
     INSERT INTO leaderboards (user_id, score, ship_type, updated_at)
     VALUES (?1, ?2, ?3, datetime('now'))
     ON CONFLICT(user_id) DO UPDATE SET
@@ -732,25 +831,25 @@ async function upsertScore(db, userId, username, score, shipType, avatar, bio) {
   `).bind(userId, score, shipType);
 
   if (typeof db.batch === 'function') {
-    await runBatchWithUserFallback(db, userWrite, leaderboardWrite, userId, username);
+    await runBatchWithUserFallback(db, userWrite, leaderboardEntryWrite, userId, username);
+    try {
+      await legacyLeaderboardWrite.run();
+    } catch (_) {}
   } else {
     await runUserWrite(db, userWrite, userId, username);
-    await leaderboardWrite.run();
+    await leaderboardEntryWrite.run();
+    try {
+      await legacyLeaderboardWrite.run();
+    } catch (_) {}
   }
 
-  const current = await db.prepare(`
-    SELECT score, ship_type, updated_at FROM leaderboards WHERE user_id = ?1
-  `).bind(userId).first();
-
-  const previousScore = previous ? previous.score : 0;
-  const currentScore = current ? current.score : score;
-
   return {
-    updated: currentScore > previousScore,
+    updated: score > previousScore,
     previous_score: previousScore,
-    score: currentScore,
-    ship_type: current ? current.ship_type : shipType,
-    updated_at: current ? current.updated_at : null
+    score,
+    ship_type: shipType,
+    updated_at: null,
+    entry_id: entryId
   };
 }
 

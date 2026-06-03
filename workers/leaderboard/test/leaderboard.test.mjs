@@ -51,6 +51,7 @@ class FakeDb {
   constructor() {
     this.users = new Map();
     this.leaderboards = new Map();
+    this.leaderboardEntries = [];
     this.rateLimits = new Map();
     this.accounts = new Map();
     this.sessions = new Map();
@@ -85,11 +86,32 @@ class FakeStatement {
       const user = this.db.users.get(id);
       return score && user ? { user_id: id, username: user.username, ...score } : null;
     }
+    if (sql.includes('FROM leaderboard_entries e') && sql.includes('WHERE e.user_id')) {
+      const id = this.args[0];
+      const row = this.db.leaderboardEntries
+        .filter(item => item.user_id === id)
+        .sort((a, b) => b.score - a.score || a.updated_at.localeCompare(b.updated_at) || a.entry_id.localeCompare(b.entry_id))[0];
+      const user = this.db.users.get(id);
+      return row && user ? { username: user.username, avatar: user.avatar, bio: user.bio, ...row } : null;
+    }
+    if (sql.includes('FROM leaderboard_entries') && sql.includes('WHERE user_id')) {
+      const id = this.args[0];
+      const row = this.db.leaderboardEntries
+        .filter(item => item.user_id === id)
+        .sort((a, b) => b.score - a.score || a.updated_at.localeCompare(b.updated_at) || a.entry_id.localeCompare(b.entry_id))[0];
+      return row ? { score: row.score, ship_type: row.ship_type, updated_at: row.updated_at, entry_id: row.entry_id } : null;
+    }
     if (sql.includes('COUNT(*) + 1 AS rank')) {
       const [score, updatedAt, userId] = this.args;
       let rank = 1;
       for (const [id, row] of this.db.leaderboards) {
         if (row.score > score || (row.score === score && (row.updated_at < updatedAt || (row.updated_at === updatedAt && id < userId)))) {
+          rank++;
+        }
+      }
+      for (const row of this.db.leaderboardEntries) {
+        const tieId = row.entry_id || row.user_id;
+        if (row.score > score || (row.score === score && (row.updated_at < updatedAt || (row.updated_at === updatedAt && tieId < userId)))) {
           rank++;
         }
       }
@@ -121,6 +143,13 @@ class FakeStatement {
   }
 
   async all() {
+    if (this.sql.includes('FROM leaderboard_entries e') && this.sql.includes('ORDER BY')) {
+      const results = this.db.leaderboardEntries
+        .map(row => ({ username: this.db.users.get(row.user_id)?.username, avatar: this.db.users.get(row.user_id)?.avatar, bio: this.db.users.get(row.user_id)?.bio, ...row }))
+        .sort((a, b) => b.score - a.score || a.updated_at.localeCompare(b.updated_at) || a.entry_id.localeCompare(b.entry_id))
+        .slice(0, this.args[0]);
+      return { results };
+    }
     if (this.sql.includes('FROM leaderboards l') && this.sql.includes('ORDER BY')) {
       const results = [...this.db.leaderboards.entries()]
         .map(([user_id, row]) => ({ user_id, username: this.db.users.get(user_id)?.username, ...row }))
@@ -142,6 +171,7 @@ class FakeStatement {
     if (sql.includes('CREATE TABLE IF NOT EXISTS account_sessions')) return {};
     if (sql.includes('CREATE TABLE IF NOT EXISTS player_cloud_saves')) return {};
     if (sql.includes('CREATE TABLE IF NOT EXISTS match_history')) return {};
+    if (sql.includes('CREATE TABLE IF NOT EXISTS leaderboard_entries')) return {};
     if (sql.includes('CREATE INDEX IF NOT EXISTS')) return {};
     if (sql.includes('DELETE FROM request_rate_limits')) return {};
     if (sql.includes('UPDATE request_rate_limits')) {
@@ -191,6 +221,11 @@ class FakeStatement {
       if (!existing || score > existing.score) {
         this.db.leaderboards.set(userId, { score, ship_type: shipType, updated_at: this.db.now });
       }
+      return {};
+    }
+    if (sql.includes('INSERT INTO leaderboard_entries')) {
+      const [entryId, userId, score, shipType] = this.args;
+      this.db.leaderboardEntries.push({ entry_id: entryId, user_id: userId, score, ship_type: shipType, updated_at: this.db.now });
       return {};
     }
     throw new Error('Unhandled run SQL: ' + sql);
@@ -254,6 +289,38 @@ test('Worker player rank uses the same tie-break as leaderboard rows', async () 
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.equal(body.rank, 2);
+});
+
+test('Worker leaderboard keeps multiple score entries for the same player', async () => {
+  const worker = await loadWorker();
+  const db = new FakeDb();
+  db.now = '2026-06-02 10:00:00';
+
+  const headers = { 'Content-Type': 'application/json', Origin: 'https://renlimeng.qzz.io', 'CF-Connecting-IP': '203.0.113.28' };
+  const first = await worker.fetch(new Request('https://example.com/api/submit-score', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ user_id: 'usr_multiscore', username: 'Multi', score: 1200, ship_type: 'void' })
+  }), { DB: db, ALLOWED_ORIGINS: 'https://renlimeng.qzz.io' });
+  db.now = '2026-06-02 10:01:00';
+  const second = await worker.fetch(new Request('https://example.com/api/submit-score', {
+    method: 'POST',
+    headers: { ...headers, 'CF-Connecting-IP': '203.0.113.29' },
+    body: JSON.stringify({ user_id: 'usr_multiscore', username: 'Multi', score: 900, ship_type: 'thunder' })
+  }), { DB: db, ALLOWED_ORIGINS: 'https://renlimeng.qzz.io' });
+
+  assert.equal(first.status, 200);
+  assert.equal(second.status, 200);
+  assert.equal(db.leaderboardEntries.length, 2);
+
+  const board = await worker.fetch(new Request('https://example.com/api/leaderboard?limit=10', {
+    headers: { Origin: 'https://renlimeng.qzz.io', 'CF-Connecting-IP': '203.0.113.30' }
+  }), { DB: db, ALLOWED_ORIGINS: 'https://renlimeng.qzz.io' });
+  const body = await board.json();
+
+  assert.deepEqual(body.entries.map(entry => entry.score), [1200, 900]);
+  assert.equal(body.entries[0].user_id, 'usr_multiscore');
+  assert.equal(body.entries[1].user_id, 'usr_multiscore');
 });
 
 test('Worker rejects oversized submit bodies before parsing JSON', async () => {
