@@ -22,6 +22,7 @@ body {
     position: relative;
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     max-width: 540px; 
     margin: 0 auto;
     background: radial-gradient(circle at center, #09101f 0%, #02040a 100%);
