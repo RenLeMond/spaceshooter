@@ -323,6 +323,33 @@ test('Worker leaderboard keeps multiple score entries for the same player', asyn
   assert.equal(body.entries[1].user_id, 'usr_multiscore');
 });
 
+test('Worker profile-only score sync does not add a duplicate leaderboard entry', async () => {
+  const worker = await loadWorker();
+  const db = new FakeDb();
+  db.now = '2026-06-02 10:00:00';
+  const headers = { 'Content-Type': 'application/json', Origin: 'https://renlimeng.qzz.io', 'CF-Connecting-IP': '203.0.113.31' };
+
+  const first = await worker.fetch(new Request('https://example.com/api/submit-score', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ user_id: 'usr_profileonly', username: 'Pilot', score: 1500, ship_type: 'void' })
+  }), { DB: db, ALLOWED_ORIGINS: 'https://renlimeng.qzz.io' });
+  db.now = '2026-06-02 10:02:00';
+  const profileOnly = await worker.fetch(new Request('https://example.com/api/submit-score', {
+    method: 'POST',
+    headers: { ...headers, 'CF-Connecting-IP': '203.0.113.32' },
+    body: JSON.stringify({ user_id: 'usr_profileonly', username: 'PilotRenamed', score: 0, ship_type: 'void', bio: 'Renamed' })
+  }), { DB: db, ALLOWED_ORIGINS: 'https://renlimeng.qzz.io' });
+
+  assert.equal(first.status, 200);
+  assert.equal(profileOnly.status, 200);
+  assert.equal(db.leaderboardEntries.length, 1);
+  assert.equal(db.users.get('usr_profileonly').username, 'PilotRenamed');
+  const body = await profileOnly.json();
+  assert.equal(body.updated, false);
+  assert.equal(body.score, 1500);
+});
+
 test('Worker rejects oversized submit bodies before parsing JSON', async () => {
   const worker = await loadWorker();
   const db = new FakeDb();

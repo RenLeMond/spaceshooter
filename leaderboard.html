@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>星海猎手 V7 - 全球联机排行榜</title>
     <meta name="description" content="星海猎手 V7 官方全球联机排行榜。同步本地最高分，查阅全服星海勇士排名。">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600;800&family=Noto+Sans+SC:wght@300;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
         :root {
@@ -1767,6 +1767,322 @@
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
+
+        /* Game cockpit visual pass */
+        body {
+            font-family: 'Outfit', 'Noto Sans SC', system-ui, sans-serif;
+            background:
+                radial-gradient(circle at 50% -10%, rgba(34, 211, 238, 0.16), transparent 32%),
+                radial-gradient(circle at 12% 82%, rgba(217, 70, 239, 0.1), transparent 32%),
+                #02040a;
+        }
+
+        .space-bg {
+            background:
+                linear-gradient(180deg, rgba(2, 6, 23, 0.1), rgba(2, 4, 10, 0.92)),
+                radial-gradient(ellipse 70% 42% at 50% 6%, rgba(8, 145, 178, 0.18), transparent 58%),
+                radial-gradient(ellipse 42% 30% at 84% 24%, rgba(168, 85, 247, 0.13), transparent 58%),
+                #02040a;
+        }
+
+        .dust-layer {
+            opacity: 0.24;
+            filter: saturate(1.2);
+        }
+
+        .hex-grid {
+            opacity: 0.34;
+            mask-image: linear-gradient(to bottom, black 0%, transparent 78%);
+        }
+
+        .scanline-layer {
+            z-index: 80;
+            opacity: 0.24;
+        }
+
+        .container {
+            max-width: 1160px;
+            padding: 18px;
+        }
+
+        header,
+        .glass-panel,
+        .profile-row,
+        .stat-card,
+        .leaderboard-item,
+        .match-item,
+        .hangar-summary,
+        .custom-toast {
+            clip-path: none;
+        }
+
+        header {
+            min-height: 76px;
+            margin-bottom: 18px;
+            border-radius: 18px;
+            border-color: rgba(34, 211, 238, 0.18);
+            background:
+                linear-gradient(135deg, rgba(34, 211, 238, 0.12), transparent 42%),
+                linear-gradient(225deg, rgba(217, 70, 239, 0.08), transparent 45%),
+                rgba(5, 10, 24, 0.84);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+
+        header::after {
+            content: 'V7 COMMAND / GLOBAL RANK';
+            color: rgba(103, 232, 249, 0.28);
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            clip-path: none;
+            outline: none;
+            border: 1px solid rgba(34, 211, 238, 0.34);
+            background:
+                radial-gradient(circle at 50% 35%, rgba(34, 211, 238, 0.3), rgba(15, 23, 42, 0.88) 66%);
+        }
+
+        .logo-titles h1 {
+            font-size: 24px;
+            letter-spacing: 0.08em;
+        }
+
+        .logo-titles p {
+            color: rgba(148, 163, 184, 0.78);
+            letter-spacing: 0.18em;
+        }
+
+        .status-badge,
+        .back-btn {
+            min-height: 32px;
+            border-radius: 12px;
+            clip-path: none;
+            background: rgba(15, 23, 42, 0.66);
+        }
+
+        .back-btn {
+            border-color: rgba(148, 163, 184, 0.14);
+        }
+
+        .dashboard-grid {
+            grid-template-columns: minmax(320px, 0.84fr) minmax(0, 1.56fr);
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+
+        .glass-panel {
+            border-radius: 18px;
+            padding: 20px;
+            border: 1px solid rgba(34, 211, 238, 0.16);
+            background:
+                linear-gradient(145deg, rgba(15, 23, 42, 0.82), rgba(3, 7, 18, 0.78)),
+                rgba(3, 7, 18, 0.84);
+            box-shadow:
+                0 22px 60px rgba(0, 0, 0, 0.44),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06),
+                inset 0 0 30px rgba(34, 211, 238, 0.035);
+        }
+
+        .glass-panel::before {
+            background:
+                linear-gradient(90deg, rgba(34, 211, 238, 0.14), transparent 34%, rgba(217, 70, 239, 0.08) 72%, transparent),
+                repeating-linear-gradient(90deg, transparent 0, transparent 34px, rgba(34, 211, 238, 0.022) 34px, rgba(34, 211, 238, 0.022) 35px);
+            opacity: 0.8;
+        }
+
+        .glass-panel::after,
+        .hud-corner-br {
+            width: 14px;
+            height: 14px;
+            border-width: 1px;
+        }
+
+        .panel-heading {
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+        }
+
+        .panel-title {
+            font-size: 13px;
+            letter-spacing: 0.12em;
+        }
+
+        .profile-row,
+        .pilot-id-row,
+        .cloud-card,
+        .stat-card,
+        .hangar-summary,
+        .hangar-summary-card,
+        .leaderboard-item,
+        .match-item,
+        .avatar-select-card {
+            border-radius: 14px;
+            background:
+                linear-gradient(135deg, rgba(34, 211, 238, 0.065), transparent 48%),
+                rgba(2, 6, 23, 0.52);
+            border-color: rgba(148, 163, 184, 0.12);
+        }
+
+        .profile-row {
+            margin-bottom: 18px;
+            padding: 14px;
+        }
+
+        .profile-avatar,
+        .user-ship-ico,
+        .match-icon {
+            clip-path: none;
+            border-radius: 14px;
+        }
+
+        .stats-grid {
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .stat-card {
+            padding: 13px 12px;
+            text-align: left;
+        }
+
+        .stat-value {
+            font-size: 18px;
+        }
+
+        .form-input,
+        .profile-field textarea {
+            border-radius: 12px;
+            background: rgba(2, 6, 23, 0.62);
+            border-color: rgba(148, 163, 184, 0.16);
+        }
+
+        .secondary-action-btn,
+        .primary-action-btn,
+        .pilot-id-row button,
+        .hangar-link {
+            border-radius: 12px;
+            clip-path: none;
+        }
+
+        .leaderboard-list {
+            max-height: 620px;
+            gap: 8px;
+        }
+
+        .leaderboard-item {
+            grid-template-columns: 52px minmax(0, 1fr) 128px 96px;
+            padding: 12px 14px;
+        }
+
+        .leaderboard-item:hover {
+            transform: translateY(-1px);
+        }
+
+        .rank-column {
+            width: 34px;
+            height: 34px;
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid rgba(148, 163, 184, 0.12);
+        }
+
+        .rank-gold,
+        .rank-silver,
+        .rank-bronze {
+            font-size: 17px;
+        }
+
+        .user-name {
+            color: #f8fafc;
+            letter-spacing: 0.02em;
+        }
+
+        .score-column {
+            font-size: 16px;
+            color: #67e8f9;
+        }
+
+        .history-panel {
+            margin-bottom: 24px;
+        }
+
+        .modal {
+            background: rgba(2, 6, 23, 0.78);
+        }
+
+        .modal-card {
+            border-radius: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 12px;
+            }
+
+            header {
+                padding: 14px;
+                border-radius: 16px;
+                gap: 14px;
+            }
+
+            .logo-titles h1 {
+                font-size: 21px;
+            }
+
+            .glass-panel {
+                padding: 14px;
+                border-radius: 16px;
+            }
+
+            .nav-actions {
+                align-items: center;
+            }
+
+            .status-badge {
+                min-height: 38px;
+                padding: 0 12px;
+                align-self: center;
+            }
+
+            .back-btn {
+                min-height: 42px;
+                padding: 0 10px;
+            }
+
+            .leaderboard-item {
+                grid-template-columns: 38px minmax(0, 1fr) auto;
+                border-radius: 13px;
+            }
+
+            .rank-column {
+                width: 28px;
+                height: 28px;
+                border-radius: 10px;
+            }
+
+            .score-column {
+                font-size: 13px;
+            }
+
+            .date-column {
+                display: block;
+                grid-column: 2 / -1;
+                justify-self: start;
+                text-align: left;
+                margin-top: 2px;
+                color: rgba(148, 163, 184, 0.78);
+                font-size: 9px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1789,8 +2105,8 @@
                     <div class="status-dot"></div>
                     <span id="syncStatusText">连接中</span>
                 </div>
-                <a href="v7_hangar.html?v=7.0.25" class="back-btn"><i class="fa-solid fa-user-astronaut"></i> 永久机库</a>
-                <a href="space_shooter.html?v=7.0.25" class="back-btn" id="backToGameBtn"><i class="fa-solid fa-plane-departure"></i> 进入游戏</a>
+                <a href="v7_hangar.html?v=7.0.26" class="back-btn"><i class="fa-solid fa-user-astronaut"></i> 永久机库</a>
+                <a href="space_shooter.html?v=7.0.26" class="back-btn" id="backToGameBtn"><i class="fa-solid fa-plane-departure"></i> 进入游戏</a>
             </div>
         </header>
 
@@ -1862,7 +2178,7 @@
                 <div class="hangar-summary" id="hangarSummary">
                     <div class="hangar-summary-head">
                         <div class="hangar-summary-title"><i class="fa-solid fa-warehouse"></i> 机库摘要</div>
-                        <a class="hangar-link" href="v7_hangar.html?v=7.0.25"><i class="fa-solid fa-arrow-up-right-from-square"></i> 前往机库</a>
+                        <a class="hangar-link" href="v7_hangar.html?v=7.0.26"><i class="fa-solid fa-arrow-up-right-from-square"></i> 前往机库</a>
                     </div>
                     <div class="hangar-summary-grid">
                         <div class="hangar-summary-card">
@@ -1941,8 +2257,8 @@
         <span id="toastText">已更新</span>
     </div>
 
-    <script src="js/leaderboard_config.js?v=7.0.25"></script>
-    <script src="js/leaderboard_api.js?v=7.0.25"></script>
-    <script src="js/leaderboard_page.js?v=7.0.25"></script>
+    <script src="js/leaderboard_config.js?v=7.0.26"></script>
+    <script src="js/leaderboard_api.js?v=7.0.26"></script>
+    <script src="js/leaderboard_page.js?v=7.0.26"></script>
 </body>
 </html>

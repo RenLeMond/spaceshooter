@@ -791,12 +791,12 @@ async function upsertScore(db, userId, username, score, shipType, avatar, bio) {
       bio = excluded.bio
   `).bind(userId, username, avatar, bio);
 
-  if (score <= 0 && previousScore <= 0) {
+  if (score <= 0) {
     await runUserWrite(db, userWrite, userId, username);
     return {
       updated: false,
-      previous_score: 0,
-      score: 0,
+      previous_score: previousScore,
+      score: previousScore,
       ship_type: shipType,
       updated_at: null
     };

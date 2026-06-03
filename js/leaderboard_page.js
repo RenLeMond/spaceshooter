@@ -368,8 +368,8 @@
         }
         loadLocalData();
         try {
-            if (state.bestScore > 0 && typeof API.submitScore === 'function') {
-                await API.submitScore(state.bestScore, state.skin, state.nickname, {
+            if (typeof API.submitScore === 'function') {
+                await API.submitScore(0, state.skin, state.nickname, {
                     avatar: state.avatar,
                     bio: state.bio
                 });

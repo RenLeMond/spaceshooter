@@ -127,6 +127,13 @@ test('leaderboard page uses automatic sync controls and offers local account log
   assert.match(pageScript, /space_account_token/);
 });
 
+test('leaderboard profile sync does not submit best score as a leaderboard entry', async () => {
+  const pageScript = await readFile(new URL('../js/leaderboard_page.js', import.meta.url), 'utf8');
+
+  assert.equal(pageScript.includes('API.submitScore(state.bestScore'), false);
+  assert.match(pageScript, /API\.submitScore\(0,\s*state\.skin,\s*state\.nickname/s);
+});
+
 test('hangar summary link has overflow guards', async () => {
   const html = await readFile(new URL('../leaderboard.html', import.meta.url), 'utf8');
 
@@ -140,4 +147,11 @@ test('gameplay HUD uses the compact spacing pass', async () => {
   assert.match(css, /#hud\s*{[^}]*padding:\s*8px 12px 0 !important/s);
   assert.match(css, /#hud\s*{[^}]*gap:\s*4px !important/s);
   assert.match(css, /#hud #bossHpGroup\s*{[^}]*padding:\s*6px 8px !important/s);
+});
+
+test('leaderboard mobile rows keep the uploaded time visible', async () => {
+  const html = await readFile(new URL('../leaderboard.html', import.meta.url), 'utf8');
+
+  assert.match(html, /@media \(max-width: 640px\)[\s\S]*\.date-column\s*{[^}]*display:\s*block/s);
+  assert.match(html, /@media \(max-width: 640px\)[\s\S]*\.date-column\s*{[^}]*grid-column:\s*2 \/ -1/s);
 });
