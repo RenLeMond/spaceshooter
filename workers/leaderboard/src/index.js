@@ -11,7 +11,6 @@ const RATE_LIMITS = {
   '/api/cloud-save': { limit: 40, windowSeconds: 60 }
 };
 let profileColumnsChecked = false;
-let leaderboardEntriesChecked = false;
 
 export default {
   async fetch(request, env) {
@@ -23,8 +22,8 @@ export default {
 
     try {
       const url = new URL(request.url);
-      await ensureProfileColumns(env.DB);
-      await ensureLeaderboardEntries(env.DB);
+      // 仅在首次冷启动时并行执行兼容性迁移（不阻塞主流程的 DDL 均已移入 schema.sql）
+      await ensureRuntimeCompat(env.DB);
       if (url.pathname === '/api/submit-score' && request.method === 'POST' && isBodyTooLarge(request)) {
         return jsonResponse({ error: 'payload_too_large' }, corsHeaders, 413);
       }
@@ -45,7 +44,14 @@ export default {
       if (url.pathname === '/api/leaderboard' && request.method === 'GET') {
         const limit = clampInt(url.searchParams.get('limit'), 1, 50, 50);
         const rows = await getLeaderboardRows(env.DB, limit);
-        return jsonResponse({ entries: rows }, corsHeaders);
+        return new Response(JSON.stringify({ entries: rows }), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Cache-Control': 'public, max-age=30, stale-while-revalidate=60',
+            ...corsHeaders
+          }
+        });
       }
 
       if (url.pathname === '/api/player' && request.method === 'GET') {
@@ -200,117 +206,16 @@ async function checkRateLimit(db, request, pathname, config) {
   return { allowed: true };
 }
 
-// Note: request_rate_limits table is created via schema.sql; no runtime DDL needed.
-
-async function ensureProfileColumns(db) {
+// 运行时兼容性迁移：只保留无法在 schema.sql 中幂等处理的 ALTER TABLE
+// 所有 CREATE TABLE / CREATE INDEX 均已移入 schema.sql，通过 wrangler d1 migrations apply 部署
+async function ensureRuntimeCompat(db) {
   if (profileColumnsChecked) return;
-  try {
-    await db.prepare(`
-      CREATE TABLE IF NOT EXISTS request_rate_limits (
-        key TEXT PRIMARY KEY,
-        count INTEGER NOT NULL DEFAULT 0,
-        window_start INTEGER NOT NULL
-      )
-    `).run();
-  } catch (_) {}
-  try {
-    await db.prepare(`
-      CREATE INDEX IF NOT EXISTS idx_request_rate_limits_window
-      ON request_rate_limits(window_start)
-    `).run();
-  } catch (_) {}
-  try {
-    await db.prepare(`
-      CREATE TABLE IF NOT EXISTS accounts (
-        account_id TEXT PRIMARY KEY,
-        account_key TEXT NOT NULL UNIQUE,
-        account_label TEXT NOT NULL,
-        password_salt TEXT NOT NULL,
-        password_hash TEXT NOT NULL,
-        user_id TEXT NOT NULL UNIQUE,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-      )
-    `).run();
-  } catch (_) {}
-  try {
-    await db.prepare(`
-      CREATE TABLE IF NOT EXISTS account_sessions (
-        token TEXT PRIMARY KEY,
-        account_id TEXT NOT NULL,
-        created_at TEXT NOT NULL DEFAULT (datetime('now'))
-      )
-    `).run();
-  } catch (_) {}
-  try {
-    await db.prepare(`
-      CREATE TABLE IF NOT EXISTS player_cloud_saves (
-        user_id TEXT PRIMARY KEY,
-        permanent_cores INTEGER NOT NULL DEFAULT 0,
-        talents_json TEXT NOT NULL DEFAULT '{}',
-        unlocked_skins_json TEXT NOT NULL DEFAULT '["default"]',
-        current_skin TEXT NOT NULL DEFAULT 'default',
-        best_score INTEGER NOT NULL DEFAULT 0,
-        profile_json TEXT NOT NULL DEFAULT '{}',
-        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-      )
-    `).run();
-  } catch (_) {}
-  try {
-    await db.prepare(`
-      CREATE TABLE IF NOT EXISTS match_history (
-        match_id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        score INTEGER NOT NULL DEFAULT 0,
-        wave INTEGER NOT NULL DEFAULT 1,
-        skin TEXT NOT NULL DEFAULT 'default',
-        is_new_best INTEGER NOT NULL DEFAULT 0,
-        permanent_cores_earned INTEGER NOT NULL DEFAULT 0,
-        played_at TEXT NOT NULL
-      )
-    `).run();
-  } catch (_) {}
-  try {
-    await db.prepare(`
-      CREATE INDEX IF NOT EXISTS idx_match_history_user_time
-      ON match_history(user_id, played_at DESC)
-    `).run();
-  } catch (_) {}
-  try {
-    await db.prepare("ALTER TABLE users ADD COLUMN avatar TEXT NOT NULL DEFAULT 'fa-user-astronaut'").run();
-  } catch (_) {}
-  try {
-    await db.prepare("ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''").run();
-  } catch (_) {}
+  // 并行执行两个 ALTER TABLE（为老库补加 avatar/bio 列），忽略已存在时的错误
+  await Promise.all([
+    db.prepare("ALTER TABLE users ADD COLUMN avatar TEXT NOT NULL DEFAULT 'fa-user-astronaut'").run().catch(() => {}),
+    db.prepare("ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''").run().catch(() => {})
+  ]);
   profileColumnsChecked = true;
-}
-
-async function ensureLeaderboardEntries(db) {
-  if (leaderboardEntriesChecked) return;
-  try {
-    await db.prepare(`
-      CREATE TABLE IF NOT EXISTS leaderboard_entries (
-        entry_id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        score INTEGER NOT NULL DEFAULT 0,
-        ship_type TEXT NOT NULL DEFAULT 'default',
-        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-      )
-    `).run();
-  } catch (_) {}
-  try {
-    await db.prepare(`
-      CREATE INDEX IF NOT EXISTS idx_leaderboard_entries_score
-      ON leaderboard_entries(score DESC, updated_at ASC)
-    `).run();
-  } catch (_) {}
-  try {
-    await db.prepare(`
-      CREATE INDEX IF NOT EXISTS idx_leaderboard_entries_user_score
-      ON leaderboard_entries(user_id, score DESC)
-    `).run();
-  } catch (_) {}
-  leaderboardEntriesChecked = true;
 }
 
 function getClientIp(request) {

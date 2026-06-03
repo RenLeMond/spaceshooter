@@ -325,25 +325,22 @@
         setStatus('connecting');
         try {
             if (!API || !API.isEnabled()) throw new Error('leaderboard_disabled');
-            const data = await API.fetchLeaderboard(50);
+            // 并行发起榜单和玩家排名两个请求，减少一次串行 RTT
+            const [data, player] = await Promise.all([
+                API.fetchLeaderboard(50),
+                API.fetchPlayer(state.userId).catch(() => null)
+            ]);
             state.leaderboard = Array.isArray(data.entries) ? data.entries : [];
             renderLeaderboard(state.leaderboard);
-            await refreshPlayerRank();
+            // 优先用 /api/player 返回的精确排名，否则从榜单里找
+            if (player && player.rank) {
+                el.playerRankText.textContent = `全球排名 #${player.rank}`;
+            }
             setStatus('online');
         } catch (err) {
             renderLeaderboard([]);
             setStatus('offline');
         }
-    }
-
-    async function refreshPlayerRank() {
-        if (!API || !API.isEnabled()) return;
-        try {
-            const player = await API.fetchPlayer(state.userId);
-            if (player && player.rank) {
-                el.playerRankText.textContent = `全球排名 #${player.rank}`;
-            }
-        } catch (_) {}
     }
 
     async function refreshCloudSaveIfBound() {
