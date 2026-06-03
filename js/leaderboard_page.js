@@ -339,7 +339,20 @@
         } catch (_) {}
     }
 
+    async function refreshCloudSaveIfBound() {
+        if (!API || !API.isEnabled()) return false;
+        if (!API.getSessionToken || !API.getSessionToken()) return false;
+        if (typeof API.fetchCloudSave !== 'function') return false;
+        try {
+            await API.fetchCloudSave();
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+
     async function refreshProfileAndLeaderboard() {
+        await refreshCloudSaveIfBound();
         loadLocalData();
         renderProfile();
         await refreshLeaderboard();
@@ -428,8 +441,6 @@
                     await API.saveCloudSave(API.collectLocalCloudSave());
                 }
             }
-            loadLocalData();
-            renderProfile();
             await syncProfileAndScore();
             showToast(result.mode === 'registered' ? '账号已注册并同步云存档' : '账号已登录，云存档已同步', 'success');
             await refreshLeaderboard();
@@ -496,11 +507,11 @@
         });
     }
 
-    function init() {
+    async function init() {
         loadLocalData();
         renderProfile();
         initEvents();
-        refreshLeaderboard();
+        await refreshProfileAndLeaderboard();
     }
 
     init();

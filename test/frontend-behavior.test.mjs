@@ -134,6 +134,13 @@ test('leaderboard profile sync does not submit best score as a leaderboard entry
   assert.match(pageScript, /API\.submitScore\(0,\s*state\.skin,\s*state\.nickname/s);
 });
 
+test('leaderboard refresh pulls bound cloud save before rendering recent matches', async () => {
+  const pageScript = await readFile(new URL('../js/leaderboard_page.js', import.meta.url), 'utf8');
+
+  assert.match(pageScript, /async function refreshCloudSaveIfBound\(\)/);
+  assert.match(pageScript, /await refreshCloudSaveIfBound\(\);\s*loadLocalData\(\);\s*renderProfile\(\);/s);
+});
+
 test('hangar summary link has overflow guards', async () => {
   const html = await readFile(new URL('../leaderboard.html', import.meta.url), 'utf8');
 
