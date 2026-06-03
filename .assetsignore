@@ -1,0 +1,9 @@
+.git
+.wrangler
+.claude
+node_modules
+workers
+docs
+test
+package-lock.json
+package.json

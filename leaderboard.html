@@ -1163,6 +1163,16 @@
             margin-bottom: 12px;
         }
 
+        .bound-lock-note {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            color: var(--text-muted);
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
         .hangar-summary {
             margin-top: 14px;
             border: 1px solid rgba(34, 211, 238, 0.12);
@@ -1181,12 +1191,14 @@
             grid-template-columns: 1fr auto;
             align-items: center;
             margin-bottom: 10px;
+            min-width: 0;
         }
 
         .hangar-summary-title {
             display: flex;
             align-items: center;
             gap: 7px;
+            min-width: 0;
             color: #dffbff;
             font-size: 11px;
             font-weight: 900;
@@ -1199,6 +1211,8 @@
             justify-content: center;
             gap: 6px;
             min-height: 30px;
+            max-width: 100%;
+            box-sizing: border-box;
             padding: 0 10px;
             border-radius: 10px;
             color: var(--neon-cyan);
@@ -1207,6 +1221,7 @@
             font-weight: 900;
             border: 1px solid rgba(34, 211, 238, 0.24);
             background: rgba(34, 211, 238, 0.08);
+            white-space: nowrap;
         }
 
         .hangar-summary-grid {
@@ -1529,8 +1544,8 @@
                     <div class="status-dot"></div>
                     <span id="syncStatusText">连接中</span>
                 </div>
-                <a href="v7_hangar.html?v=7.0.22" class="back-btn"><i class="fa-solid fa-user-astronaut"></i> 永久机库</a>
-                <a href="space_shooter.html?v=7.0.22" class="back-btn" id="backToGameBtn"><i class="fa-solid fa-plane-departure"></i> 进入游戏</a>
+                <a href="v7_hangar.html?v=7.0.23" class="back-btn"><i class="fa-solid fa-user-astronaut"></i> 永久机库</a>
+                <a href="space_shooter.html?v=7.0.23" class="back-btn" id="backToGameBtn"><i class="fa-solid fa-plane-departure"></i> 进入游戏</a>
             </div>
         </header>
 
@@ -1594,7 +1609,7 @@
                     <button class="secondary-action-btn" id="btnBindAccount" type="button"><i class="fa-solid fa-link"></i> 绑定档案</button>
                 </div>
                 <div class="bound-actions" id="boundDetails">
-                    <button class="secondary-action-btn" id="btnUnbindAccount" type="button"><i class="fa-solid fa-link-slash"></i> 解除绑定</button>
+                    <div class="bound-lock-note"><i class="fa-solid fa-lock"></i> 当前档案已绑定，绑定关系会持续用于云存档同步。</div>
                 </div>
 
                 <button class="primary-action-btn" id="btnSyncLocalScore"><i class="fa-solid fa-cloud-arrow-up"></i> 同步最高分</button>
@@ -1603,7 +1618,7 @@
                 <div class="hangar-summary" id="hangarSummary">
                     <div class="hangar-summary-head">
                         <div class="hangar-summary-title"><i class="fa-solid fa-warehouse"></i> 机库摘要</div>
-                        <a class="hangar-link" href="v7_hangar.html?v=7.0.22"><i class="fa-solid fa-arrow-up-right-from-square"></i> 前往机库</a>
+                        <a class="hangar-link" href="v7_hangar.html?v=7.0.23"><i class="fa-solid fa-arrow-up-right-from-square"></i> 前往机库</a>
                     </div>
                     <div class="hangar-summary-grid">
                         <div class="hangar-summary-card">
@@ -1674,8 +1689,8 @@
         <span id="toastText">已更新</span>
     </div>
 
-    <script src="js/leaderboard_config.js?v=7.0.22"></script>
-    <script src="js/leaderboard_api.js?v=7.0.22"></script>
-    <script src="js/leaderboard_page.js?v=7.0.22"></script>
+    <script src="js/leaderboard_config.js?v=7.0.23"></script>
+    <script src="js/leaderboard_api.js?v=7.0.23"></script>
+    <script src="js/leaderboard_page.js?v=7.0.23"></script>
 </body>
 </html>

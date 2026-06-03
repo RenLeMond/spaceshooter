@@ -65,6 +65,7 @@ canvas {
     background: var(--ui-bg-deep);
     border: 1px solid var(--ui-line-cyan);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    position: relative;
 }
 #hud .hud-action-divider {
     width: 1px;
@@ -74,6 +75,77 @@ canvas {
 }
 #hud #synergyName {
     letter-spacing: 0.02em;
+}
+#hud .core-weapon-trigger {
+    min-height: 28px;
+    border-radius: 10px;
+    padding: 2px 4px;
+    cursor: pointer;
+    transition: background 160ms ease, box-shadow 160ms ease;
+}
+#hud .core-weapon-trigger:hover,
+#hud .core-weapon-trigger:focus-visible {
+    outline: none;
+    background: rgba(34, 211, 238, 0.08);
+    box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.14);
+}
+.core-weapon-popover {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    top: calc(100% + 8px);
+    z-index: 22;
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(34, 211, 238, 0.24);
+    background:
+        linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(3, 7, 18, 0.92)),
+        rgba(3, 7, 18, 0.94);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    pointer-events: auto;
+}
+.core-weapon-popover-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: #67e8f9;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+.core-weapon-popover-head button {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    background: rgba(255, 255, 255, 0.04);
+}
+.core-weapon-popover strong {
+    display: block;
+    margin-top: 7px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 900;
+    line-height: 1.25;
+}
+.core-weapon-popover p {
+    margin: 6px 0 0;
+    color: rgba(203, 213, 225, 0.9);
+    font-size: 11px;
+    line-height: 1.45;
+}
+.core-weapon-popover em {
+    display: block;
+    margin-top: 8px;
+    color: rgba(34, 211, 238, 0.86);
+    font-size: 10px;
+    font-style: normal;
+    font-weight: 800;
 }
 #hud #pauseBtn:hover,
 #hud #soundToggleBtn:hover {

@@ -2,7 +2,7 @@
 // 资源缓存版本号 — 同步于 space_shooter.html 的所有 ?v= 查询参数。
 // Worker 链 (game_worker.js + importScripts 的 6 个引擎文件) 通过 self.location.search 自动继承该版本，
 // 后续 bump 仅需改本常量 + HTML 的 ?v= 两处即可全量失效旧缓存。
-const ASSET_VERSION = '7.0.22';
+const ASSET_VERSION = '7.0.23';
 
 window.onload = function() {
     const canvas = document.getElementById('gameCanvas');
@@ -595,11 +595,14 @@ window.onload = function() {
                         isNewBest: !!msg.isNewBest,
                         permanentCoresEarned: msg.permanentCoresEarned || 0
                     });
-                    if (window.StarseaLeaderboard && typeof window.StarseaLeaderboard.syncCloudSaveFromLocal === 'function') {
-                        window.StarseaLeaderboard.syncCloudSaveFromLocal();
-                    }
-                    if (msg.isNewBest && window.StarseaLeaderboard && typeof window.StarseaLeaderboard.syncScoreToCloud === 'function') {
-                        window.StarseaLeaderboard.syncScoreToCloud(msg.bestScore, msg.currentSkin || mainCurrentSkin);
+                    if (window.StarseaLeaderboard) {
+                        if (typeof window.StarseaLeaderboard.syncCloudSaveFromLocal === 'function') {
+                            window.StarseaLeaderboard.syncCloudSaveFromLocal();
+                        }
+                        if (typeof window.StarseaLeaderboard.syncScoreToCloud === 'function') {
+                            const scoreToSync = msg.isNewBest ? msg.bestScore : msg.score;
+                            window.StarseaLeaderboard.syncScoreToCloud(scoreToSync, msg.currentSkin || mainCurrentSkin);
+                        }
                     }
                     document.getElementById('endScore').innerText = String(msg.score).padStart(6, '0');
                     document.getElementById('endWave').innerText = msg.wave;
@@ -1109,23 +1112,25 @@ function updateWeaponStatsState(next) {
     if (next && next.slots) weaponStatsState.slots = Array.isArray(next.slots) ? next.slots : [];
     const panel = document.getElementById('weaponStatsPanel');
     if (panel && !panel.classList.contains('hidden')) renderWeaponStatsPanel();
+    const popover = document.getElementById('coreWeaponPopover');
+    if (popover && !popover.classList.contains('hidden')) renderCoreWeaponPopover();
 }
 window.updateWeaponStatsState = updateWeaponStatsState;
 
 function getWeaponBaseStats(slots, comboKey) {
     const key = comboKey || (slots && slots[0]) || '';
     const map = {
-        '': { name: '基础高频激光', damage: 20, radius: 4, pierce: 1, shots: 1, desc: '无晶核挂载时的稳定主炮。' },
-        EM: { name: '电磁脉冲枪', damage: 25, radius: 3.5, pierce: 1, shots: 1, desc: '高速电磁弹，适合触发雷暴类构装。' },
-        Frost: { name: '低温裂解枪', damage: 30, radius: 5, pierce: 1, shots: 1, desc: '低温弹体，命中可触发冰暴反应。' },
-        Fire: { name: '热核燃烧炮', damage: 35, radius: 6, pierce: 1, shots: 1, desc: '高热弹体，单发基础伤害较高。' },
-        Rad: { name: '高能恒星辐射光', damage: 40, radius: 8, pierce: 1, shots: 1, desc: '高能辐射弹，弹体更大。' },
-        'EM+Frost': { name: '冰暴超导跃迁枪', damage: 35, radius: 8, pierce: 3, shots: 1, desc: '超导冰弹，穿透能力显著提升。' },
-        'EM+Fire': { name: '雷霆聚变链式炮', damage: 45, radius: 7, pierce: 1, shots: 1, desc: '聚变链式主炮，适合配合雷电追击。' },
-        'EM+Rad': { name: '磁重力爆破核心', damage: 55, radius: 15, pierce: 99, shots: 1, desc: '大范围磁重力弹体，近似无限穿透。' },
-        'Fire+Frost': { name: '升华相差熔岩风暴', damage: 30, radius: 6, pierce: 1, shots: 2, desc: '左右双弹齐射，每发独立造成伤害。' },
-        'Frost+Rad': { name: '绝对静止视界', damage: 40, radius: 10, pierce: 2, shots: 1, desc: '冻结视界弹，半径与穿透均衡。' },
-        'Fire+Rad': { name: '坍缩黑洞星云爆', damage: 80, radius: 18, pierce: 1, shots: 1, desc: '重型爆破主炮，单发伤害最高。' }
+        '': { name: '基础高频激光', damage: 20, radius: 4, pierce: 1, shots: 1, desc: '无晶核挂载时的稳定主炮。', special: '稳定射速，无额外晶核增益。' },
+        EM: { name: '电磁脉冲枪', damage: 25, radius: 3.5, pierce: 1, shots: 1, desc: '高速电磁弹，适合触发雷暴类构装。', special: '高速弹道，适配雷电追击类构装。' },
+        Frost: { name: '低温裂解枪', damage: 30, radius: 5, pierce: 1, shots: 1, desc: '低温弹体，命中可触发冰暴反应。', special: '低温弹体，弹体半径略增。' },
+        Fire: { name: '热核燃烧炮', damage: 35, radius: 6, pierce: 1, shots: 1, desc: '高热弹体，单发基础伤害较高。', special: '高热弹体，单发基础伤害提升。' },
+        Rad: { name: '高能恒星辐射光', damage: 40, radius: 8, pierce: 1, shots: 1, desc: '高能辐射弹，弹体更大。', special: '辐射弹体，基础半径更大。' },
+        'EM+Frost': { name: '冰暴超导跃迁枪', damage: 35, radius: 8, pierce: 3, shots: 1, desc: '超导冰弹，穿透能力显著提升。', special: '穿透 +2，弹体半径提升到 R8。' },
+        'EM+Fire': { name: '雷霆聚变链式炮', damage: 45, radius: 7, pierce: 1, shots: 1, desc: '聚变链式主炮，适合配合雷电追击。', special: '合成后基础伤害 45，适配雷电链索敌。' },
+        'EM+Rad': { name: '磁重力爆破核心', damage: 55, radius: 15, pierce: 99, shots: 1, desc: '大范围磁重力弹体，近似无限穿透。', special: '大范围 R15，近似无限穿透。' },
+        'Fire+Frost': { name: '升华相差熔岩风暴', damage: 30, radius: 6, pierce: 1, shots: 2, desc: '左右双弹齐射，每发独立造成伤害。', special: '双发齐射，每发独立结算构装与天赋增益。' },
+        'Frost+Rad': { name: '绝对静止视界', damage: 40, radius: 10, pierce: 2, shots: 1, desc: '冻结视界弹，半径与穿透均衡。', special: '半径 R10，穿透 +1。' },
+        'Fire+Rad': { name: '坍缩黑洞星云爆', damage: 80, radius: 18, pierce: 1, shots: 1, desc: '重型爆破主炮，单发伤害最高。', special: '单发伤害最高，爆破半径提升到 R18。' }
     };
     return map[key] || map[''];
 }
@@ -1143,6 +1148,9 @@ function computeWeaponStats() {
     const details = [
         { icon: 'fa-crosshairs', title: base.name, desc: base.desc, value: base.shots > 1 ? `${base.shots} 发 x ${base.damage}` : `${base.damage}` }
     ];
+    if ((state.comboKey || '').includes('+')) {
+        details.push({ icon: 'fa-atom', title: '晶核合成增益', desc: base.special || base.desc, value: `${base.shots > 1 ? `${base.shots}x` : ''}R${fmt(base.radius)} / P${base.pierce}` });
+    }
 
     if (mods.includes('antimatter')) {
         damage = Math.floor(damage * 1.8);
@@ -1245,6 +1253,34 @@ function renderWeaponStatsPanel() {
     `).join('');
 }
 
+function renderCoreWeaponPopover() {
+    const popover = document.getElementById('coreWeaponPopover');
+    if (!popover) return;
+    const stats = computeWeaponStats();
+    const titleEl = document.getElementById('coreWeaponPopoverTitle');
+    const bodyEl = document.getElementById('coreWeaponPopoverBody');
+    const metaEl = document.getElementById('coreWeaponPopoverMeta');
+    if (titleEl) titleEl.textContent = stats.base.name;
+    if (bodyEl) bodyEl.textContent = stats.base.special || stats.base.desc;
+    if (metaEl) {
+        metaEl.textContent = `${stats.base.shots > 1 ? `${stats.base.shots} 发齐射 · ` : ''}伤害 ${fmt(stats.damage)} · 半径 R${fmt(stats.radius)} · 穿透 P${stats.pierce}`;
+    }
+}
+
+function toggleCoreWeaponPopover(forceOpen) {
+    const popover = document.getElementById('coreWeaponPopover');
+    if (!popover) return;
+    const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : popover.classList.contains('hidden');
+    if (shouldOpen) {
+        renderCoreWeaponPopover();
+        popover.classList.remove('hidden');
+        popover.setAttribute('aria-hidden', 'false');
+    } else {
+        popover.classList.add('hidden');
+        popover.setAttribute('aria-hidden', 'true');
+    }
+}
+
 function openWeaponStatsPanel(source) {
     const panel = document.getElementById('weaponStatsPanel');
     if (!panel) return;
@@ -1282,6 +1318,16 @@ function bindWeaponStatsUI() {
     if (weaponStatsCloseBtn && weaponStatsCloseBtn.dataset.bound !== 'true') {
         weaponStatsCloseBtn.dataset.bound = 'true';
         weaponStatsCloseBtn.addEventListener('click', closeWeaponStatsPanel);
+    }
+    const coreWeaponTrigger = document.getElementById('coreWeaponTrigger');
+    if (coreWeaponTrigger && coreWeaponTrigger.dataset.bound !== 'true') {
+        coreWeaponTrigger.dataset.bound = 'true';
+        coreWeaponTrigger.addEventListener('click', () => toggleCoreWeaponPopover());
+    }
+    const coreWeaponPopoverClose = document.getElementById('coreWeaponPopoverClose');
+    if (coreWeaponPopoverClose && coreWeaponPopoverClose.dataset.bound !== 'true') {
+        coreWeaponPopoverClose.dataset.bound = 'true';
+        coreWeaponPopoverClose.addEventListener('click', () => toggleCoreWeaponPopover(false));
     }
 }
 

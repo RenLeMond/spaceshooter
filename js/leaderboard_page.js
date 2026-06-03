@@ -53,7 +53,6 @@
         bindPassword: document.getElementById('bindPassword'),
         btnBindAccount: document.getElementById('btnBindAccount'),
         boundDetails: document.getElementById('boundDetails'),
-        btnUnbindAccount: document.getElementById('btnUnbindAccount'),
         btnSyncLocalScore: document.getElementById('btnSyncLocalScore'),
         btnRefreshLocal: document.getElementById('btnRefreshLocal'),
         hangarCurrentShip: document.getElementById('hangarCurrentShip'),
@@ -341,6 +340,12 @@
         } catch (_) {}
     }
 
+    async function refreshProfileAndLeaderboard() {
+        loadLocalData();
+        renderProfile();
+        await refreshLeaderboard();
+    }
+
     function setStatus(mode) {
         if (mode === 'online') {
             el.syncStatusText.textContent = '联机正常';
@@ -379,6 +384,33 @@
         }
     }
 
+    async function syncProfileAndScore(options) {
+        options = options || {};
+        if (!API || !API.isEnabled()) {
+            if (options.toast) showToast('联机服务暂不可用', 'error');
+            return false;
+        }
+        loadLocalData();
+        try {
+            if (state.bestScore > 0 && typeof API.submitScore === 'function') {
+                await API.submitScore(state.bestScore, state.skin, state.nickname, {
+                    avatar: state.avatar,
+                    bio: state.bio
+                });
+            }
+            if (API.getSessionToken && API.getSessionToken() && API.saveCloudSave && API.collectLocalCloudSave) {
+                await API.saveCloudSave(API.collectLocalCloudSave());
+            }
+            await refreshProfileAndLeaderboard();
+            if (options.toast) showToast(options.toast, 'success');
+            return true;
+        } catch (_) {
+            if (options.toast) showToast('同步失败，请稍后重试', 'error');
+            setStatus('offline');
+            return false;
+        }
+    }
+
     async function bindAccount() {
         const account = el.bindEmail.value.trim();
         const password = el.bindPassword.value.trim();
@@ -410,22 +442,13 @@
             }
             loadLocalData();
             renderProfile();
+            await syncProfileAndScore();
             showToast(result.mode === 'registered' ? '账号已注册并同步云存档' : '账号已登录，云存档已同步', 'success');
             await refreshLeaderboard();
         } catch (err) {
             showToast(err && err.data && err.data.error === 'invalid_credentials' ? '密码不正确' : '绑定失败，请稍后重试', 'error');
             setStatus('offline');
         }
-    }
-
-    function unbindAccount() {
-        state.isBound = false;
-        state.boundAccount = '';
-        localStorage.setItem('space_user_is_bound', 'false');
-        localStorage.removeItem('space_user_bound_email');
-        localStorage.removeItem('space_account_token');
-        renderProfile();
-        showToast('已恢复为游客档案', 'success');
     }
 
     function openAvatarModal() {
@@ -447,13 +470,13 @@
             state.nickname = sanitizeNickname(el.playerNameInput.value);
             saveProfile();
             renderProfile();
-            showToast('呼号已保存', 'success');
+            syncProfileAndScore({ toast: '呼号已保存并同步' });
         });
         el.pilotSignature.addEventListener('change', () => {
             state.bio = sanitizeBio(el.pilotSignature.value) || DEFAULT_BIO;
             saveProfile();
             renderProfile();
-            showToast('飞行签名已保存', 'success');
+            syncProfileAndScore({ toast: '飞行签名已保存并同步' });
         });
         el.btnCopyId.addEventListener('click', () => {
             navigator.clipboard.writeText(state.userId).then(() => showToast('呼号 ID 已复制', 'success')).catch(() => showToast('复制失败', 'error'));
@@ -476,16 +499,11 @@
             saveProfile();
             renderProfile();
             closeAvatarModal();
-            showToast('头像已更新', 'success');
+            syncProfileAndScore({ toast: '头像已更新并同步' });
         });
         el.btnBindAccount.addEventListener('click', bindAccount);
-        el.btnUnbindAccount.addEventListener('click', unbindAccount);
         el.btnSyncLocalScore.addEventListener('click', syncLocalScore);
-        el.btnRefreshLocal.addEventListener('click', () => {
-            loadLocalData();
-            renderProfile();
-            refreshLeaderboard();
-        });
+        el.btnRefreshLocal.addEventListener('click', () => refreshProfileAndLeaderboard());
         window.addEventListener('focus', () => {
             loadLocalData();
             renderProfile();

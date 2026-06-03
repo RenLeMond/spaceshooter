@@ -14,7 +14,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Noto+Sans+SC:wght@300;500;700;900&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=7.0.22">
+    <link rel="stylesheet" href="style.css?v=7.0.23">
 </head>
 <body class="flex items-center justify-center min-h-screen">
 
@@ -81,7 +81,7 @@
 
             <!-- 晶核 + 控制 + EM 炸弹（同一行） -->
             <div class="glass-panel hud-action-row flex items-center gap-2 px-2 py-1.5 rounded-xl mt-1 pointer-events-none">
-                <div class="flex-1 min-w-0 flex items-center gap-1.5">
+                <div id="coreWeaponTrigger" class="core-weapon-trigger flex-1 min-w-0 flex items-center gap-1.5 pointer-events-auto" role="button" tabindex="0" title="查看当前晶核合成武器">
                     <div class="text-[9px] text-gray-400 font-bold uppercase shrink-0">晶核</div>
                     <div class="flex gap-1 items-center shrink-0">
                         <div id="slot1" class="px-1.5 h-6 min-w-[24px] rounded-lg bg-gray-950 border border-white/10 flex items-center justify-center text-[10px] text-gray-500 font-bold transition-all">空</div>
@@ -89,6 +89,17 @@
                         <div id="slot2" class="px-1.5 h-6 min-w-[24px] rounded-lg bg-gray-950 border border-white/10 flex items-center justify-center text-[10px] text-gray-500 font-bold transition-all">空</div>
                     </div>
                     <span id="synergyName" title="基础高频激光" class="flex-1 min-w-0 text-[9px] font-bold text-cyan-400 truncate">基础高频激光</span>
+                    <i class="fa-solid fa-circle-info text-[9px] text-cyan-400/70 shrink-0"></i>
+                </div>
+
+                <div id="coreWeaponPopover" class="core-weapon-popover hidden" aria-hidden="true">
+                    <div class="core-weapon-popover-head">
+                        <span><i class="fa-solid fa-atom"></i> 当前合成武器</span>
+                        <button id="coreWeaponPopoverClose" type="button" title="关闭"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <strong id="coreWeaponPopoverTitle">基础高频激光</strong>
+                    <p id="coreWeaponPopoverBody">稳定射速，无额外晶核增益。</p>
+                    <em id="coreWeaponPopoverMeta">伤害 20 · 半径 R4 · 穿透 P1</em>
                 </div>
 
                 <div class="hud-action-divider"></div>
@@ -238,7 +249,7 @@
                 <a href="leaderboard.html" class="home-entry-link" aria-label="查看全球排行榜">
                     <i class="fa-solid fa-trophy"></i> 联机排行
                 </a>
-                <a href="v7_hangar.html?v=7.0.22" class="home-entry-link home-entry-link-primary" aria-label="进入永久机库">
+                <a href="v7_hangar.html?v=7.0.23" class="home-entry-link home-entry-link-primary" aria-label="进入永久机库">
                     <i class="fa-solid fa-user-astronaut"></i> 永久机库
                 </a>
             </footer>
@@ -852,16 +863,16 @@
     </div>
 
     <!-- Scripts using global script tags for CORS-free local execution -->
-    <script charset="utf-8" src="js/sound.js?v=7.0.22"></script>
-    <script charset="utf-8" src="js/engine_base.js?v=7.0.22"></script>
-    <script charset="utf-8" src="js/engine_physics.js?v=7.0.22"></script>
-    <script charset="utf-8" src="js/engine_entities.js?v=7.0.22"></script>
-    <script charset="utf-8" src="js/engine_boss.js?v=7.0.22"></script>
-    <script charset="utf-8" src="js/engine_renderer.js?v=7.0.22"></script>
-    <script charset="utf-8" src="js/engine_hangar.js?v=7.0.22"></script>
-    <script charset="utf-8" src="js/leaderboard_config.js?v=7.0.22"></script>
-    <script charset="utf-8" src="js/leaderboard_api.js?v=7.0.22"></script>
-    <script charset="utf-8" src="js/main.js?v=7.0.22"></script>
+    <script charset="utf-8" src="js/sound.js?v=7.0.23"></script>
+    <script charset="utf-8" src="js/engine_base.js?v=7.0.23"></script>
+    <script charset="utf-8" src="js/engine_physics.js?v=7.0.23"></script>
+    <script charset="utf-8" src="js/engine_entities.js?v=7.0.23"></script>
+    <script charset="utf-8" src="js/engine_boss.js?v=7.0.23"></script>
+    <script charset="utf-8" src="js/engine_renderer.js?v=7.0.23"></script>
+    <script charset="utf-8" src="js/engine_hangar.js?v=7.0.23"></script>
+    <script charset="utf-8" src="js/leaderboard_config.js?v=7.0.23"></script>
+    <script charset="utf-8" src="js/leaderboard_api.js?v=7.0.23"></script>
+    <script charset="utf-8" src="js/main.js?v=7.0.23"></script>
 
     <!-- V7 Holographic Ship Synchronizer Script -->
     <script>

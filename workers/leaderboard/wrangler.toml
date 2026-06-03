@@ -1,6 +1,9 @@
 name = "e92c11bf-8429-471d-93ea-9fe086c3b3f5"
 main = "src/index.js"
 compatibility_date = "2026-06-02"
+routes = [
+  { pattern = "game.rlmbest.xyz/api/*", zone_name = "rlmbest.xyz" }
+]
 
 # 首次部署前在 Cloudflare Dashboard 创建 D1 数据库，将 database_id 填入下方
 [[d1_databases]]

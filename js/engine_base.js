@@ -1085,7 +1085,12 @@ class GameEngine {
         if (this.score > this.bestScore) {
             this.bestScore = this.score;
             localStorage.setItem('space_best_score', this.bestScore);
-            if (window.StarseaLeaderboard && typeof window.StarseaLeaderboard.syncScoreToCloud === 'function') {
+        }
+        if (window.StarseaLeaderboard) {
+            if (typeof window.StarseaLeaderboard.syncCloudSaveFromLocal === 'function') {
+                window.StarseaLeaderboard.syncCloudSaveFromLocal();
+            }
+            if (typeof window.StarseaLeaderboard.syncScoreToCloud === 'function') {
                 window.StarseaLeaderboard.syncScoreToCloud(this.bestScore, this.currentSkin);
             }
         }
