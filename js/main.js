@@ -42,8 +42,19 @@ function recordLocalMatchHistory(match) {
     return null;
 }
 
+function markLocalCloudSaveDirty() {
+    if (window.StarseaLeaderboard && typeof window.StarseaLeaderboard.markLocalCloudSaveDirty === 'function') {
+        window.StarseaLeaderboard.markLocalCloudSaveDirty();
+        return;
+    }
+    try {
+        localStorage.setItem('space_cloud_save_dirty_at', String(Date.now()));
+    } catch (_) {}
+}
+
 function settleLocalGameOver(match) {
     const record = recordLocalMatchHistory(match);
+    markLocalCloudSaveDirty();
     if (window.StarseaLeaderboard) {
         if (typeof window.StarseaLeaderboard.syncCloudSaveFromLocal === 'function') {
             window.StarseaLeaderboard.syncCloudSaveFromLocal();
@@ -360,6 +371,7 @@ window.onload = async function() {
             mainPermanentCores = savePermanentCores(mainPermanentCores - def.cost);
             mainTalents[id] = lv + 1;
             localStorage.setItem('space_v7_talents', JSON.stringify(mainTalents));
+            markLocalCloudSaveDirty();
             sfx.playPowerup();
             mainShowToast(`🧬 永久天赋【${def.name}】已强化至 LV.${mainTalents[id]}！`);
             updateMainHangarUI();
@@ -417,6 +429,7 @@ window.onload = async function() {
             if (mainUnlockedSkins.includes(skinId)) {
                 mainCurrentSkin = skinId;
                 localStorage.setItem('space_current_skin', skinId);
+                markLocalCloudSaveDirty();
                 sfx.playSkinSwitch();
                 const names = { void: '🌌 星渊幻影', thunder: '⚡ 超维雷霆', imperial: '✨ 帝皇余晖' };
                 mainShowToast(`🎨 成功切换机体涂装为: ${names[skinId] || skinId}`);
@@ -427,6 +440,7 @@ window.onload = async function() {
                     localStorage.setItem('space_unlocked_skins', JSON.stringify(mainUnlockedSkins));
                     mainCurrentSkin = skinId;
                     localStorage.setItem('space_current_skin', skinId);
+                    markLocalCloudSaveDirty();
                     sfx.playPowerup();
                     const names = { void: '🌌 星渊幻影', thunder: '⚡ 超维雷霆', imperial: '✨ 帝皇余晖' };
                     mainShowToast(`✨ 成功解锁并装配超维机体: ${names[skinId] || skinId}`);
@@ -637,6 +651,9 @@ window.onload = async function() {
                     }
                     if (msg.key === 'space_permanent_cores' && typeof safeReadPermanentCores === 'function') {
                         mainPermanentCores = safeReadPermanentCores();
+                    }
+                    if (msg.key === 'space_current_skin' || msg.key === 'space_unlocked_skins' || msg.key === 'space_v7_talents' || msg.key === 'space_permanent_cores') {
+                        markLocalCloudSaveDirty();
                     }
                     break;
                     
@@ -1048,26 +1065,7 @@ function renderMainRogueUpgradeCards(container, elementSlots, comboKey, equipped
     container.innerHTML = '';
 
     const equipped = equippedMods || [];
-    const hasEM = elementSlots.includes('EM') || comboKey.includes('EM');
-    const poolSource = getRogueModDefinitions();
-
-    // 过滤：前置条件 + 去重已装备模组
-    const availablePool = poolSource.filter(mod => {
-        if (mod.id === 'tesla' && !hasEM) return false;
-        if (equipped.includes(mod.id)) return false; // 去重
-        return true;
-    });
-
-    // 使用 Fisher-Yates 洗牌算法，避免原地 sort 污染，保证纯随机概率
-    const shuffled = typeof shuffleArray === 'function' ? shuffleArray([...availablePool]) : (function(arr) {
-        for (let i = arr.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
-        }
-        return arr;
-    })([...availablePool]);
-    
-    const selected = shuffled.slice(0, 3);
+    const selected = selectRogueUpgradeMods(elementSlots, comboKey, equipped);
 
     // 兜底防软锁：若无任何可选模组，直接关闭弹窗并恢复战斗（引擎侧通常已拦截，此处为双保险）
     if (selected.length === 0) {

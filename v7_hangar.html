@@ -1587,6 +1587,7 @@
             localStorage.setItem('space_unlocked_skins', JSON.stringify(unlockedSkins));
             localStorage.setItem('space_current_skin', currentSkin);
             localStorage.setItem('space_permanent_cores', String(scrapBalance));
+            localStorage.setItem('space_cloud_save_dirty_at', String(Date.now()));
         }
 
         function renderSkinHangar() {
@@ -1754,6 +1755,7 @@
                 }
                 localStorage.setItem('space_v7_talents', JSON.stringify(talents));
                 localStorage.setItem('space_permanent_cores', String(scrapBalance));
+                localStorage.setItem('space_cloud_save_dirty_at', String(Date.now()));
             } catch(e) {
                 console.warn("Storage write failed", e);
             }

@@ -12,7 +12,8 @@ class GameEngine {
         
         this.isRunning = false;
         this.isPaused = false;
-        this.controlMode = 'touch'; 
+        this.controlMode = 'touch';
+        this.randomSeed = 0x9e3779b9;
         
         this.score = 0;
         this.scrap = 0; 
@@ -231,6 +232,16 @@ class GameEngine {
             if (!pool[i].active) return pool[i];
         }
         return null;
+    }
+
+    random() {
+        if (!this.isBenchmarking) return Math.random();
+        let x = this.randomSeed || 0x9e3779b9;
+        x ^= x << 13;
+        x ^= x >>> 17;
+        x ^= x << 5;
+        this.randomSeed = x >>> 0;
+        return this.randomSeed / 4294967296;
     }
 
     bindUIElements() {
@@ -524,33 +535,6 @@ class GameEngine {
         });
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     update(deltaTime) {
         if (!this.isRunning || this.isPaused) return;
 
@@ -734,7 +718,8 @@ class GameEngine {
         this.handleEnemySpawning(deltaTime);
 
         // 引擎尾迹烧伤 (从 draw 移入 update，避免暂停期仍触发游戏状态改动)
-        if (this.hangar.engineLevel > 0 && Math.random() < 0.4) {
+        const trailBurnChance = Math.min(1, 0.4 * dtClamped);
+        if (this.hangar.engineLevel > 0 && Math.random() < trailBurnChance) {
             const burn = this.hangar.engineLevel * 0.8;
             for (let i = 0; i < this.maxMeteors; i++) {
                 const m = this.meteors[i];
@@ -844,19 +829,19 @@ class GameEngine {
                 // 生成多颗流星
                 for (let count = 0; count < 2; count++) {
                     const benchOffsets = this.scratchMeteorOffsets;
-                    for (let k = 0; k < 8; k++) benchOffsets[k] = Math.random() * 0.4 + 0.8;
+                    for (let k = 0; k < 8; k++) benchOffsets[k] = this.random() * 0.4 + 0.8;
                     this.spawnMeteorInPool({
-                        x: Math.random() * this.logicalWidth,
+                        x: this.random() * this.logicalWidth,
                         y: -30,
-                        size: Math.random() * 25 + 15,
-                        radius: Math.random() * 12 + 8,
-                        vx: (Math.random() - 0.5) * 6,
-                        vy: Math.random() * 8 + 4,
+                        size: this.random() * 25 + 15,
+                        radius: this.random() * 12 + 8,
+                        vx: (this.random() - 0.5) * 6,
+                        vy: this.random() * 8 + 4,
                         hp: 30,
                         maxHp: 30,
                         type: 'normal',
-                        angle: Math.random() * Math.PI,
-                        spinSpeed: (Math.random() - 0.5) * 0.1,
+                        angle: this.random() * Math.PI,
+                        spinSpeed: (this.random() - 0.5) * 0.1,
                         offsets: benchOffsets,
                         numPoints: 8,
                         color: '#c084fc'
@@ -865,8 +850,8 @@ class GameEngine {
 
                 // 疯狂生成粒子爆炸，给粒子池上满载压力
                 this.createExplosionParticles(
-                    Math.random() * this.logicalWidth,
-                    Math.random() * (this.logicalHeight / 2) + 100,
+                    this.random() * this.logicalWidth,
+                    this.random() * (this.logicalHeight / 2) + 100,
                     20,
                     '#22d3ee'
                 );
@@ -875,9 +860,9 @@ class GameEngine {
             // 自动狂暴开火 (跑分时僚机和主机疯狂输出以拉满弹幕)
             for (let i = 0; i < 3; i++) {
                 this.spawnBulletInPool({
-                    x: Math.random() * this.logicalWidth,
+                    x: this.random() * this.logicalWidth,
                     y: this.logicalHeight - 150,
-                    vx: (Math.random() - 0.5) * 8,
+                    vx: (this.random() - 0.5) * 8,
                     vy: -15,
                     radius: 4,
                     damage: 15,
@@ -975,6 +960,7 @@ class GameEngine {
         this.bossTiersDefeatedThisRun = [];
         this.gameOverCoreSettled = false;
         this.runStartedAt = performance.now();
+        this.randomSeed = 0x9e3779b9;
         if (typeof this._refreshNextBossThreshold === 'function') {
             this._refreshNextBossThreshold();
         }

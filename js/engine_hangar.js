@@ -124,6 +124,7 @@ Object.assign(GameEngine.prototype, {
             locked: '未点亮',
             btnCost: (c) => `点亮 · ${c}`
         };
+        const permanentCores = safeReadPermanentCores();
         for (let i = 0; i < TALENT_DEFINITIONS.length; i++) {
             const def = TALENT_DEFINITIONS[i];
             this._renderUpgradeCard(

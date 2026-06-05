@@ -5,6 +5,7 @@
     const GUEST_KEY_RE = /^gst_[a-z0-9]{32,64}$/;
     const GUEST_KEY_KEY = 'space_guest_key';
     const CLOUD_REVISION_KEY = 'space_cloud_save_revision';
+    const CLOUD_DIRTY_KEY = 'space_cloud_save_dirty_at';
     const MATCH_HISTORY_LIMIT = 50;
 
     function getConfig() {
@@ -128,6 +129,18 @@
 
     function getCloudRevision() {
         return Math.max(0, Math.floor(Number(localStorage.getItem(CLOUD_REVISION_KEY)) || 0));
+    }
+
+    function markLocalCloudSaveDirty() {
+        localStorage.setItem(CLOUD_DIRTY_KEY, String(Date.now()));
+    }
+
+    function hasLocalCloudSaveChanges() {
+        return !!localStorage.getItem(CLOUD_DIRTY_KEY);
+    }
+
+    function clearLocalCloudSaveDirty() {
+        localStorage.removeItem(CLOUD_DIRTY_KEY);
     }
 
     function safeJson(key, fallback) {
@@ -286,6 +299,7 @@
                 })
             });
             if (result && result.save) applyCloudSave(result.save);
+            clearLocalCloudSaveDirty();
             return result;
         } catch (err) {
             if (err && err.status === 409 && err.data && err.data.save) {
@@ -309,6 +323,7 @@
         } finally {
             clearSessionToken();
             localStorage.removeItem(CLOUD_REVISION_KEY);
+            clearLocalCloudSaveDirty();
         }
         return { success: true };
     }
@@ -381,6 +396,8 @@
         getProfile: getProfile,
         getSessionToken: getSessionToken,
         getCloudRevision: getCloudRevision,
+        markLocalCloudSaveDirty: markLocalCloudSaveDirty,
+        hasLocalCloudSaveChanges: hasLocalCloudSaveChanges,
         collectLocalCloudSave: collectLocalCloudSave,
         applyCloudSave: applyCloudSave,
         checkHealth: checkHealth,
