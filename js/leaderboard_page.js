@@ -379,6 +379,10 @@
         if (!API.getSessionToken || !API.getSessionToken()) return false;
         if (typeof API.fetchCloudSave !== 'function') return false;
         try {
+            if (API.hasLocalCloudSaveChanges && API.hasLocalCloudSaveChanges() && API.saveCloudSave && API.collectLocalCloudSave) {
+                await API.saveCloudSave(API.collectLocalCloudSave());
+                return true;
+            }
             await API.fetchCloudSave();
             return true;
         } catch (_) {

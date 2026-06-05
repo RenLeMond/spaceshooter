@@ -33,7 +33,7 @@ Object.assign(GameEngine.prototype, {
 
     spawnBoss() {
         const tier = this.bossTier + 1;
-        if (Math.random() < 0.5) {
+        if (this.random() < 0.5) {
             this.spawnTitanBoss(tier);
         } else {
             this.spawnAsteroidWorm(tier);

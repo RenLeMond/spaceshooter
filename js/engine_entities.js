@@ -106,6 +106,23 @@ function shuffleArray(arr) {
     return arr;
 }
 
+function getAvailableRogueModPool(elementSlots, comboKey, equippedMods) {
+    const equipped = Array.isArray(equippedMods) ? equippedMods : [];
+    const slots = Array.isArray(elementSlots) ? elementSlots : [];
+    const combo = String(comboKey || '');
+    const hasEM = slots.includes('EM') || combo.includes('EM');
+    return ROGUE_MOD_DEFINITIONS.filter(mod => {
+        if (mod.id === 'tesla' && !hasEM) return false;
+        if (equipped.includes(mod.id)) return false;
+        return true;
+    });
+}
+
+function selectRogueUpgradeMods(elementSlots, comboKey, equippedMods, limit = 3) {
+    const availablePool = getAvailableRogueModPool(elementSlots, comboKey, equippedMods);
+    return shuffleArray([...availablePool]).slice(0, limit);
+}
+
 // V7: 先驱者六角星盘「永久天赋矩阵」定义 — Worker / 主线程共用 (var 供跨文件 classic script 访问)
 // 局外 Meta 永久升级：用结算星核点亮，等级持久化于 localStorage('space_v7_talents')，开局自动生效。
 var TALENT_DEFINITIONS = [
@@ -490,14 +507,14 @@ Object.assign(GameEngine.prototype, {
     },
 
     spawnMeteor(xOverride = null, yOverride = null, sizeOverride = null, vxOverride = null) {
-        const size = sizeOverride || (Math.random() * 50 + 20);
-        const x = xOverride !== null ? xOverride : (Math.random() * (this.logicalWidth - size * 2) + size);
+        const size = sizeOverride || (this.random() * 50 + 20);
+        const x = xOverride !== null ? xOverride : (this.random() * (this.logicalWidth - size * 2) + size);
         const y = yOverride !== null ? yOverride : -size;
-        
+
         let type = 'standard';
         let speedMultiplier = 1 + (this.wave * 0.1);
-        let vy = (Math.random() * 2 + 1.5) * speedMultiplier;
-        let vx = vxOverride !== null ? vxOverride : (Math.random() * 1.6 - 0.8);
+        let vy = (this.random() * 2 + 1.5) * speedMultiplier;
+        let vx = vxOverride !== null ? vxOverride : (this.random() * 1.6 - 0.8);
 
         if (size > 60 && xOverride === null) {
             type = 'splitter';
@@ -528,15 +545,15 @@ Object.assign(GameEngine.prototype, {
 
         // Phase Shield spawning probability (15% chance in endless mode for non-tiny meteors)
         let shieldCount = 0;
-        if (this.endlessMode && Math.random() < 0.15 && size > 30 && xOverride === null) {
+        if (this.endlessMode && this.random() < 0.15 && size > 30 && xOverride === null) {
             type = 'phase_shield';
             shieldCount = 3;
         }
 
-        const numPoints = Math.floor(Math.random() * 4) + 8;
+        const numPoints = Math.floor(this.random() * 4) + 8;
         const offsets = this.scratchMeteorOffsets;
         for (let i = 0; i < numPoints; i++) {
-            offsets[i] = 0.75 + Math.random() * 0.45;
+            offsets[i] = 0.75 + this.random() * 0.45;
         }
 
         this.spawnMeteorInPool({
@@ -549,8 +566,8 @@ Object.assign(GameEngine.prototype, {
             hp: maxHp,
             maxHp: maxHp,
             type: type,
-            angle: Math.random() * Math.PI,
-            spinSpeed: (Math.random() * 0.04 - 0.02),
+            angle: this.random() * Math.PI,
+            spinSpeed: (this.random() * 0.04 - 0.02),
             offsets: offsets,
             numPoints: numPoints,
             shieldCount: shieldCount,
@@ -854,18 +871,7 @@ Object.assign(GameEngine.prototype, {
         
         const equipped = this.player.equippedMods || [];
         const slots = this.player.elementSlots || [];
-        const hasEM = slots.includes('EM') || (this.player.comboKey && this.player.comboKey.includes('EM'));
-
-        // 过滤：前置条件 + 去重已装备模组
-        const availablePool = ROGUE_MOD_DEFINITIONS.filter(mod => {
-            if (mod.id === 'tesla' && !hasEM) return false;
-            if (equipped.includes(mod.id)) return false; // 去重
-            return true;
-        });
-
-        // Fisher-Yates 洗牌 + 取前 3 张
-        const shuffled = shuffleArray([...availablePool]);
-        const selected = shuffled.slice(0, 3);
+        const selected = selectRogueUpgradeMods(slots, this.player.comboKey, equipped);
 
         // 兜底防软锁：无可选模组时关闭弹窗并恢复战斗（triggerLevelUp 通常已拦截，此处双保险）
         if (selected.length === 0) {
@@ -925,7 +931,7 @@ Object.assign(GameEngine.prototype, {
         if (modId === 'heavy') {
             this.player.fireInterval = Math.floor(this.player.fireInterval * 1.12);
         } else if (modId === 'drone') {
-            this.hangar.turretLevel++;
+            this.hangar.turretLevel = Math.min(2, this.hangar.turretLevel + 1);
             this.updateWingmen(1.0);
         } else if (modId === 'antimatter') {
             this.player.maxHp = Math.floor(this.player.maxHp * 0.7);
