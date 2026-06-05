@@ -157,9 +157,12 @@ test('gameplay HUD uses the compact spacing pass', async () => {
 });
 
 test('start screen bottom dock stays inside mobile visual viewport', async () => {
+  const html = await readFile(new URL('../space_shooter.html', import.meta.url), 'utf8');
   const css = await readFile(new URL('../style.css', import.meta.url), 'utf8');
   const mainSource = await readFile(new URL('../js/main.js', import.meta.url), 'utf8');
 
+  assert.match(html, /viewport-fit=cover/);
+  assert.match(css, /-webkit-fill-available/);
   assert.match(css, /#canvas-container\s*{[^}]*height:\s*var\(--app-height,\s*100dvh\)/s);
   assert.match(css, /#startScreen\s*{[^}]*display:\s*flex[^}]*flex-direction:\s*column/s);
   assert.match(css, /\.start-shell\s*{[^}]*min-height:\s*0/s);

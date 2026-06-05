@@ -4,7 +4,7 @@ import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright';
+import { chromium, devices } from 'playwright';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const mimeTypes = {
@@ -35,6 +35,19 @@ function startStaticServer() {
       resolve({ server, port: server.address().port });
     });
   });
+}
+
+async function assertStartDockFitsViewport(page, label) {
+  await page.waitForSelector('.home-entry-dock', { state: 'visible', timeout: 10000 });
+  const box = await page.locator('.home-entry-dock').boundingBox();
+  const viewport = page.viewportSize();
+
+  assert.ok(box, `${label}: bottom dock should have a layout box`);
+  assert.ok(viewport, `${label}: page should expose a viewport`);
+  assert.ok(box.height >= 30, `${label}: bottom dock should be tall enough, got ${box.height}`);
+  assert.ok(box.y + box.height <= viewport.height, `${label}: bottom dock bottom ${box.y + box.height} should fit viewport ${viewport.height}`);
+  assert.ok(box.y >= 0, `${label}: bottom dock top ${box.y} should fit viewport`);
+  assert.equal(await page.locator('.home-entry-link').count(), 4, `${label}: bottom dock should render all entry links`);
 }
 
 test('critical pages load without script errors and the game runtime starts', async t => {
@@ -93,11 +106,24 @@ test('mobile start screen keeps the bottom dock visible', async t => {
     hasTouch: true
   });
   await page.goto(`http://127.0.0.1:${port}/space_shooter.html`, { waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('.home-entry-dock', { state: 'visible', timeout: 10000 });
 
-  const box = await page.locator('.home-entry-dock').boundingBox();
-  assert.ok(box, 'bottom dock should have a layout box');
-  assert.ok(box.height >= 30, `bottom dock should be tall enough, got ${box.height}`);
-  assert.ok(box.y + box.height <= 760, `bottom dock bottom ${box.y + box.height} should fit viewport`);
-  assert.ok(box.y >= 0, `bottom dock top ${box.y} should fit viewport`);
+  await assertStartDockFitsViewport(page, 'generic mobile');
+});
+
+test('iPhone Safari profiles keep the start dock inside the visual viewport', async t => {
+  const { server, port } = await startStaticServer();
+  const browser = await chromium.launch({ headless: true });
+  t.after(async () => {
+    await browser.close();
+    await new Promise(resolve => server.close(resolve));
+  });
+
+  const base = `http://127.0.0.1:${port}`;
+  for (const deviceName of ['iPhone SE', 'iPhone 13']) {
+    const { defaultBrowserType, ...device } = devices[deviceName];
+    const page = await browser.newPage(device);
+    await page.goto(`${base}/space_shooter.html`, { waitUntil: 'domcontentloaded' });
+    await assertStartDockFitsViewport(page, deviceName);
+    await page.close();
+  }
 });

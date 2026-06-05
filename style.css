@@ -1,8 +1,16 @@
+html {
+    height: 100%;
+    min-height: -webkit-fill-available;
+    background-color: #02040a;
+}
+
 body {
     margin: 0;
     padding: 0;
     background-color: #02040a;
     overflow: hidden;
+    min-height: 100%;
+    min-height: -webkit-fill-available;
     font-family: 'Outfit', 'Noto Sans SC', 'Inter', system-ui, -apple-system, sans-serif;
     user-select: none;
     -webkit-user-select: none;
@@ -21,6 +29,7 @@ body {
 #canvas-container {
     position: relative;
     width: 100vw;
+    height: -webkit-fill-available;
     height: 100vh;
     height: 100dvh;
     height: var(--app-height, 100dvh);
