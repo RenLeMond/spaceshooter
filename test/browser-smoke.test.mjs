@@ -122,11 +122,11 @@ test('leaderboard renders entries before slower cloud and profile calls finish',
     localStorage.setItem('space_user_is_bound', 'true');
     localStorage.setItem('space_user_bound_email', 'pilot@example.com');
   });
-  const startedAt = Date.now();
   await page.goto(`http://127.0.0.1:${port}/leaderboard.html`, { waitUntil: 'domcontentloaded' });
+  const startedAt = Date.now();
   await page.waitForSelector('.leaderboard-item', { state: 'visible', timeout: 1000 });
 
-  assert.ok(Date.now() - startedAt < 1600, 'leaderboard list should render before delayed profile/cloud calls finish');
+  assert.ok(Date.now() - startedAt < 1000, 'leaderboard list should render before delayed profile/cloud calls finish');
   assert.match(await page.locator('.leaderboard-item').first().textContent(), /FastPilot/);
 });
 

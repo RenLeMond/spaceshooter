@@ -51,10 +51,16 @@ async function loadLeaderboardApi(storage = new Map(), fetchImpl = async () => (
           return arr;
         }
       },
-      fetch: async (url, options) => new Response(JSON.stringify(await fetchImpl(url, options || {})), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      }),
+      fetch: async (url, options) => {
+        const result = await fetchImpl(url, options || {});
+        const response = result && typeof result === 'object' && 'status' in result
+          ? result
+          : { status: 200, body: result };
+        return new Response(JSON.stringify(response.body), {
+          status: response.status,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      },
       dispatchEvent() {},
       CustomEvent: function CustomEvent(type, init) {
         return { type, detail: init && init.detail };
@@ -77,6 +83,18 @@ test('ngrok previews use the production same-site API host', async () => {
 
   assert.equal(ngrok.apiBase, 'https://game.rlmbest.xyz');
   assert.equal(prod.apiBase, '');
+});
+
+test('entry pages use the current cache-busting asset version', async () => {
+  const expected = '7.0.29';
+  const files = ['index.html', 'space_shooter.html', 'leaderboard.html', 'v7_hangar.html'];
+  for (const file of files) {
+    const html = await readFile(new URL('../' + file, import.meta.url), 'utf8');
+    assert.equal(/7\.0\.2[0-8]/.test(html), false, `${file} should not link old 7.0.2x assets`);
+  }
+
+  const mainSource = await readFile(new URL('../js/main.js', import.meta.url), 'utf8');
+  assert.match(mainSource, new RegExp(`ASSET_VERSION = '${expected}'`));
 });
 
 test('weapon base stats expose fused weapon special bonuses', async () => {
@@ -356,6 +374,53 @@ test('frontend cloud save dirty marker is cleared only after a successful save',
   assert.equal(storage.get('space_cloud_save_revision'), '2');
   assert.equal(storage.has('space_cloud_save_dirty_at'), false);
   assert.equal(api.hasLocalCloudSaveChanges(), false);
+});
+
+test('frontend cloud save dirty local changes retry after revision conflict without restoring cloud state', async () => {
+  const storage = new Map([
+    ['space_cloud_save_dirty_at', '1234'],
+    ['space_account_token', 'sess_abc'],
+    ['space_cloud_save_revision', '1'],
+    ['space_permanent_cores', '20'],
+    ['space_v7_talents', '{}'],
+    ['space_unlocked_skins', '["default"]'],
+    ['space_current_skin', 'default']
+  ]);
+  const saveRequests = [];
+  const { api } = await loadLeaderboardApi(storage, async (url, options) => {
+    if (String(url).endsWith('/api/cloud-save') && options.method === 'POST') {
+      const payload = JSON.parse(options.body);
+      saveRequests.push(payload);
+      if (saveRequests.length === 1) {
+        return {
+          status: 409,
+          body: {
+            error: 'revision_conflict',
+            save: {
+              revision: 5,
+              permanentCores: 100,
+              talents: { A: 2 },
+              unlockedSkins: ['default', 'void'],
+              currentSkin: 'void'
+            }
+          }
+        };
+      }
+      return { success: true, save: Object.assign({ revision: 6 }, payload.save) };
+    }
+    return { success: true };
+  });
+
+  const result = await api.saveCloudSave(api.collectLocalCloudSave());
+
+  assert.equal(saveRequests.length, 2);
+  assert.equal(saveRequests[0].revision, 1);
+  assert.equal(saveRequests[1].revision, 5);
+  assert.equal(result.save.revision, 6);
+  assert.equal(storage.get('space_permanent_cores'), '20');
+  assert.equal(storage.get('space_current_skin'), 'default');
+  assert.equal(storage.get('space_unlocked_skins'), '["default"]');
+  assert.equal(storage.has('space_cloud_save_dirty_at'), false);
 });
 
 test('main thread game over uses the shared local match settlement helper', async () => {

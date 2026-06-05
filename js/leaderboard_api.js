@@ -286,16 +286,18 @@
         return result;
     }
 
-    async function saveCloudSave(save) {
+    async function saveCloudSave(save, allowConflictRetry) {
         const token = getSessionToken();
         if (!token) return { skipped: true, reason: 'not_bound' };
+        if (typeof allowConflictRetry === 'undefined') allowConflictRetry = true;
+        const payloadSave = save || collectLocalCloudSave();
         try {
             const result = await apiFetch('/api/cloud-save', {
                 method: 'POST',
                 headers: { Authorization: 'Bearer ' + token },
                 body: JSON.stringify({
                     revision: getCloudRevision(),
-                    save: save || collectLocalCloudSave()
+                    save: payloadSave
                 })
             });
             if (result && result.save) applyCloudSave(result.save);
@@ -303,6 +305,10 @@
             return result;
         } catch (err) {
             if (err && err.status === 409 && err.data && err.data.save) {
+                if (allowConflictRetry && hasLocalCloudSaveChanges() && typeof err.data.save.revision !== 'undefined') {
+                    localStorage.setItem(CLOUD_REVISION_KEY, String(Math.max(0, Math.floor(Number(err.data.save.revision) || 0))));
+                    return saveCloudSave(payloadSave, false);
+                }
                 applyCloudSave(err.data.save);
                 return { conflict: true, save: err.data.save };
             }
