@@ -138,7 +138,18 @@ test('leaderboard refresh pulls bound cloud save before rendering recent matches
   const pageScript = await readFile(new URL('../js/leaderboard_page.js', import.meta.url), 'utf8');
 
   assert.match(pageScript, /async function refreshCloudSaveIfBound\(\)/);
-  assert.match(pageScript, /await refreshCloudSaveIfBound\(\);\s*loadLocalData\(\);\s*renderProfile\(\);/s);
+  assert.match(pageScript, /const cloudRefresh = refreshCloudSaveIfBound\(\)\.then/s);
+  assert.match(pageScript, /loadLocalData\(\);\s*renderProfile\(\);/s);
+  assert.match(pageScript, /if \(!changed\) return;\s*loadLocalData\(\);\s*renderProfile\(\);/s);
+});
+
+test('leaderboard page does not block the first list render on slower profile calls', async () => {
+  const pageScript = await readFile(new URL('../js/leaderboard_page.js', import.meta.url), 'utf8');
+
+  assert.match(pageScript, /LEADERBOARD_CACHE_KEY/);
+  assert.match(pageScript, /function renderCachedLeaderboard\(\)/);
+  assert.match(pageScript, /const playerPromise = API\.fetchPlayer\(state\.userId\)\.catch/);
+  assert.match(pageScript, /const data = await API\.fetchLeaderboard\(50\);[\s\S]*renderLeaderboard\(state\.leaderboard\);[\s\S]*const player = await playerPromise;/);
 });
 
 test('hangar summary link has overflow guards', async () => {

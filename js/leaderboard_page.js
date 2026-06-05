@@ -3,6 +3,8 @@
     const DEFAULT_NICKNAME = API ? API.DEFAULT_NICKNAME : '星海先驱者';
     const DEFAULT_AVATAR = 'fa-user-astronaut';
     const DEFAULT_BIO = '向着星辰与深渊！';
+    const LEADERBOARD_CACHE_KEY = 'space_leaderboard_cache_v1';
+    const LEADERBOARD_CACHE_MAX_AGE_MS = 2 * 60 * 1000;
 
     const SHIP_META = {
         default: { icon: 'fa-rocket', name: '先驱者默认', className: 'skin-default', badge: 'D', color: '#22d3ee' },
@@ -116,6 +118,34 @@
         state.bio = sanitizeBio(localStorage.getItem('space_user_bio')) || DEFAULT_BIO;
         state.isBound = localStorage.getItem('space_user_is_bound') === 'true';
         state.boundAccount = localStorage.getItem('space_user_bound_email') || '';
+    }
+
+    function readLeaderboardCache() {
+        try {
+            const cached = JSON.parse(localStorage.getItem(LEADERBOARD_CACHE_KEY) || 'null');
+            if (!cached || !Array.isArray(cached.entries)) return null;
+            if (Date.now() - Number(cached.savedAt || 0) > LEADERBOARD_CACHE_MAX_AGE_MS) return null;
+            return cached.entries;
+        } catch (_) {
+            return null;
+        }
+    }
+
+    function writeLeaderboardCache(entries) {
+        try {
+            localStorage.setItem(LEADERBOARD_CACHE_KEY, JSON.stringify({
+                savedAt: Date.now(),
+                entries: Array.isArray(entries) ? entries : []
+            }));
+        } catch (_) {}
+    }
+
+    function renderCachedLeaderboard() {
+        const cached = readLeaderboardCache();
+        if (!cached || !cached.length) return false;
+        state.leaderboard = cached;
+        renderLeaderboard(cached);
+        return true;
     }
 
     function saveProfile() {
@@ -325,20 +355,21 @@
         setStatus('connecting');
         try {
             if (!API || !API.isEnabled()) throw new Error('leaderboard_disabled');
-            // 并行发起榜单和玩家排名两个请求，减少一次串行 RTT
-            const [data, player] = await Promise.all([
-                API.fetchLeaderboard(50),
-                API.fetchPlayer(state.userId).catch(() => null)
-            ]);
+            // 榜单先渲染，个人精确排名后台补齐，避免一个慢请求拖住首屏列表。
+            const playerPromise = API.fetchPlayer(state.userId).catch(() => null);
+            const data = await API.fetchLeaderboard(50);
             state.leaderboard = Array.isArray(data.entries) ? data.entries : [];
+            writeLeaderboardCache(state.leaderboard);
             renderLeaderboard(state.leaderboard);
-            // 优先用 /api/player 返回的精确排名，否则从榜单里找
+            setStatus('online');
+
+            const player = await playerPromise;
+            // 优先用 /api/player 返回的精确排名，否则保留榜单里推导出的排名
             if (player && player.rank) {
                 el.playerRankText.textContent = `全球排名 #${player.rank}`;
             }
-            setStatus('online');
         } catch (err) {
-            renderLeaderboard([]);
+            if (!state.leaderboard.length) renderLeaderboard([]);
             setStatus('offline');
         }
     }
@@ -356,10 +387,16 @@
     }
 
     async function refreshProfileAndLeaderboard() {
-        await refreshCloudSaveIfBound();
         loadLocalData();
         renderProfile();
+        renderCachedLeaderboard();
+        const cloudRefresh = refreshCloudSaveIfBound().then(changed => {
+            if (!changed) return;
+            loadLocalData();
+            renderProfile();
+        });
         await refreshLeaderboard();
+        await cloudRefresh;
     }
 
     function setStatus(mode) {
@@ -522,8 +559,9 @@
     async function init() {
         loadLocalData();
         renderProfile();
+        renderCachedLeaderboard();
         initEvents();
-        await refreshProfileAndLeaderboard();
+        refreshProfileAndLeaderboard();
     }
 
     init();

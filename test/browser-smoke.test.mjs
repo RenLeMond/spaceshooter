@@ -14,10 +14,11 @@ const mimeTypes = {
   '.json': 'application/json; charset=utf-8'
 };
 
-function startStaticServer() {
+function startStaticServer(apiHandler) {
   const server = createServer(async (request, response) => {
     try {
       const url = new URL(request.url, 'http://127.0.0.1');
+      if (apiHandler && await apiHandler(url, request, response)) return;
       const requestPath = decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname);
       const filePath = path.resolve(root, '.' + requestPath);
       if (!filePath.startsWith(root + path.sep) || !(await stat(filePath)).isFile()) {
@@ -35,6 +36,10 @@ function startStaticServer() {
       resolve({ server, port: server.address().port });
     });
   });
+}
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function assertStartDockFitsViewport(page, label) {
@@ -71,6 +76,58 @@ test('critical pages load without script errors and the game runtime starts', as
 
   await page.waitForFunction(() => Boolean(window.gameWorker || window.gameEngine), null, { timeout: 10000 });
   assert.deepEqual(pageErrors, []);
+});
+
+test('leaderboard renders entries before slower cloud and profile calls finish', async t => {
+  const { server, port } = await startStaticServer(async (url, _request, response) => {
+    if (url.pathname === '/api/leaderboard') {
+      response.setHeader('Content-Type', 'application/json; charset=utf-8');
+      response.end(JSON.stringify({
+        entries: [{
+          rank: 1,
+          user_id: 'usr_fastboard',
+          username: 'FastPilot',
+          avatar: 'fa-rocket',
+          bio: '极速上榜',
+          score: 12345,
+          ship_type: 'void',
+          updated_at: '2026-06-05T10:00:00Z'
+        }]
+      }));
+      return true;
+    }
+    if (url.pathname === '/api/player') {
+      await delay(1800);
+      response.setHeader('Content-Type', 'application/json; charset=utf-8');
+      response.end(JSON.stringify({ user_id: 'usr_fastboard', rank: 1, score: 12345 }));
+      return true;
+    }
+    if (url.pathname === '/api/cloud-save') {
+      await delay(2400);
+      response.setHeader('Content-Type', 'application/json; charset=utf-8');
+      response.end(JSON.stringify({ success: true, save: { revision: 1, bestScore: 12345 } }));
+      return true;
+    }
+    return false;
+  });
+  const browser = await chromium.launch({ headless: true });
+  t.after(async () => {
+    await browser.close();
+    await new Promise(resolve => server.close(resolve));
+  });
+
+  const page = await browser.newPage();
+  await page.addInitScript(() => {
+    localStorage.setItem('space_account_token', 'sess_slow_profile');
+    localStorage.setItem('space_user_is_bound', 'true');
+    localStorage.setItem('space_user_bound_email', 'pilot@example.com');
+  });
+  const startedAt = Date.now();
+  await page.goto(`http://127.0.0.1:${port}/leaderboard.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.leaderboard-item', { state: 'visible', timeout: 1000 });
+
+  assert.ok(Date.now() - startedAt < 1600, 'leaderboard list should render before delayed profile/cloud calls finish');
+  assert.match(await page.locator('.leaderboard-item').first().textContent(), /FastPilot/);
 });
 
 test('V6 hangar recalculates tactical attributes after changing a wingman', async t => {
