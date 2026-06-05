@@ -78,3 +78,26 @@ test('V6 hangar recalculates tactical attributes after changing a wingman', asyn
       && document.getElementById('synergyName').textContent === '混合战术共鸣';
   }));
 });
+
+test('mobile start screen keeps the bottom dock visible', async t => {
+  const { server, port } = await startStaticServer();
+  const browser = await chromium.launch({ headless: true });
+  t.after(async () => {
+    await browser.close();
+    await new Promise(resolve => server.close(resolve));
+  });
+
+  const page = await browser.newPage({
+    viewport: { width: 393, height: 760 },
+    isMobile: true,
+    hasTouch: true
+  });
+  await page.goto(`http://127.0.0.1:${port}/space_shooter.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.home-entry-dock', { state: 'visible', timeout: 10000 });
+
+  const box = await page.locator('.home-entry-dock').boundingBox();
+  assert.ok(box, 'bottom dock should have a layout box');
+  assert.ok(box.height >= 30, `bottom dock should be tall enough, got ${box.height}`);
+  assert.ok(box.y + box.height <= 760, `bottom dock bottom ${box.y + box.height} should fit viewport`);
+  assert.ok(box.y >= 0, `bottom dock top ${box.y} should fit viewport`);
+});

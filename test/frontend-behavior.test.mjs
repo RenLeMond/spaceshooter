@@ -156,6 +156,19 @@ test('gameplay HUD uses the compact spacing pass', async () => {
   assert.match(css, /#hud #bossHpGroup\s*{[^}]*padding:\s*6px 8px !important/s);
 });
 
+test('start screen bottom dock stays inside mobile visual viewport', async () => {
+  const css = await readFile(new URL('../style.css', import.meta.url), 'utf8');
+  const mainSource = await readFile(new URL('../js/main.js', import.meta.url), 'utf8');
+
+  assert.match(css, /#canvas-container\s*{[^}]*height:\s*var\(--app-height,\s*100dvh\)/s);
+  assert.match(css, /#startScreen\s*{[^}]*display:\s*flex[^}]*flex-direction:\s*column/s);
+  assert.match(css, /\.start-shell\s*{[^}]*min-height:\s*0/s);
+  assert.match(css, /\.home-entry-dock\s*{[^}]*flex:\s*0 0 auto/s);
+  assert.match(css, /\.home-entry-dock\s*{[^}]*safe-area-inset-bottom/s);
+  assert.match(mainSource, /visualViewport/);
+  assert.match(mainSource, /--app-height/);
+});
+
 test('leaderboard mobile rows keep the uploaded time visible', async () => {
   const html = await readFile(new URL('../leaderboard.html', import.meta.url), 'utf8');
 

@@ -23,7 +23,8 @@ body {
     width: 100vw;
     height: 100vh;
     height: 100dvh;
-    max-width: 540px; 
+    height: var(--app-height, 100dvh);
+    max-width: 540px;
     margin: 0 auto;
     background: radial-gradient(circle at center, #09101f 0%, #02040a 100%);
     box-shadow: 0 0 50px rgba(6, 182, 212, 0.2);
@@ -704,6 +705,12 @@ canvas {
     box-sizing: border-box;
 }
 
+#startScreen {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
 #startScreen.hidden {
     display: none;
 }
@@ -767,13 +774,15 @@ canvas {
 
 .start-shell {
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     gap: 10px;
-    padding: clamp(88px, 14vh, 132px) 14px 6px;
+    padding: clamp(88px, 14vh, 132px) 14px 8px;
     box-sizing: border-box;
     overflow-y: auto;
+    overscroll-behavior: contain;
     scrollbar-width: none; /* Firefox */
 }
 
@@ -1270,11 +1279,11 @@ canvas {
 /* ============ [NEW] 全息控制台底部导航底座 (System Dock) ============ */
 .home-entry-dock {
     width: 100%;
-    height: 32px;
+    min-height: 34px;
     display: flex;
     align-items: center;
     justify-content: space-around;
-    padding: 0 12px;
+    padding: 0 12px max(env(safe-area-inset-bottom), 0px);
     background: rgba(2, 5, 14, 0.72);
     border-top: 1px solid rgba(34, 211, 238, 0.16);
     box-shadow: 
@@ -1284,6 +1293,7 @@ canvas {
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     z-index: 5;
+    flex: 0 0 auto;
 }
 
 .home-entry-link {
@@ -1415,8 +1425,8 @@ canvas {
         min-height: 36px;
     }
     .home-entry-dock {
-        height: 32px;
-        padding: 0 6px;
+        min-height: 36px;
+        padding: 0 6px max(env(safe-area-inset-bottom), 0px);
     }
     .home-entry-link {
         font-size: 0;
@@ -1468,7 +1478,7 @@ canvas {
         height: 40px;
     }
     .home-entry-dock {
-        height: 30px;
+        min-height: 34px;
     }
 }
 
