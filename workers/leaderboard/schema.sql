@@ -47,6 +47,8 @@ CREATE TABLE IF NOT EXISTS accounts (
     account_label TEXT NOT NULL,
     password_salt TEXT NOT NULL,
     password_hash TEXT NOT NULL,
+    password_algorithm TEXT NOT NULL DEFAULT 'sha256',
+    password_iterations INTEGER NOT NULL DEFAULT 1,
     user_id TEXT NOT NULL UNIQUE,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -57,7 +59,15 @@ CREATE TABLE IF NOT EXISTS account_sessions (
     token TEXT PRIMARY KEY,
     account_id TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    expires_at INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id) REFERENCES accounts(account_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS guest_identities (
+    user_id TEXT PRIMARY KEY,
+    key_hash TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS player_cloud_saves (
@@ -68,6 +78,7 @@ CREATE TABLE IF NOT EXISTS player_cloud_saves (
     current_skin TEXT NOT NULL DEFAULT 'default',
     best_score INTEGER NOT NULL DEFAULT 0 CHECK (best_score >= 0),
     profile_json TEXT NOT NULL DEFAULT '{}',
+    revision INTEGER NOT NULL DEFAULT 0,
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

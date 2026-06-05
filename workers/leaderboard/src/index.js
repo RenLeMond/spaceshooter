@@ -1,13 +1,25 @@
 const ALLOWED_SHIPS = new Set(['default', 'void', 'thunder', 'imperial']);
 const USER_ID_RE = /^usr_[a-z0-9]{8,32}$/;
-const MAX_JSON_BODY_BYTES = 4096;
+const GUEST_KEY_RE = /^gst_[a-z0-9]{32,64}$/;
+const WRITE_BODY_LIMITS = {
+  '/api/submit-score': 4096,
+  '/api/guest-session': 4096,
+  '/api/auth/bind': 65536,
+  '/api/auth/logout': 4096,
+  '/api/cloud-save': 65536
+};
+const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
+const PBKDF2_ITERATIONS = 120000;
+const MATCH_HISTORY_LIMIT = 50;
 const DEFAULT_NICKNAME = '星海先驱者';
 const DEFAULT_AVATAR = 'fa-user-astronaut';
 const DEFAULT_ALLOWED_ORIGINS = 'https://renlimeng.qzz.io,https://rlmbest.xyz,http://localhost:5173,http://127.0.0.1:5173,http://localhost:8787,http://127.0.0.1:8787,http://localhost:8080,http://127.0.0.1:8080,http://localhost:9999,http://127.0.0.1:9999';
 const RATE_LIMITS = {
   '/api/leaderboard': { limit: 120, windowSeconds: 60 },
   '/api/submit-score': { limit: 20, windowSeconds: 60 },
+  '/api/guest-session': { limit: 20, windowSeconds: 60 },
   '/api/auth/bind': { limit: 12, windowSeconds: 60 },
+  '/api/auth/logout': { limit: 20, windowSeconds: 60 },
   '/api/cloud-save': { limit: 40, windowSeconds: 60 }
 };
 let profileColumnsChecked = false;
@@ -24,7 +36,8 @@ export default {
       const url = new URL(request.url);
       // 仅在首次冷启动时并行执行兼容性迁移（不阻塞主流程的 DDL 均已移入 schema.sql）
       await ensureRuntimeCompat(env.DB);
-      if (url.pathname === '/api/submit-score' && request.method === 'POST' && isBodyTooLarge(request)) {
+      const bodyLimit = WRITE_BODY_LIMITS[url.pathname];
+      if (bodyLimit && request.method === 'POST' && isBodyTooLarge(request, bodyLimit)) {
         return jsonResponse({ error: 'payload_too_large' }, corsHeaders, 413);
       }
 
@@ -63,13 +76,26 @@ export default {
         return jsonResponse(player || { user_id: userId, score: 0, ship_type: 'default', rank: null }, corsHeaders);
       }
 
+      if (url.pathname === '/api/guest-session' && request.method === 'POST') {
+        const payload = await readJson(request, bodyLimit);
+        const result = await claimGuestIdentity(env.DB, payload.user_id, payload.guest_key);
+        if (result.error) return jsonResponse({ error: result.error }, corsHeaders, 400);
+        return jsonResponse({ success: true, ...result }, corsHeaders);
+      }
+
       if (url.pathname === '/api/auth/bind' && request.method === 'POST') {
-        const payload = await readJson(request);
-        const result = await bindAccount(env.DB, payload);
+        const payload = await readJson(request, bodyLimit);
+        const result = await bindAccount(env.DB, payload, request);
         if (result.error) {
-          return jsonResponse({ success: false, error: result.error }, corsHeaders, result.error === 'invalid_credentials' ? 401 : 400);
+          const status = result.error === 'invalid_credentials' || result.error === 'identity_required' ? 401 : 400;
+          return jsonResponse({ success: false, error: result.error }, corsHeaders, status);
         }
         return jsonResponse({ success: true, ...result }, corsHeaders);
+      }
+
+      if (url.pathname === '/api/auth/logout' && request.method === 'POST') {
+        const revoked = await revokeSession(env.DB, request);
+        return jsonResponse({ success: true, revoked }, corsHeaders);
       }
 
       if (url.pathname === '/api/cloud-save') {
@@ -80,14 +106,19 @@ export default {
           return jsonResponse({ success: true, user_id: session.user_id, save }, corsHeaders);
         }
         if (request.method === 'POST') {
-          const payload = await readJson(request);
-          const save = await upsertCloudSave(env.DB, session.user_id, payload.save || {});
+          const payload = await readJson(request, bodyLimit);
+          const current = await loadCloudSave(env.DB, session.user_id);
+          const revision = clampInt(payload.revision, 0, 2147483647, -1);
+          if (revision !== current.revision) {
+            return jsonResponse({ error: 'revision_conflict', save: current }, corsHeaders, 409);
+          }
+          const save = await replaceCloudSave(env.DB, session.user_id, payload.save || {}, current.revision + 1);
           return jsonResponse({ success: true, user_id: session.user_id, save }, corsHeaders);
         }
       }
 
       if (url.pathname === '/api/submit-score' && request.method === 'POST') {
-        const payload = await readJson(request);
+        const payload = await readJson(request, bodyLimit);
         const userId = String(payload.user_id || '');
         const username = sanitizeUsername(payload.username);
         const avatar = sanitizeAvatar(payload.avatar);
@@ -101,6 +132,10 @@ export default {
         if (!username) {
           return jsonResponse({ error: 'invalid username' }, corsHeaders, 400);
         }
+        const identity = await authorizeUserWrite(env.DB, request, userId, payload.guest_key);
+        if (!identity) {
+          return jsonResponse({ error: 'identity_required' }, corsHeaders, 401);
+        }
 
         const result = await upsertScore(env.DB, userId, username, score, shipType, avatar, bio);
         if (result.suspicious) {
@@ -111,6 +146,9 @@ export default {
 
       return jsonResponse({ error: 'not found' }, corsHeaders, 404);
     } catch (err) {
+      if (err && err.code === 'payload_too_large') {
+        return jsonResponse({ error: 'payload_too_large' }, corsHeaders, 413);
+      }
       console.error(err);
       return jsonResponse({ error: 'internal_error', message: String(err.message || err) }, corsHeaders, 500);
     }
@@ -122,14 +160,16 @@ function buildCorsHeaders(request, env) {
   const allowed = parseAllowedOrigins(env.ALLOWED_ORIGINS);
   const allowOrigin = allowed.includes('*')
     ? '*'
-    : (allowed.includes(origin) ? origin : allowed[0] || '*');
+    : (allowed.includes(origin) ? origin : '');
 
-  return {
-    'Access-Control-Allow-Origin': allowOrigin,
+  const headers = {
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Max-Age': '86400'
+    'Access-Control-Max-Age': '86400',
+    'Vary': 'Origin'
   };
+  if (allowOrigin) headers['Access-Control-Allow-Origin'] = allowOrigin;
+  return headers;
 }
 
 function parseAllowedOrigins(value) {
@@ -149,19 +189,48 @@ function jsonResponse(body, corsHeaders, status = 200) {
   });
 }
 
-async function readJson(request) {
+async function readJson(request, maxBytes = 65536) {
   try {
-    return await request.json();
-  } catch {
+    if (isBodyTooLarge(request, maxBytes)) throw payloadTooLargeError();
+    if (!request.body) return {};
+    const reader = request.body.getReader();
+    const chunks = [];
+    let total = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        throw payloadTooLargeError();
+      }
+      chunks.push(value);
+    }
+    const bytes = new Uint8Array(total);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return JSON.parse(new TextDecoder().decode(bytes) || '{}');
+  } catch (err) {
+    if (err && err.code === 'payload_too_large') throw err;
+    if (isBodyTooLarge(request, maxBytes)) throw payloadTooLargeError();
     return {};
   }
 }
 
-function isBodyTooLarge(request) {
+function payloadTooLargeError() {
+  const err = new Error('payload_too_large');
+  err.code = 'payload_too_large';
+  return err;
+}
+
+function isBodyTooLarge(request, maxBytes) {
   const contentLength = request.headers.get('Content-Length');
   if (!contentLength) return false;
   const bytes = Number.parseInt(contentLength, 10);
-  return Number.isFinite(bytes) && bytes > MAX_JSON_BODY_BYTES;
+  return Number.isFinite(bytes) && bytes > maxBytes;
 }
 
 async function checkRateLimit(db, request, pathname, config) {
@@ -210,10 +279,21 @@ async function checkRateLimit(db, request, pathname, config) {
 // 所有 CREATE TABLE / CREATE INDEX 均已移入 schema.sql，通过 wrangler d1 migrations apply 部署
 async function ensureRuntimeCompat(db) {
   if (profileColumnsChecked) return;
-  // 并行执行两个 ALTER TABLE（为老库补加 avatar/bio 列），忽略已存在时的错误
+  // 兼容旧数据库；正式部署仍应先执行 schema.sql / migration。
   await Promise.all([
     db.prepare("ALTER TABLE users ADD COLUMN avatar TEXT NOT NULL DEFAULT 'fa-user-astronaut'").run().catch(() => {}),
-    db.prepare("ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''").run().catch(() => {})
+    db.prepare("ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''").run().catch(() => {}),
+    db.prepare("ALTER TABLE accounts ADD COLUMN password_algorithm TEXT NOT NULL DEFAULT 'sha256'").run().catch(() => {}),
+    db.prepare("ALTER TABLE accounts ADD COLUMN password_iterations INTEGER NOT NULL DEFAULT 1").run().catch(() => {}),
+    db.prepare("ALTER TABLE account_sessions ADD COLUMN expires_at INTEGER NOT NULL DEFAULT 0").run().catch(() => {}),
+    db.prepare("ALTER TABLE player_cloud_saves ADD COLUMN revision INTEGER NOT NULL DEFAULT 0").run().catch(() => {}),
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS guest_identities (
+        user_id TEXT PRIMARY KEY,
+        key_hash TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `).run().catch(() => {})
   ]);
   profileColumnsChecked = true;
 }
@@ -288,7 +368,75 @@ async function hashPassword(password, salt) {
   return Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
-async function bindAccount(db, payload) {
+async function hashPbkdf2Password(password, salt, iterations = PBKDF2_ITERATIONS) {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(password),
+    'PBKDF2',
+    false,
+    ['deriveBits']
+  );
+  const bits = await crypto.subtle.deriveBits({
+    name: 'PBKDF2',
+    hash: 'SHA-256',
+    salt: new TextEncoder().encode(salt),
+    iterations
+  }, key, 256);
+  return bytesToHex(new Uint8Array(bits));
+}
+
+function bytesToHex(bytes) {
+  return Array.from(bytes).map(byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function constantTimeEqual(left, right) {
+  const a = new TextEncoder().encode(String(left || ''));
+  const b = new TextEncoder().encode(String(right || ''));
+  let diff = a.length ^ b.length;
+  const length = Math.max(a.length, b.length);
+  for (let i = 0; i < length; i++) diff |= (a[i] || 0) ^ (b[i] || 0);
+  return diff === 0;
+}
+
+async function hashGuestKey(value) {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(value || '')));
+  return bytesToHex(new Uint8Array(digest));
+}
+
+async function claimGuestIdentity(db, requestedUserId, guestKey) {
+  const userId = String(requestedUserId || '');
+  const key = String(guestKey || '');
+  if (!USER_ID_RE.test(userId) || !GUEST_KEY_RE.test(key)) return { error: 'invalid_identity' };
+  const keyHash = await hashGuestKey(key);
+  const existingIdentity = await db.prepare(`
+    SELECT user_id, key_hash FROM guest_identities WHERE user_id = ?1
+  `).bind(userId).first();
+  if (existingIdentity) {
+    if (!constantTimeEqual(existingIdentity.key_hash, keyHash)) return { error: 'identity_conflict' };
+    return { user_id: userId, migrated: false };
+  }
+  const publicUser = await db.prepare('SELECT 1 AS ok FROM users WHERE id = ?1').bind(userId).first();
+  const claimedUserId = publicUser ? createServerUserId() : userId;
+  await upsertUserProfile(db, claimedUserId, {});
+  await db.prepare(`
+    INSERT INTO guest_identities (user_id, key_hash) VALUES (?1, ?2)
+  `).bind(claimedUserId, keyHash).run();
+  return { user_id: claimedUserId, migrated: claimedUserId !== userId };
+}
+
+async function authorizeUserWrite(db, request, userId, guestKey) {
+  const session = await requireSession(db, request);
+  if (session) return session.user_id === userId ? session : null;
+  if (!GUEST_KEY_RE.test(String(guestKey || ''))) return null;
+  const identity = await db.prepare(`
+    SELECT user_id, key_hash FROM guest_identities WHERE user_id = ?1
+  `).bind(userId).first();
+  if (!identity) return null;
+  const keyHash = await hashGuestKey(guestKey);
+  return constantTimeEqual(identity.key_hash, keyHash) ? identity : null;
+}
+
+async function bindAccount(db, payload, request) {
   const label = sanitizeAccount(payload.account);
   const key = accountKey(label);
   const password = sanitizePassword(payload.password);
@@ -297,40 +445,66 @@ async function bindAccount(db, payload) {
   }
 
   const existing = await db.prepare(`
-    SELECT account_id, account_key, account_label, password_salt, password_hash, user_id
+    SELECT account_id, account_key, account_label, password_salt, password_hash,
+           password_algorithm, password_iterations, user_id
     FROM accounts
     WHERE account_key = ?1
   `).bind(key).first();
 
   if (existing) {
-    const hash = await hashPassword(password, existing.password_salt);
-    if (hash !== existing.password_hash) {
+    const algorithm = existing.password_algorithm || 'sha256';
+    const iterations = existing.password_iterations || 1;
+    const hash = algorithm === 'pbkdf2-sha256'
+      ? await hashPbkdf2Password(password, existing.password_salt, iterations)
+      : await hashPassword(password, existing.password_salt);
+    if (!constantTimeEqual(hash, existing.password_hash)) {
       return { error: 'invalid_credentials' };
     }
-    const save = await upsertCloudSave(db, existing.user_id, payload.save || {});
+    if (algorithm !== 'pbkdf2-sha256') {
+      const upgradedSalt = createId('salt');
+      const upgradedHash = await hashPbkdf2Password(password, upgradedSalt);
+      await db.prepare(`
+        UPDATE accounts
+        SET password_salt = ?1, password_hash = ?2,
+            password_algorithm = 'pbkdf2-sha256', password_iterations = ?3,
+            updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+        WHERE account_id = ?4
+      `).bind(upgradedSalt, upgradedHash, PBKDF2_ITERATIONS, existing.account_id).run();
+    }
+    const save = await loadCloudSave(db, existing.user_id);
     const token = await createSession(db, existing.account_id);
     return { mode: 'login', token, user_id: existing.user_id, save };
   }
 
-  const userId = USER_ID_RE.test(payload.user_id || '') ? payload.user_id : createServerUserId();
+  const requestedUserId = USER_ID_RE.test(payload.user_id || '') ? payload.user_id : '';
+  const identity = requestedUserId
+    ? await authorizeUserWrite(db, request, requestedUserId, payload.guest_key)
+    : null;
+  if (!identity) return { error: 'identity_required' };
+  const userId = requestedUserId;
   const accountId = createId('acct');
   const salt = createId('salt');
-  const hash = await hashPassword(password, salt);
+  const hash = await hashPbkdf2Password(password, salt);
+  await upsertUserProfile(db, userId, payload.save && payload.save.profile);
   await db.prepare(`
-    INSERT INTO accounts (account_id, account_key, account_label, password_salt, password_hash, user_id)
-    VALUES (?1, ?2, ?3, ?4, ?5, ?6)
-  `).bind(accountId, key, label, salt, hash, userId).run();
-  const save = await upsertCloudSave(db, userId, payload.save || {});
+    INSERT INTO accounts (
+      account_id, account_key, account_label, password_salt, password_hash,
+      password_algorithm, password_iterations, user_id
+    )
+    VALUES (?1, ?2, ?3, ?4, ?5, 'pbkdf2-sha256', ?6, ?7)
+  `).bind(accountId, key, label, salt, hash, PBKDF2_ITERATIONS, userId).run();
+  const save = await replaceCloudSave(db, userId, payload.save || {}, 1);
   const token = await createSession(db, accountId);
   return { mode: 'registered', token, user_id: userId, save };
 }
 
 async function createSession(db, accountId) {
   const token = createId('sess');
+  const expiresAt = Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS;
   await db.prepare(`
-    INSERT INTO account_sessions (token, account_id)
-    VALUES (?1, ?2)
-  `).bind(token, accountId).run();
+    INSERT INTO account_sessions (token, account_id, expires_at)
+    VALUES (?1, ?2, ?3)
+  `).bind(token, accountId, expiresAt).run();
   return token;
 }
 
@@ -339,16 +513,33 @@ async function requireSession(db, request) {
   const token = auth.replace(/^Bearer\s+/i, '').trim();
   if (!token) return null;
   return db.prepare(`
-    SELECT a.user_id
+    SELECT a.user_id, s.expires_at
     FROM account_sessions s
     JOIN accounts a ON a.account_id = s.account_id
     WHERE s.token = ?1
-  `).bind(token).first();
+  `).bind(token).first().then(async session => {
+    if (!session) return null;
+    const expiresAt = Number(session.expires_at);
+    if (!Number.isFinite(expiresAt) || expiresAt <= Math.floor(Date.now() / 1000)) {
+      await db.prepare('DELETE FROM account_sessions WHERE token = ?1').bind(token).run();
+      return null;
+    }
+    return session;
+  });
+}
+
+async function revokeSession(db, request) {
+  const auth = request.headers.get('Authorization') || '';
+  const token = auth.replace(/^Bearer\s+/i, '').trim();
+  if (!token) return false;
+  await db.prepare('DELETE FROM account_sessions WHERE token = ?1').bind(token).run();
+  return true;
 }
 
 async function loadCloudSave(db, userId) {
   const row = await db.prepare(`
-    SELECT permanent_cores, talents_json, unlocked_skins_json, current_skin, best_score, profile_json, updated_at
+    SELECT permanent_cores, talents_json, unlocked_skins_json, current_skin, best_score,
+           profile_json, revision, updated_at
     FROM player_cloud_saves
     WHERE user_id = ?1
   `).bind(userId).first();
@@ -361,19 +552,20 @@ async function loadCloudSave(db, userId) {
     bestScore: row.best_score,
     profile: safeJson(row.profile_json, {}),
     matchHistory: matches,
+    revision: row.revision || 0,
     updatedAt: row.updated_at
-  } : { matchHistory: matches });
+  } : { matchHistory: matches, revision: 0 });
 }
 
-async function upsertCloudSave(db, userId, incomingSave) {
-  const current = await loadCloudSave(db, userId);
-  const merged = mergeCloudSave(current, incomingSave || {});
-  await upsertUserProfile(db, userId, merged.profile);
+async function replaceCloudSave(db, userId, incomingSave, revision) {
+  const snapshot = normalizeCloudSave({ ...(incomingSave || {}), revision });
+  await upsertUserProfile(db, userId, snapshot.profile);
   await db.prepare(`
     INSERT INTO player_cloud_saves (
-      user_id, permanent_cores, talents_json, unlocked_skins_json, current_skin, best_score, profile_json, updated_at
+      user_id, permanent_cores, talents_json, unlocked_skins_json, current_skin,
+      best_score, profile_json, revision, updated_at
     )
-    VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+    VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
     ON CONFLICT(user_id) DO UPDATE SET
       permanent_cores = excluded.permanent_cores,
       talents_json = excluded.talents_json,
@@ -381,17 +573,19 @@ async function upsertCloudSave(db, userId, incomingSave) {
       current_skin = excluded.current_skin,
       best_score = excluded.best_score,
       profile_json = excluded.profile_json,
+      revision = excluded.revision,
       updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
   `).bind(
     userId,
-    merged.permanentCores,
-    JSON.stringify(merged.talents),
-    JSON.stringify(merged.unlockedSkins),
-    merged.currentSkin,
-    merged.bestScore,
-    JSON.stringify(merged.profile)
+    snapshot.permanentCores,
+    JSON.stringify(snapshot.talents),
+    JSON.stringify(snapshot.unlockedSkins),
+    snapshot.currentSkin,
+    snapshot.bestScore,
+    JSON.stringify(snapshot.profile),
+    snapshot.revision
   ).run();
-  await upsertMatchHistory(db, userId, merged.matchHistory);
+  await upsertMatchHistory(db, userId, snapshot.matchHistory);
   return loadCloudSave(db, userId);
 }
 
@@ -406,30 +600,6 @@ async function upsertUserProfile(db, userId, profile) {
       avatar = excluded.avatar,
       bio = excluded.bio
   `).bind(userId, username, normalized.avatar, normalized.bio).run();
-}
-
-function mergeCloudSave(current, incoming) {
-  const base = normalizeCloudSave(current);
-  const next = normalizeCloudSave(incoming);
-  const talents = {};
-  ['A', 'B', 'C', 'D', 'E'].forEach(key => {
-    talents[key] = Math.max(base.talents[key] || 0, next.talents[key] || 0);
-  });
-  const unlockedSkins = Array.from(new Set([...base.unlockedSkins, ...next.unlockedSkins]))
-    .filter(skin => ALLOWED_SHIPS.has(skin));
-  if (!unlockedSkins.includes('default')) unlockedSkins.unshift('default');
-  const currentSkin = unlockedSkins.includes(next.currentSkin) && next.currentSkin !== 'default'
-    ? next.currentSkin
-    : (unlockedSkins.includes(base.currentSkin) ? base.currentSkin : 'default');
-  return {
-    permanentCores: Math.max(base.permanentCores, next.permanentCores),
-    talents,
-    unlockedSkins,
-    currentSkin,
-    bestScore: Math.max(base.bestScore, next.bestScore),
-    profile: mergeProfile(base.profile, incoming && incoming.profile),
-    matchHistory: mergeMatchHistory(base.matchHistory, next.matchHistory)
-  };
 }
 
 function mergeProfile(baseProfile, incomingProfile) {
@@ -467,7 +637,8 @@ function normalizeCloudSave(save) {
     currentSkin: unlockedSkins.includes(raw.currentSkin) ? raw.currentSkin : 'default',
     bestScore: clampInt(raw.bestScore, 0, 9999999, 0),
     profile: normalizeProfile(raw.profile || {}),
-    matchHistory: normalizeMatchHistory(raw.matchHistory)
+    matchHistory: normalizeMatchHistory(raw.matchHistory),
+    revision: clampInt(raw.revision, 0, 2147483647, 0)
   };
 }
 
@@ -499,7 +670,10 @@ function normalizeMatchHistory(history) {
     isNewBest: !!match.isNewBest,
     permanentCoresEarned: clampInt(match.permanentCoresEarned, 0, 9999999, 0),
     playedAt: normalizeIsoDate(match.playedAt)
-  })).filter(match => match.id && match.playedAt);
+  }))
+    .filter(match => match.id && match.playedAt)
+    .sort((left, right) => String(right.playedAt).localeCompare(String(left.playedAt)))
+    .slice(0, MATCH_HISTORY_LIMIT);
 }
 
 function normalizeIsoDate(value) {
@@ -549,6 +723,7 @@ async function upsertMatchHistory(db, userId, history) {
         is_new_best = excluded.is_new_best,
         permanent_cores_earned = excluded.permanent_cores_earned,
         played_at = excluded.played_at
+      WHERE match_history.user_id = excluded.user_id
     `).bind(
       match.id,
       userId,
@@ -560,6 +735,16 @@ async function upsertMatchHistory(db, userId, history) {
       match.playedAt
     ).run();
   }
+  await db.prepare(`
+    DELETE FROM match_history
+    WHERE user_id = ?1
+      AND match_id NOT IN (
+        SELECT match_id FROM match_history
+        WHERE user_id = ?1
+        ORDER BY played_at DESC
+        LIMIT ?2
+      )
+  `).bind(userId, MATCH_HISTORY_LIMIT).run();
 }
 
 async function getLeaderboardRows(db, limit) {

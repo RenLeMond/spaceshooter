@@ -1,0 +1,29 @@
+{
+  "name": "spaceshooter",
+  "version": "1.0.0",
+  "description": "> **极客级双重底层性能飞跃 • 局外持久化先驱者星盘永久天赋系统 • 局内 Roguelike 超维模组构装**",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "npm run test:unit && npm run test:browser",
+    "test:unit": "node --test test/frontend-behavior.test.mjs workers/leaderboard/test/leaderboard.test.mjs",
+    "test:browser": "node --test test/browser-smoke.test.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RenLeMond/spaceshooter.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/RenLeMond/spaceshooter/issues"
+  },
+  "homepage": "https://github.com/RenLeMond/spaceshooter#readme",
+  "devDependencies": {
+    "playwright": "^1.60.0"
+  }
+}

@@ -346,7 +346,8 @@ class GameEngineWorker extends GameEngine {
             bestScore: this.bestScore,
             isNewBest: isNewBest,
             currentSkin: this.currentSkin,
-            permanentCoresEarned: this.isBenchmarking ? 0 : coreReward.total
+            permanentCoresEarned: this.isBenchmarking ? 0 : coreReward.total,
+            runDurationMs: Math.max(0, performance.now() - this.runStartedAt)
         });
     }
 
@@ -709,3 +710,5 @@ self.onmessage = function(e) {
             break;
     }
 };
+
+postMessage({ type: 'bootReady' });

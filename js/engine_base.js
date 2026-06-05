@@ -128,6 +128,7 @@ class GameEngine {
         this.nextBossThreshold = 3500; // 由 _refreshNextBossThreshold() 在 boss 模块加载后刷新
         this.bossTiersDefeatedThisRun = [];
         this.gameOverCoreSettled = false;
+        this.runStartedAt = performance.now();
 
         this.spawnTimer = 0;
         this.waveTransitionTimer = 0;
@@ -973,6 +974,7 @@ class GameEngine {
         this.bossSpawnCooldown = 0;
         this.bossTiersDefeatedThisRun = [];
         this.gameOverCoreSettled = false;
+        this.runStartedAt = performance.now();
         if (typeof this._refreshNextBossThreshold === 'function') {
             this._refreshNextBossThreshold();
         }
@@ -1082,17 +1084,21 @@ class GameEngine {
             addPermanentCores(coreReward.total);
         }
         
-        if (this.score > this.bestScore) {
+        const isNewBest = this.score > this.bestScore;
+        if (isNewBest) {
             this.bestScore = this.score;
             localStorage.setItem('space_best_score', this.bestScore);
         }
-        if (window.StarseaLeaderboard) {
-            if (typeof window.StarseaLeaderboard.syncCloudSaveFromLocal === 'function') {
-                window.StarseaLeaderboard.syncCloudSaveFromLocal();
-            }
-            if (typeof window.StarseaLeaderboard.syncScoreToCloud === 'function') {
-                window.StarseaLeaderboard.syncScoreToCloud(this.bestScore, this.currentSkin);
-            }
+        if (typeof window.settleLocalGameOver === 'function') {
+            window.settleLocalGameOver({
+                score: this.score,
+                bestScore: this.bestScore,
+                wave: this.wave,
+                skin: this.currentSkin,
+                isNewBest: isNewBest,
+                permanentCoresEarned: this.isBenchmarking ? 0 : coreReward.total,
+                runDurationMs: Math.max(0, performance.now() - this.runStartedAt)
+            });
         }
 
         document.getElementById('endScore').innerText = String(this.score).padStart(6, '0');

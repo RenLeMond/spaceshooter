@@ -162,3 +162,61 @@ test('leaderboard mobile rows keep the uploaded time visible', async () => {
   assert.match(html, /@media \(max-width: 640px\)[\s\S]*\.date-column\s*{[^}]*display:\s*block/s);
   assert.match(html, /@media \(max-width: 640px\)[\s\S]*\.date-column\s*{[^}]*grid-column:\s*2 \/ -1/s);
 });
+
+test('frontend leaderboard API authenticates guest score submissions and handles identity migration', async () => {
+  const apiSource = await readFile(new URL('../js/leaderboard_api.js', import.meta.url), 'utf8');
+
+  assert.match(apiSource, /space_guest_key/);
+  assert.match(apiSource, /\/api\/guest-session/);
+  assert.match(apiSource, /guest_key/);
+  assert.match(apiSource, /replacement_user_id|migrated/);
+});
+
+test('frontend cloud save synchronization sends and persists revisions', async () => {
+  const apiSource = await readFile(new URL('../js/leaderboard_api.js', import.meta.url), 'utf8');
+
+  assert.match(apiSource, /space_cloud_save_revision/);
+  assert.match(apiSource, /revision/);
+});
+
+test('main thread game over uses the shared local match settlement helper', async () => {
+  const engineSource = await readFile(new URL('../js/engine_base.js', import.meta.url), 'utf8');
+  const mainSource = await readFile(new URL('../js/main.js', import.meta.url), 'utf8');
+
+  assert.match(mainSource, /function settleLocalGameOver\(/);
+  assert.match(engineSource, /settleLocalGameOver/);
+});
+
+test('all inline HTML scripts parse successfully', async () => {
+  const htmlFiles = [
+    'game_design.html',
+    'game_manual.html',
+    'index.html',
+    'leaderboard.html',
+    'space_shooter.html',
+    'v6_hangar.html',
+    'v6_roadmap.html',
+    'v7_hangar.html',
+    'v7_roadmap.html',
+    'version_history.html'
+  ];
+
+  for (const file of htmlFiles) {
+    const html = await readFile(new URL('../' + file, import.meta.url), 'utf8');
+    const inlineScripts = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)];
+    for (const [index, script] of inlineScripts.entries()) {
+      assert.doesNotThrow(() => new vm.Script(script[1], { filename: `${file}#inline-${index + 1}` }));
+    }
+  }
+});
+
+test('local launcher binds to loopback and only stops its own server process', async () => {
+  const launcher = await readFile(new URL('../start.bat', import.meta.url), 'utf8');
+  const server = await readFile(new URL('../tools/local_server.ps1', import.meta.url), 'utf8');
+
+  assert.match(launcher, /127\.0\.0\.1:9999/);
+  assert.match(launcher, /taskkill \/t \/f \/pid %SERVER_PID%/i);
+  assert.equal(/netstat -aon|findstr :9999/i.test(launcher), false);
+  assert.match(server, /http:\/\/127\.0\.0\.1:\$Port\//);
+  assert.match(server, /StartsWith\(\$root/);
+});

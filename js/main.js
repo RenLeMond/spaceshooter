@@ -4,7 +4,64 @@
 // 后续 bump 仅需改本常量 + HTML 的 ?v= 两处即可全量失效旧缓存。
 const ASSET_VERSION = '7.0.25';
 
-window.onload = function() {
+function recordLocalMatchHistory(match) {
+    try {
+        const key = 'space_match_history';
+        const raw = localStorage.getItem(key);
+        const list = raw ? JSON.parse(raw) : [];
+        const history = Array.isArray(list) ? list : [];
+        const record = {
+            id: `match_${Date.now().toString(36)}`,
+            score: Math.max(0, Math.floor(Number(match.score) || 0)),
+            wave: Math.max(1, Math.floor(Number(match.wave) || 1)),
+            skin: match.skin || 'default',
+            isNewBest: !!match.isNewBest,
+            permanentCoresEarned: Math.max(0, Math.floor(Number(match.permanentCoresEarned) || 0)),
+            playedAt: new Date().toISOString()
+        };
+        history.unshift(record);
+        localStorage.setItem(key, JSON.stringify(history.slice(0, 50)));
+        return record;
+    } catch (_) {}
+    return null;
+}
+
+function settleLocalGameOver(match) {
+    const record = recordLocalMatchHistory(match);
+    if (window.StarseaLeaderboard) {
+        if (typeof window.StarseaLeaderboard.syncCloudSaveFromLocal === 'function') {
+            window.StarseaLeaderboard.syncCloudSaveFromLocal();
+        }
+        if (typeof window.StarseaLeaderboard.syncScoreToCloud === 'function') {
+            const scoreToSync = match.isNewBest ? match.bestScore : match.score;
+            window.StarseaLeaderboard.syncScoreToCloud(scoreToSync, match.skin, undefined, match.runDurationMs);
+        }
+    }
+    return record;
+}
+
+window.settleLocalGameOver = settleLocalGameOver;
+
+function waitForWorkerBoot(worker, timeoutMs) {
+    return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => finish(new Error('worker_boot_timeout')), timeoutMs);
+        const onMessage = (event) => {
+            if (event.data && event.data.type === 'bootReady') finish();
+        };
+        const onError = (event) => finish(event.error || new Error(event.message || 'worker_boot_failed'));
+        function finish(error) {
+            clearTimeout(timer);
+            worker.removeEventListener('message', onMessage);
+            worker.removeEventListener('error', onError);
+            if (error) reject(error);
+            else resolve();
+        }
+        worker.addEventListener('message', onMessage);
+        worker.addEventListener('error', onError);
+    });
+}
+
+window.onload = async function() {
     const canvas = document.getElementById('gameCanvas');
     let useWorker = false;
     let worker = null;
@@ -14,9 +71,12 @@ window.onload = function() {
         try {
             // 尝试创建 Web Worker 实例 (使用本地路径，以便 CORS 拦截时能被 catch 捕获)
             worker = new Worker('js/game_worker.js?v=' + ASSET_VERSION);
+            await waitForWorkerBoot(worker, 5000);
             useWorker = true;
         } catch (e) {
             console.warn("⚠️ Web Worker CORS restrict or security sandbox blocked. Auto fallback to main thread. Error details:", e);
+            if (worker) worker.terminate();
+            worker = null;
             useWorker = false;
         }
     } else {
@@ -142,28 +202,6 @@ window.onload = function() {
                     toast.style.opacity = '0';
                 }, 1500);
             }
-        }
-
-        function recordLocalMatchHistory(match) {
-            try {
-                const key = 'space_match_history';
-                const raw = localStorage.getItem(key);
-                const list = raw ? JSON.parse(raw) : [];
-                const history = Array.isArray(list) ? list : [];
-                const record = {
-                    id: `match_${Date.now().toString(36)}`,
-                    score: Math.max(0, Math.floor(Number(match.score) || 0)),
-                    wave: Math.max(1, Math.floor(Number(match.wave) || 1)),
-                    skin: match.skin || 'default',
-                    isNewBest: !!match.isNewBest,
-                    permanentCoresEarned: Math.max(0, Math.floor(Number(match.permanentCoresEarned) || 0)),
-                    playedAt: new Date().toISOString()
-                };
-                history.unshift(record);
-                localStorage.setItem(key, JSON.stringify(history));
-                return record;
-            } catch (_) {}
-            return null;
         }
 
         window.addEventListener('starsea-leaderboard-sync-error', function (event) {
@@ -588,22 +626,15 @@ window.onload = function() {
                     
                 case 'gameOver':
                     mainPermanentCores = addPermanentCores(msg.permanentCoresEarned || 0);
-                    recordLocalMatchHistory({
+                    settleLocalGameOver({
                         score: msg.score,
+                        bestScore: msg.bestScore,
                         wave: msg.wave,
                         skin: msg.currentSkin || mainCurrentSkin,
                         isNewBest: !!msg.isNewBest,
-                        permanentCoresEarned: msg.permanentCoresEarned || 0
+                        permanentCoresEarned: msg.permanentCoresEarned || 0,
+                        runDurationMs: msg.runDurationMs || 0
                     });
-                    if (window.StarseaLeaderboard) {
-                        if (typeof window.StarseaLeaderboard.syncCloudSaveFromLocal === 'function') {
-                            window.StarseaLeaderboard.syncCloudSaveFromLocal();
-                        }
-                        if (typeof window.StarseaLeaderboard.syncScoreToCloud === 'function') {
-                            const scoreToSync = msg.isNewBest ? msg.bestScore : msg.score;
-                            window.StarseaLeaderboard.syncScoreToCloud(scoreToSync, msg.currentSkin || mainCurrentSkin);
-                        }
-                    }
                     document.getElementById('endScore').innerText = String(msg.score).padStart(6, '0');
                     document.getElementById('endWave').innerText = msg.wave;
                     document.getElementById('endBest').innerText = String(msg.bestScore).padStart(6, '0');

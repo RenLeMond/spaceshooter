@@ -785,7 +785,34 @@
             const rightData = WINGMAN_DATA[CONFIG.right];
 
             // 属性合并
-            const e        // ----------------------------------------------------
+            const attributes = {
+                em: Math.min(100, leftData.em + rightData.em),
+                grav: Math.min(100, leftData.grav + rightData.grav),
+                free: Math.min(100, leftData.free + rightData.free)
+            };
+            ['em', 'grav', 'free'].forEach(key => {
+                document.getElementById(`val-${key}`).innerText = `${attributes[key]}%`;
+                document.getElementById(`bar-${key}`).style.width = `${attributes[key]}%`;
+            });
+
+            const synergyName = document.getElementById('synergyName');
+            const synergyDesc = document.getElementById('synergyDesc');
+            if (CONFIG.left === CONFIG.right) {
+                const synergyByType = {
+                    thunder: ['核能激荡共鸣', '双雷霆聚变翼同步过载，大幅强化电磁弹幕覆盖。'],
+                    gravity: ['双生奇点共鸣', '双重质量场协同坍缩，显著强化引力控制与聚怪能力。'],
+                    frost: ['绝对零域共鸣', '双极寒翼建立低温封锁区，显著强化冻结与减速效果。']
+                };
+                const synergy = synergyByType[CONFIG.left];
+                synergyName.innerText = synergy[0];
+                synergyDesc.innerText = synergy[1];
+            } else {
+                synergyName.innerText = '混合战术共鸣';
+                synergyDesc.innerText = '异构双翼协同挂载，提供更均衡的复合火力与战场控制。';
+            }
+        }
+
+        // ----------------------------------------------------
         // 4. HTML5 Canvas 2D 物理概念沙盒 (V6 Physics Sandbox)
         // ----------------------------------------------------
         let canvas = null;

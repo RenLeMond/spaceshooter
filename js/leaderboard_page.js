@@ -404,8 +404,16 @@
         }
     }
 
-    function logoutAccount() {
-        localStorage.removeItem('space_account_token');
+    async function logoutAccount() {
+        if (API && typeof API.logoutAccount === 'function') {
+            try {
+                await API.logoutAccount();
+            } catch (_) {
+                localStorage.removeItem('space_account_token');
+            }
+        } else {
+            localStorage.removeItem('space_account_token');
+        }
         localStorage.removeItem('space_user_is_bound');
         localStorage.removeItem('space_user_bound_email');
         state.isBound = false;
