@@ -2,7 +2,7 @@
 // 资源缓存版本号 — 同步于 space_shooter.html 的所有 ?v= 查询参数。
 // Worker 链 (game_worker.js + importScripts 的 6 个引擎文件) 通过 self.location.search 自动继承该版本，
 // 后续 bump 仅需改本常量 + HTML 的 ?v= 两处即可全量失效旧缓存。
-const ASSET_VERSION = '7.0.29';
+const ASSET_VERSION = '7.0.30';
 
 function updateAppViewportHeight() {
     const viewport = window.visualViewport;

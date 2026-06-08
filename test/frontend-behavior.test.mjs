@@ -86,7 +86,7 @@ test('ngrok previews use the production same-site API host', async () => {
 });
 
 test('entry pages use the current cache-busting asset version', async () => {
-  const expected = '7.0.29';
+  const expected = '7.0.30';
   const files = ['index.html', 'space_shooter.html', 'leaderboard.html', 'v7_hangar.html'];
   for (const file of files) {
     const html = await readFile(new URL('../' + file, import.meta.url), 'utf8');
@@ -258,7 +258,18 @@ test('leaderboard page does not block the first list render on slower profile ca
   assert.match(pageScript, /LEADERBOARD_CACHE_KEY/);
   assert.match(pageScript, /function renderCachedLeaderboard\(\)/);
   assert.match(pageScript, /const playerPromise = API\.fetchPlayer\(state\.userId\)\.catch/);
-  assert.match(pageScript, /const data = await API\.fetchLeaderboard\(50\);[\s\S]*renderLeaderboard\(state\.leaderboard\);[\s\S]*const player = await playerPromise;/);
+  assert.match(pageScript, /const data = await API\.fetchLeaderboard\(LEADERBOARD_LIMIT\);[\s\S]*renderLeaderboard\(state\.leaderboard\);[\s\S]*const player = await playerPromise;/);
+});
+
+test('leaderboard hall of fame is capped to top 10', async () => {
+  const html = await readFile(new URL('../leaderboard.html', import.meta.url), 'utf8');
+  const pageScript = await readFile(new URL('../js/leaderboard_page.js', import.meta.url), 'utf8');
+
+  assert.match(html, />TOP 10</);
+  assert.equal(html.includes('TOP 50'), false);
+  assert.match(pageScript, /const LEADERBOARD_LIMIT = 10;/);
+  assert.match(pageScript, /API\.fetchLeaderboard\(LEADERBOARD_LIMIT\)/);
+  assert.match(pageScript, /\(entries \|\| \[\]\)\.slice\(0,\s*LEADERBOARD_LIMIT\)/);
 });
 
 test('hangar summary link has overflow guards', async () => {
@@ -334,6 +345,9 @@ test('leaderboard mobile rows keep the uploaded time visible', async () => {
 
   assert.match(html, /@media \(max-width: 640px\)[\s\S]*\.date-column\s*{[^}]*display:\s*block/s);
   assert.match(html, /@media \(max-width: 640px\)[\s\S]*\.date-column\s*{[^}]*grid-column:\s*2 \/ -1/s);
+  assert.match(html, /@media \(max-width: 640px\)[\s\S]*\.date-column\s*{[^}]*width:\s*100%/s);
+  assert.match(html, /@media \(max-width: 640px\)[\s\S]*\.date-column\s*{[^}]*white-space:\s*normal/s);
+  assert.match(html, /@media \(max-width: 640px\)[\s\S]*\.date-column\s*{[^}]*overflow:\s*visible/s);
 });
 
 test('frontend leaderboard API authenticates guest score submissions and handles identity migration', async () => {

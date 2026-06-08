@@ -3,6 +3,7 @@
     const DEFAULT_NICKNAME = API ? API.DEFAULT_NICKNAME : '星海先驱者';
     const DEFAULT_AVATAR = 'fa-user-astronaut';
     const DEFAULT_BIO = '向着星辰与深渊！';
+    const LEADERBOARD_LIMIT = 10;
     const LEADERBOARD_CACHE_KEY = 'space_leaderboard_cache_v1';
     const LEADERBOARD_CACHE_MAX_AGE_MS = 2 * 60 * 1000;
 
@@ -135,7 +136,7 @@
         try {
             localStorage.setItem(LEADERBOARD_CACHE_KEY, JSON.stringify({
                 savedAt: Date.now(),
-                entries: Array.isArray(entries) ? entries : []
+                entries: Array.isArray(entries) ? entries.slice(0, LEADERBOARD_LIMIT) : []
             }));
         } catch (_) {}
     }
@@ -143,8 +144,8 @@
     function renderCachedLeaderboard() {
         const cached = readLeaderboardCache();
         if (!cached || !cached.length) return false;
-        state.leaderboard = cached;
-        renderLeaderboard(cached);
+        state.leaderboard = cached.slice(0, LEADERBOARD_LIMIT);
+        renderLeaderboard(state.leaderboard);
         return true;
     }
 
@@ -250,7 +251,7 @@
     }
 
     function renderLeaderboard(entries) {
-        const list = entries || [];
+        const list = (entries || []).slice(0, LEADERBOARD_LIMIT);
         el.leaderboardList.replaceChildren();
         if (!list.length) {
             el.leaderboardList.innerHTML = '<div class="leaderboard-empty"><i class="fa-solid fa-satellite-dish"></i> 暂无可显示的排行榜记录。完成一局游戏后会自动上榜。</div>';
@@ -357,8 +358,8 @@
             if (!API || !API.isEnabled()) throw new Error('leaderboard_disabled');
             // 榜单先渲染，个人精确排名后台补齐，避免一个慢请求拖住首屏列表。
             const playerPromise = API.fetchPlayer(state.userId).catch(() => null);
-            const data = await API.fetchLeaderboard(50);
-            state.leaderboard = Array.isArray(data.entries) ? data.entries : [];
+            const data = await API.fetchLeaderboard(LEADERBOARD_LIMIT);
+            state.leaderboard = Array.isArray(data.entries) ? data.entries.slice(0, LEADERBOARD_LIMIT) : [];
             writeLeaderboardCache(state.leaderboard);
             renderLeaderboard(state.leaderboard);
             setStatus('online');

@@ -2082,10 +2082,16 @@
                 display: block;
                 grid-column: 2 / -1;
                 justify-self: start;
+                width: 100%;
+                min-width: 0;
                 text-align: left;
                 margin-top: 2px;
                 color: rgba(148, 163, 184, 0.78);
                 font-size: 9px;
+                line-height: 1.45;
+                white-space: normal;
+                overflow: visible;
+                text-overflow: clip;
             }
         }
     </style>
@@ -2110,8 +2116,8 @@
                     <div class="status-dot"></div>
                     <span id="syncStatusText">连接中</span>
                 </div>
-                <a href="v7_hangar.html?v=7.0.29" class="back-btn"><i class="fa-solid fa-user-astronaut"></i> 永久机库</a>
-                <a href="space_shooter.html?v=7.0.29" class="back-btn" id="backToGameBtn"><i class="fa-solid fa-plane-departure"></i> 进入游戏</a>
+                <a href="v7_hangar.html?v=7.0.30" class="back-btn"><i class="fa-solid fa-user-astronaut"></i> 永久机库</a>
+                <a href="space_shooter.html?v=7.0.30" class="back-btn" id="backToGameBtn"><i class="fa-solid fa-plane-departure"></i> 进入游戏</a>
             </div>
         </header>
 
@@ -2183,7 +2189,7 @@
                 <div class="hangar-summary" id="hangarSummary">
                     <div class="hangar-summary-head">
                         <div class="hangar-summary-title"><i class="fa-solid fa-warehouse"></i> 机库摘要</div>
-                        <a class="hangar-link" href="v7_hangar.html?v=7.0.29"><i class="fa-solid fa-arrow-up-right-from-square"></i> 前往机库</a>
+                        <a class="hangar-link" href="v7_hangar.html?v=7.0.30"><i class="fa-solid fa-arrow-up-right-from-square"></i> 前往机库</a>
                     </div>
                     <div class="hangar-summary-grid">
                         <div class="hangar-summary-card">
@@ -2214,7 +2220,7 @@
                 <div class="hud-corner-br" aria-hidden="true"></div>
                 <div class="panel-heading">
                     <div class="panel-title"><i class="fa-solid fa-trophy"></i> 全球星海名人堂</div>
-                    <span class="panel-subtitle">TOP 50</span>
+                    <span class="panel-subtitle">TOP 10</span>
                 </div>
                 <div class="leaderboard-header-row" aria-hidden="true">
                     <span>排名</span>
@@ -2262,8 +2268,8 @@
         <span id="toastText">已更新</span>
     </div>
 
-    <script src="js/leaderboard_config.js?v=7.0.29"></script>
-    <script src="js/leaderboard_api.js?v=7.0.29"></script>
-    <script src="js/leaderboard_page.js?v=7.0.29"></script>
+    <script src="js/leaderboard_config.js?v=7.0.30"></script>
+    <script src="js/leaderboard_api.js?v=7.0.30"></script>
+    <script src="js/leaderboard_page.js?v=7.0.30"></script>
 </body>
 </html>
