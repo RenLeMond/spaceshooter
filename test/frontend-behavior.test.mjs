@@ -86,7 +86,7 @@ test('ngrok previews use the production same-site API host', async () => {
 });
 
 test('entry pages use the current cache-busting asset version', async () => {
-  const expected = '7.0.30';
+  const expected = '7.0.31';
   const files = ['index.html', 'space_shooter.html', 'leaderboard.html', 'v7_hangar.html'];
   for (const file of files) {
     const html = await readFile(new URL('../' + file, import.meta.url), 'utf8');
