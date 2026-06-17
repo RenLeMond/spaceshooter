@@ -1374,7 +1374,9 @@ class GameEngine {
         this.scoreText.innerText = String(this.score).padStart(6, '0');
         this.scrapText.innerText = this.scrap;
         this.waveText.innerText = this.wave;
-        this.hpBar.style.width = `${this.player.hp}%`;
+        // 使用 hp/maxHp 比率而非裸 hp 值，防止 antimatter 模组(maxHp=70)时血条不满或溢出
+        const hpPercent = Math.max(0, Math.min(100, (this.player.hp / this.player.maxHp) * 100));
+        this.hpBar.style.width = `${hpPercent}%`;
         
         const shieldPercent = this.shieldTime > 0 ? (this.shieldTime / 8000) * 100 : 0;
         this.shieldBar.style.width = `${shieldPercent}%`;

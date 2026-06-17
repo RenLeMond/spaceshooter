@@ -315,14 +315,15 @@
             const ship = SHIP_META[match.skin] || SHIP_META.default;
             const item = document.createElement('div');
             item.className = 'match-item';
+            // ship.icon/name 来自 SHIP_META 常量(安全)，但 match 数据源自 localStorage，统一 escape 防注入
             item.innerHTML = `
-                <div class="match-icon"><i class="fa-solid ${ship.icon}"></i></div>
+                <div class="match-icon"><i class="fa-solid ${String(ship.icon).replace(/[^a-z0-9-]/gi, '')}"></i></div>
                 <div class="match-main">
-                    <strong>WAVE ${Math.max(1, match.wave || 1)}</strong>
-                    <span>${ship.name}${match.isNewBest ? ' · 新纪录' : ''}</span>
+                    <strong>WAVE ${Math.max(1, Math.floor(Number(match.wave) || 1))}</strong>
+                    <span>${escapeHtml(ship.name)}${match.isNewBest ? ' · 新纪录' : ''}</span>
                 </div>
                 <div class="match-score">${formatNumber(match.score || 0)}</div>
-                <div class="match-time">${formatDate(match.playedAt)} · +${match.permanentCoresEarned || 0} 星核</div>
+                <div class="match-time">${escapeHtml(formatDate(match.playedAt))} · +${Math.max(0, Math.floor(Number(match.permanentCoresEarned) || 0))} 星核</div>
             `;
             el.matchHistoryList.appendChild(item);
         });

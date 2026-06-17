@@ -391,8 +391,9 @@ Object.assign(GameEngine.prototype, {
 
         const mainPct = document.getElementById('bossMainPercent');
         const mainBar = document.getElementById('bossMainHpBar');
-        if (mainPct) mainPct.innerText = `${Math.ceil((totalHp / totalMaxHp) * 100)}%`;
-        if (mainBar) mainBar.style.width = `${(totalHp / totalMaxHp) * 100}%`;
+        const bossHpPct = totalMaxHp > 0 ? (totalHp / totalMaxHp) * 100 : 0;
+        if (mainPct) mainPct.innerText = `${Math.ceil(bossHpPct)}%`;
+        if (mainBar) mainBar.style.width = `${bossHpPct}%`;
 
         const headSpeed = b.headSpeed || 4;
         const devourMult = b.devourMultiplier || 2;

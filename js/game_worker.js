@@ -53,7 +53,9 @@ self.window = {
                 postMessage({ type: 'saveLocalStorage', key, val: self.currentSkin });
             }
             if (key === 'space_unlocked_skins') {
-                const skinState = normalizeWorkerSkin(self.currentSkin, JSON.parse(val));
+                let parsedSkins;
+                try { parsedSkins = JSON.parse(val); } catch (e) { parsedSkins = ['default']; }
+                const skinState = normalizeWorkerSkin(self.currentSkin, parsedSkins);
                 self.unlockedSkins = skinState.unlockedSkins;
                 self.currentSkin = skinState.currentSkin;
                 postMessage({ type: 'saveLocalStorage', key, val: JSON.stringify(self.unlockedSkins) });

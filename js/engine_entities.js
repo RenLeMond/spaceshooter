@@ -885,21 +885,26 @@ Object.assign(GameEngine.prototype, {
             const card = document.createElement('div');
             const themeClass = mod.class === '超维共鸣' ? 'rogue-amber' : (mod.class === '混沌魔改' ? 'rogue-rose' : 'rogue-cyan');
             card.className = `rogue-card ${themeClass}`;
+            // 与 main.js renderMainRogueUpgradeCards 保持一致：icon 过滤后注入，title/class/desc 用 textContent
+            const safeIcon = String(mod.icon || '').replace(/[^a-z0-9-]/gi, '');
 
             card.innerHTML = `
                 <div class="rogue-scan"></div>
-                <div class="rogue-icon"><i class="fa-solid ${mod.icon}"></i></div>
+                <div class="rogue-icon"><i class="fa-solid ${safeIcon}"></i></div>
                 <div class="rogue-body pointer-events-none">
                     <div class="flex items-center justify-between">
-                        <span class="rogue-name">${mod.title}</span>
-                        <span class="rogue-class-tag">${mod.class}</span>
+                        <span class="rogue-name"></span>
+                        <span class="rogue-class-tag"></span>
                     </div>
-                    <p class="rogue-desc mt-1">${mod.desc}</p>
+                    <p class="rogue-desc mt-1"></p>
                 </div>
                 <div class="rogue-action-hint pointer-events-none">
                     <i class="fa-solid fa-circle-chevron-right animate-pulse"></i>
                 </div>
             `;
+            card.querySelector('.rogue-name').textContent = mod.title;
+            card.querySelector('.rogue-class-tag').textContent = mod.class;
+            card.querySelector('.rogue-desc').textContent = mod.desc;
             
             card.addEventListener('click', () => {
                 this.applyModCard(mod.id);
