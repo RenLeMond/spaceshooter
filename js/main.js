@@ -1289,7 +1289,7 @@ function computeWeaponStats() {
     if (cLevel > 0) details.push({ icon: 'fa-shield-halved', title: '反物质纳米力场', desc: `永久天赋 C Lv.${cLevel}：碰撞伤害减免 +${cLevel * 8}%。`, value: `-${cLevel * 8}%` });
 
     // 引力弹弓临时增益说明（非永久属性，触发时生效）
-    details.push({ icon: 'fa-bolt-lightning', title: '引力弹弓狂暴', desc: '触发引力弹弓时：主炮伤害 ×2、弹体半径 ×1.5、期间无敌，持续 1.5 秒。', value: '临时' });
+    details.push({ icon: 'fa-bolt-lightning', title: '引力弹弓狂暴', desc: '触发引力弹弓时：武器射速暴增 200%（开火间隔 ÷3）、子弹伤害 ×2、弹体半径 ×1.5、期间无敌，持续 1.5 秒。', value: '临时' });
 
     return { base, damage, meteorDamage, bossDamage, radius, pierce, fireInterval, magnet, details };
 }

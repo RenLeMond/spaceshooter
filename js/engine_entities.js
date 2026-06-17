@@ -187,7 +187,9 @@ Object.assign(GameEngine.prototype, {
         
         for (let wi = 0; wi < this.wingmen.length; wi++) {
             const w = this.wingmen[wi];
-            if (now - w.lastShotTime >= p.fireInterval) {
+            // V7 修复：弹弓期间僚机射速也跟随暴增（与主炮 playerFire 逻辑一致）
+            const wingmanInterval = this.slingshotTime > 0 ? Math.floor(p.fireInterval / 3) : p.fireInterval;
+            if (now - w.lastShotTime >= wingmanInterval) {
                 w.lastShotTime = now;
 
                 if (comboKey === 'EM+Fire') {
