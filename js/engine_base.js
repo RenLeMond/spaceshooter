@@ -1391,13 +1391,25 @@ class GameEngine {
             if (this.expPercentText) this.expPercentText.innerText = `${Math.floor(expPercent)}%`;
         }
 
-        // V7: 单线程降级模式下同步机载构装总览（Worker 模式由 game_worker 的 hud 消息驱动）
-        if (typeof window !== 'undefined' && typeof window.updateLoadoutUI === 'function' && this.player) {
-            window.updateLoadoutUI(
-                this.player.equippedMods || [],
-                this.player.elementSlots || [],
-                this.player.comboKey || ''
-            );
+        // V7: 单线程降级模式下同步机载构装总览与武器详情面板（Worker 模式由 game_worker 的 hud 消息驱动）
+        if (typeof window !== 'undefined' && this.player) {
+            if (typeof window.updateLoadoutUI === 'function') {
+                window.updateLoadoutUI(
+                    this.player.equippedMods || [],
+                    this.player.elementSlots || [],
+                    this.player.comboKey || ''
+                );
+            }
+            // V7 修复：单线程模式下也需同步武器详情面板状态，否则晶核切换后面板不刷新
+            if (typeof window.updateWeaponStatsState === 'function') {
+                window.updateWeaponStatsState({
+                    slots: this.player.elementSlots || [],
+                    comboKey: this.player.comboKey || '',
+                    synergyName: this.player.synergyName || '',
+                    equippedMods: this.player.equippedMods || [],
+                    currentSkin: this.currentSkin || 'default'
+                });
+            }
         }
     }
 

@@ -288,6 +288,15 @@ Object.assign(GameEngine.prototype, {
     pickupElement(elementName) {
         if (!this.player.elementSlots) this.player.elementSlots = [];
 
+        // V7 修复：拾取已拥有的同种晶核时不再重复入槽（防止 'Fire+Fire' 等无效 comboKey
+        // 导致武器面板回退显示"基础高频激光"），改为给予少量分数奖励
+        if (this.player.elementSlots.includes(elementName)) {
+            this.score += 50;
+            this.addFloatText(this.player.x, this.player.y - 40, '+50 重复晶核', '#fbbf24', 16);
+            sfx.playPowerup();
+            return;
+        }
+
         if (this.player.elementSlots.length >= 2) {
             this.player.elementSlots.shift();
         }
@@ -306,8 +315,13 @@ Object.assign(GameEngine.prototype, {
     _recomputeComboKey() {
         const slots = this.player.elementSlots || [];
         if (slots.length === 2) {
-            // 仅 2 项时按字典序简单排序
-            this.player.comboKey = (slots[0] < slots[1]) ? (slots[0] + '+' + slots[1]) : (slots[1] + '+' + slots[0]);
+            // V7 安全网：两个相同晶核时降级为单晶核（防止 'Fire+Fire' 等无效 comboKey）
+            if (slots[0] === slots[1]) {
+                this.player.comboKey = slots[0];
+            } else {
+                // 仅 2 项时按字典序简单排序
+                this.player.comboKey = (slots[0] < slots[1]) ? (slots[0] + '+' + slots[1]) : (slots[1] + '+' + slots[0]);
+            }
         } else if (slots.length === 1) {
             this.player.comboKey = slots[0];
         } else {
