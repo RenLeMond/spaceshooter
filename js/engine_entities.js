@@ -74,25 +74,26 @@ function calculatePermanentCoreReward(stats) {
 
 // P2: 武器名称表 — 模块级常量，避免每次 HUD/pickup 重建对象字面量
 // HUD 字号 9px、宽度有限，去掉装饰【】让单核/共鸣名能完整显示
+// 与 main.js getWeaponBaseStats 保持名称一致
 const WEAPONS_NAMES = {
-    'EM': '【高频快速电磁炮】',
-    'Frost': '【超导绝对零度枪】',
-    'Fire': '【熔核聚变爆裂弹】',
-    'Rad': '【高能恒星辐射光】',
-    'EM+Frost': '【冰暴超导跃迁枪】',
-    'EM+Fire': '【雷霆聚变链式炮】',
-    'EM+Rad': '【磁重力爆破核心】',
-    'Fire+Frost': '【升华相差熔岩风暴】',
-    'Frost+Rad': '【绝对静止视界】',
-    'Fire+Rad': '【坍缩黑洞星云爆】'
+    'EM': '高频快速电磁炮',
+    'Frost': '超导绝对零度枪',
+    'Fire': '熔核聚变爆裂弹',
+    'Rad': '高能恒星辐射光',
+    'EM+Frost': '冰暴超导跃迁枪',
+    'EM+Fire': '雷霆聚变链式炮',
+    'EM+Rad': '磁重力爆破核心',
+    'Fire+Frost': '升华相差熔岩风暴',
+    'Frost+Rad': '绝对静止视界',
+    'Fire+Rad': '坍缩黑洞星云爆'
 };
 
 // V7: Roguelike 模组定义表 — 模块级常量，engine_entities.js 与 main.js 共用
 var ROGUE_MOD_DEFINITIONS = [
     { id: 'split', title: '多重散射 (Split Shot)', class: '通用', icon: 'fa-cubes', color: 'cyan', desc: '主炮额外向左右两翼扇形发射 +2 侧向子弹，但基础主炮单发伤害削减 15%。' },
-    { id: 'heavy', title: '重力巨弹 (Heavy Mag)', class: '通用', icon: 'fa-compress', color: 'purple', desc: '子弹体积物理增大 40%，且穿透（Pierce）+1，但主炮开火频率降低 10%。' },
-    { id: 'drone', title: '先驱无人机 (Vanguard Drone)', class: '通用', icon: 'fa-shield-halved', color: 'rose', desc: '加挂一架独立的智能索敌巡航能盾僚机，自动对附近流星释放 15 点的电浆能量打击。' },
-    { id: 'tesla', title: '特斯拉雷电 (Tesla Arc)', class: '超维共鸣', icon: 'fa-bolt', color: 'amber', desc: '前置需拥有电磁 EM 晶核。所有子弹物理碰撞瞬间有 40% 概率触发 350px 链式高频雷暴。' },
+    { id: 'heavy', title: '重力巨弹 (Heavy Mag)', class: '通用', icon: 'fa-compress', color: 'purple', desc: '子弹体积物理增大 40%，且穿透（Pierce）+1，但主炮开火间隔延长约 12%。' },
+    { id: 'drone', title: '先驱无人机 (Vanguard Drone)', class: '通用', icon: 'fa-shield-halved', color: 'rose', desc: '加挂一架智能索敌巡航能盾僚机，并入当前僚机火力体系，共享晶核组合射击。' },
+    { id: 'tesla', title: '特斯拉雷电 (Tesla Arc)', class: '超维共鸣', icon: 'fa-bolt', color: 'amber', desc: '前置需拥有电磁 EM 晶核。所有子弹物理碰撞瞬间有 40% 概率触发 300px 链式高频雷暴，每跳 25 伤害，最多 2 跳。' },
     { id: 'implosion', title: '折跃重力星轨 (Warp Singularity)', class: '超维共鸣', icon: 'fa-circle-notch', color: 'cyan', desc: '战术折跃(Shift)在起点与终点残留轨迹上施加引力聚能拉扯流星。' },
     { id: 'antimatter', title: '反物质过载 (Antimatter Overload)', class: '混沌魔改', icon: 'fa-radiation', color: 'rose', desc: '主武器基础伤害疯狂暴涨 80%，但飞船最大 HP 永久缩减 30%，极限火力输出。' }
 ];

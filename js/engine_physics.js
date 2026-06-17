@@ -612,7 +612,9 @@ Object.assign(GameEngine.prototype, {
 
     triggerTeslaArc(startMeteor) {
         let currentSource = startMeteor;
-        const hitMeteors = new Set([startMeteor]);
+        // 0-GC: 用固定大小数组替代 new Set()，maxHops=2 最多跟踪 3 个陨石引用
+        const hitMeteors = [startMeteor, null, null];
+        let hitCount = 1;
         const maxHops = 2;
         const chainDamage = 25;
         const searchRange = 300;
@@ -624,7 +626,11 @@ Object.assign(GameEngine.prototype, {
 
             for (let i = 0; i < this.maxMeteors; i++) {
                 const m = this.meteors[i];
-                if (!m.active || hitMeteors.has(m)) continue;
+                if (!m.active) continue;
+                // 线性查找已命中列表（最多 3 项，比 Set 更省内存）
+                let alreadyHit = false;
+                for (let h = 0; h < hitCount; h++) { if (hitMeteors[h] === m) { alreadyHit = true; break; } }
+                if (alreadyHit) continue;
 
                 const dx = m.x - currentSource.x;
                 const dy = m.y - currentSource.y;
@@ -672,7 +678,7 @@ Object.assign(GameEngine.prototype, {
                 nextTarget.active = false;
             }
 
-            hitMeteors.add(nextTarget);
+            hitMeteors[hitCount++] = nextTarget;
             currentSource = nextTarget;
         }
     }

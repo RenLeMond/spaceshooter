@@ -456,6 +456,8 @@ let engineInstance = null;
 
 self.onmessage = function(e) {
     const data = e.data;
+    if (!data || !data.type) return;
+  try {
     switch (data.type) {
         case 'init':
             // 接收 OffscreenCanvas 以及本地持久化数据
@@ -708,7 +710,14 @@ self.onmessage = function(e) {
                 engineInstance.updateHUD();
             }
             break;
+            
+        default:
+            break;
     }
+  } catch(err) {
+    console.error("[Worker] onmessage 异常:", err);
+    postMessage({ type: 'workerError', message: err && err.message ? err.message : String(err) });
+  }
 };
 
 postMessage({ type: 'bootReady' });
