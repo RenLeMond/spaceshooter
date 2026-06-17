@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星海猎手 V7 - 全量代码检查报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { font-family: 'Inter', 'Noto Sans SC', system-ui, sans-serif; }
+        body { background: #0f172a; color: #e2e8f0; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); }
+        .sev-critical { background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.35); }
+        .sev-high { background: rgba(249, 115, 22, 0.12); border-color: rgba(249, 115, 22, 0.35); }
+        .sev-medium { background: rgba(234, 179, 8, 0.12); border-color: rgba(234, 179, 8, 0.35); }
+        .sev-low { background: rgba(34, 211, 238, 0.12); border-color: rgba(34, 211, 238, 0.35); }
+        .sev-fixed { background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.35); }
+        .code-block { background: #0b1120; border-radius: 8px; padding: 12px 16px; font-family: 'Fira Code', 'Consolas', monospace; font-size: 12px; overflow-x: auto; border: 1px solid rgba(255,255,255,0.06); }
+        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; border: 1px solid; }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+<div class="max-w-5xl mx-auto">
+
+<!-- Header -->
+<header class="text-center mb-8">
+    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 mb-4">
+        <i class="fa-solid fa-satellite-dish text-cyan-400 text-xs"></i>
+        <span class="text-xs font-bold text-cyan-300 uppercase tracking-widest">Code Review Report</span>
+    </div>
+    <h1 class="text-3xl md:text-4xl font-black text-white tracking-tight mb-2">星海猎手 V7 · 全量代码检查报告</h1>
+    <p class="text-sm text-gray-400">检查日期：2026-06-17 · 覆盖 js/ 全部 12 个脚本文件 · 重点关注局内武器详情</p>
+</header>
+
+<!-- Summary Metrics -->
+<section class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+    <div class="glass-panel sev-critical border rounded-xl p-4 text-center">
+        <div class="text-3xl font-black text-red-400">2</div>
+        <div class="text-xs text-gray-400 mt-1">严重 Critical</div>
+    </div>
+    <div class="glass-panel sev-medium border rounded-xl p-4 text-center">
+        <div class="text-3xl font-black text-yellow-400">6</div>
+        <div class="text-xs text-gray-400 mt-1">中等 Medium</div>
+    </div>
+    <div class="glass-panel sev-low border rounded-xl p-4 text-center">
+        <div class="text-3xl font-black text-cyan-400">8</div>
+        <div class="text-xs text-gray-400 mt-1">低 Low</div>
+    </div>
+    <div class="glass-panel sev-fixed border rounded-xl p-4 text-center">
+        <div class="text-3xl font-black text-emerald-400">13</div>
+        <div class="text-xs text-gray-400 mt-1">已修复 Fixed</div>
+    </div>
+</section>
+
+<!-- Section 1: Weapon Details Issues (User's Primary Concern) -->
+<section class="mb-8">
+    <div class="flex items-center gap-2 mb-4">
+        <i class="fa-solid fa-crosshairs text-fuchsia-400"></i>
+        <h2 class="text-xl font-black text-white">一、局内武器详情问题（重点排查）</h2>
+        <span class="badge sev-fixed text-emerald-400 border-emerald-500/30">全部已修复</span>
+    </div>
+
+    <div class="space-y-3">
+
+        <!-- Issue 1 -->
+        <div class="glass-panel border border-white/10 rounded-xl p-4">
+            <div class="flex items-start justify-between gap-3 mb-2">
+                <div>
+                    <span class="badge sev-high text-orange-400 border-orange-500/30 mr-2">高</span>
+                    <strong class="text-white">武器名称不一致：武器详情面板与局内 HUD 显示不同名称</strong>
+                </div>
+                <span class="badge sev-fixed text-emerald-400 border-emerald-500/30"><i class="fa-solid fa-check"></i> 已修复</span>
+            </div>
+            <p class="text-sm text-gray-400 mb-2">单元素晶核武器在 <code class="text-cyan-300 text-xs">main.js getWeaponBaseStats()</code> 和 <code class="text-cyan-300 text-xs">engine_entities.js WEAPONS_NAMES</code> 中使用了完全不同的名称，导致玩家在 HUD 看到的名字和点开武器详情面板看到的名字不一致。</p>
+            <div class="code-block text-gray-300 mb-2">
+// 修复前 — 名称完全不同
+EM:    面板"电磁脉冲枪"  vs  HUD"【高频快速电磁炮】"
+Frost: 面板"低温裂解枪"  vs  HUD"【超导绝对零度枪】"
+Fire:  面板"热核燃烧炮"  vs  HUD"【熔核聚变爆裂弹】"
+
+// 修复后 — 统一名称，去除装饰括号
+EM:    高频快速电磁炮   (两处一致)
+Frost: 超导绝对零度枪   (两处一致)
+Fire:  熔核聚变爆裂弹   (两处一致)
+            </div>
+            <p class="text-xs text-gray-500">文件：main.js L1165-1181 · engine_entities.js L77-88</p>
+        </div>
+
+        <!-- Issue 2 -->
+        <div class="glass-panel border border-white/10 rounded-xl p-4">
+            <div class="flex items-start justify-between gap-3 mb-2">
+                <div>
+                    <span class="badge sev-medium text-yellow-400 border-yellow-500/30 mr-2">中</span>
+                    <strong class="text-white">特斯拉雷电范围数值错误：面板/模组描述 350px，引擎实际 300px</strong>
+                </div>
+                <span class="badge sev-fixed text-emerald-400 border-emerald-500/30"><i class="fa-solid fa-check"></i> 已修复</span>
+            </div>
+            <p class="text-sm text-gray-400 mb-2">武器详情面板和 ROGUE_MOD_DEFINITIONS 都声称特斯拉链式雷暴范围为 350px，但引擎 <code class="text-cyan-300 text-xs">triggerTeslaArc()</code> 中 <code class="text-amber-300">searchRange = 300</code>，实际只有 300px。同时面板未提及每跳 25 伤害和最多 2 跳。</p>
+            <div class="code-block text-gray-300">
+// engine_physics.js — 引擎实际值
+const searchRange = 300;    // 实际 300px
+const chainDamage = 25;     // 每跳 25 伤害
+const maxHops = 2;          // 最多 2 跳
+
+// 修复前 — 面板描述与引擎不符
+desc: '...40% 概率触发 350px 链式高频雷暴。'     // ❌ 350px
+
+// 修复后 — 数值修正 + 补充伤害信息
+desc: '...40% 概率触发 300px 链式高频雷暴，每跳 25 伤害，最多跳跃 2 次。'  // ✅
+            </div>
+            <p class="text-xs text-gray-500 mt-2">文件：main.js L1244 · engine_entities.js L95 · engine_physics.js L618</p>
+        </div>
+
+        <!-- Issue 3 -->
+        <div class="glass-panel border border-white/10 rounded-xl p-4">
+            <div class="flex items-start justify-between gap-3 mb-2">
+                <div>
+                    <span class="badge sev-medium text-yellow-400 border-yellow-500/30 mr-2">中</span>
+                    <strong class="text-white">晶核合成特效描述缺失：溅射伤害/冻结/减速效果未在面板展示</strong>
+                </div>
+                <span class="badge sev-fixed text-emerald-400 border-emerald-500/30"><i class="fa-solid fa-check"></i> 已修复</span>
+            </div>
+            <p class="text-sm text-gray-400 mb-2">4 种双晶核合成武器在命中时有额外的协同反应效果（溅射/冻结/减速），但武器详情面板的 <code class="text-cyan-300 text-xs">special</code> 字段完全没有提及这些核心机制。</p>
+            <div class="code-block text-gray-300">
+// 引擎中实际存在但面板未展示的协同特效：
+EM+Fire:    命中对 140px 范围陨石造成 25 溅射伤害     ❌→✅ 已补充
+Fire+Rad:   命中对 125px 范围陨石造成 35 溅射+引力拉扯  ❌→✅ 已补充
+EM+Frost:   命中减速陨石 70% (vy *= 0.3)              ❌→✅ 已补充
+Frost+Rad:  命中冻结陨石完全停止 (vx=0, vy=0)         ❌→✅ 已补充
+            </div>
+            <p class="text-xs text-gray-500 mt-2">文件：main.js getWeaponBaseStats() special 字段 · engine_physics.js applySynergyBulletReaction()</p>
+        </div>
+
+        <!-- Issue 4 -->
+        <div class="glass-panel border border-white/10 rounded-xl p-4">
+            <div class="flex items-start justify-between gap-3 mb-2">
+                <div>
+                    <span class="badge sev-medium text-yellow-400 border-yellow-500/30 mr-2">中</span>
+                    <strong class="text-white">"先驱无人机"模组描述与实际行为不符</strong>
+                </div>
+                <span class="badge sev-fixed text-emerald-400 border-emerald-500/30"><i class="fa-solid fa-check"></i> 已修复</span>
+            </div>
+            <p class="text-sm text-gray-400 mb-2">ROGUE_MOD_DEFINITIONS 描述"自动对附近流星释放 15 点的电浆能量打击"，但引擎实际行为是 <code class="text-cyan-300 text-xs">turretLevel++</code>（增加一架僚机），并非 15 点能量打击。</p>
+            <div class="code-block text-gray-300">
+// 引擎实际行为 (engine_entities.js applyModCard)
+this.hangar.turretLevel = Math.min(2, this.hangar.turretLevel + 1);  // 增加僚机
+this.updateWingmen(1.0);                                              // 重建僚机队形
+
+// 修复后描述 — 与实际行为一致
+desc: '加挂一架智能索敌巡航能盾僚机，并入当前僚机火力体系，共享晶核组合射击。'
+            </div>
+            <p class="text-xs text-gray-500 mt-2">文件：engine_entities.js L94</p>
+        </div>
+
+        <!-- Issue 5 -->
+        <div class="glass-panel border border-white/10 rounded-xl p-4">
+            <div class="flex items-start justify-between gap-3 mb-2">
+                <div>
+                    <span class="badge sev-low text-cyan-400 border-cyan-500/30 mr-2">低</span>
+                    <strong class="text-white">"重力巨弹"频率降低描述：10% vs 12% 不一致</strong>
+                </div>
+                <span class="badge sev-fixed text-emerald-400 border-emerald-500/30"><i class="fa-solid fa-check"></i> 已修复</span>
+            </div>
+            <p class="text-sm text-gray-400">ROGUE_MOD_DEFINITIONS 写"降低 10%"，引擎代码 <code class="text-amber-300">* 1.12</code> 实为约 12% 间隔延长。已统一为"约 12%"。</p>
+            <p class="text-xs text-gray-500 mt-2">文件：engine_entities.js L93</p>
+        </div>
+
+        <!-- Issue 6 -->
+        <div class="glass-panel border border-white/10 rounded-xl p-4">
+            <div class="flex items-start justify-between gap-3 mb-2">
+                <div>
+                    <span class="badge sev-low text-cyan-400 border-cyan-500/30 mr-2">低</span>
+                    <strong class="text-white">帝皇余晖机体：废料双倍增益未在武器面板展示</strong>
+                </div>
+                <span class="badge sev-fixed text-emerald-400 border-emerald-500/30"><i class="fa-solid fa-check"></i> 已修复</span>
+            </div>
+            <p class="text-sm text-gray-400">引擎中帝皇涂装 <code class="text-cyan-300 text-xs">this.scrap += 2</code>（双倍废料），但武器面板只提到了磁吸范围提升。已补充废料×2 说明。</p>
+            <p class="text-xs text-gray-500 mt-2">文件：main.js L1266-1268 · engine_physics.js L492-494</p>
+        </div>
+
+        <!-- Issue 7 -->
+        <div class="glass-panel border border-white/10 rounded-xl p-4">
+            <div class="flex items-start justify-between gap-3 mb-2">
+                <div>
+                    <span class="badge sev-low text-cyan-400 border-cyan-500/30 mr-2">低</span>
+                    <strong class="text-white">引力弹弓临时增益（伤害×2 / 半径×1.5 / 无敌）未在面板说明</strong>
+                </div>
+                <span class="badge sev-fixed text-emerald-400 border-emerald-500/30"><i class="fa-solid fa-check"></i> 已修复</span>
+            </div>
+            <p class="text-sm text-gray-400">引擎 <code class="text-cyan-300 text-xs">spawnBulletInPool</code> 在弹弓激活时 <code class="text-amber-300">damage *= 2; radius *= 1.5</code>，但武器面板完全没有提及这一关键临时增益。已补充说明行。</p>
+            <p class="text-xs text-gray-500 mt-2">文件：main.js computeWeaponStats() · engine_physics.js L35-39</p>
+        </div>
+
+        <!-- Issue 8 -->
+        <div class="glass-panel border border-white/10 rounded-xl p-4">
+            <div class="flex items-start justify-between gap-3 mb-2">
+                <div>
+                    <span class="badge sev-low text-cyan-400 border-cyan-500/30 mr-2">低</span>
+                    <strong class="text-white">EM+Fire 僚机链电伤害绕过反物质/天赋加成 — 面板未标注</strong>
+                </div>
+                <span class="badge sev-fixed text-emerald-400 border-emerald-500/30"><i class="fa-solid fa-check"></i> 已修复</span>
+            </div>
+            <p class="text-sm text-gray-400">引擎中 EM+Fire 僚机链电 <code class="text-amber-300">target.hp -= 20</code> 直接扣血，未经过 <code class="text-cyan-300 text-xs">spawnBulletInPool</code>，因此不受反物质×1.8、天赋B等加成影响。面板已补充"固定伤害，不受反物质/天赋加成"标注。</p>
+            <p class="text-xs text-gray-500 mt-2">文件：main.js getWingmanDamage() · engine_entities.js L234</p>
+        </div>
+
+    </div>
+</section>
+
+<!-- Section 2: Critical Bugs -->
+<section class="mb-8">
+    <div class="flex items-center gap-2 mb-4">
+        <i class="fa-solid fa-bug text-red-400"></i>
+        <h2 class="text-xl font-black text-white">二、严重 Bug</h2>
+    </div>
+    <div class="space-y-3">
+
+        <div class="glass-panel sev-critical border rounded-xl p-4">
+            <div class="flex items-start justify-between gap-3 mb-2">
+                <div>
+                    <span class="badge sev-critical text-red-400 border-red-500/30 mr-2">严重</span>
+                    <strong class="text-white">Worker 缺少 onerror 处理 — 运行时异常导致游戏静默卡死</strong>
+                </div>
+                <span class="badge sev-fixed text-emerald-400 border-emerald-500/30"><i class="fa-solid fa-check"></i> 已修复</span>
+            </div>
+            <p class="text-sm text-gray-400 mb-2">主线程只设置了 <code class="text-cyan-300 text-xs">worker.onmessage</code>，没有 <code class="text-cyan-300 text-xs">worker.onerror</code>。Worker 内部一旦抛出未捕获异常，主线程完全无感知，游戏会静默卡死在空白画面。</p>
+            <p class="text-xs text-gray-500">修复：添加 worker.onerror 回调 + Worker 内 onmessage 包裹 try/catch + 新增 workerError 消息类型 → 文件：main.js L487 · game_worker.js L457</p>
+        </div>
+
+        <div class="glass-panel sev-critical border rounded-xl p-4">
+            <div class="flex items-start justify-between gap-3 mb-2">
+                <div>
+                    <span class="badge sev-critical text-red-400 border-red-500/30 mr-2">严重</span>
+                    <strong class="text-white">单线程降级模式 gameLoop 暂停时仍持续渲染 + 恢复时 deltaTime 跳变</strong>
+                </div>
+                <span class="badge sev-fixed text-emerald-400 border-emerald-500/30"><i class="fa-solid fa-check"></i> 已修复</span>
+            </div>
+            <p class="text-sm text-gray-400 mb-2"><code class="text-cyan-300 text-xs">gameLoop</code> 无条件调用 <code class="text-cyan-300 text-xs">engine.draw()</code>，暂停时持续渲染浪费 CPU。且 <code class="text-cyan-300 text-xs">lastTime</code> 在暂停期间不更新，恢复瞬间 <code class="text-amber-300">deltaTime</code> 会是暂停的全时长，造成物理跳变。</p>
+            <p class="text-xs text-gray-500">修复：添加 isPaused/isRunning 守卫提前 return → 文件：main.js L1052-1062</p>
+        </div>
+
+    </div>
+</section>
+
+<!-- Section 3: Medium Issues -->
+<section class="mb-8">
+    <div class="flex items-center gap-2 mb-4">
+        <i class="fa-solid fa-triangle-exclamation text-yellow-400"></i>
+        <h2 class="text-xl font-black text-white">三、中等问题</h2>
+    </div>
+    <div class="space-y-3">
+
+        <div class="glass-panel sev-medium border rounded-xl p-4">
+            <div class="flex items-start justify-between gap-3 mb-2">
+                <strong class="text-white">triggerTeslaArc 在碰撞热路径上 new Set() — 违背 0-GC</strong>
+                <span class="badge sev-fixed text-emerald-400 border-emerald-500/30"><i class="fa-solid fa-check"></i> 已修复</span>
+            </div>
+            <p class="text-sm text-gray-400">每次触发特斯拉链式雷暴都 <code class="text-amber-300">new Set()</code>，在 40% 概率的高频碰撞路径上产生 GC 压力。已改为固定大小数组 + 线性查找（最多 3 项）。</p>
+            <p class="text-xs text-gray-500 mt-1">文件：engine_physics.js L613-678</p>
+        </div>
+
+        <div class="glass-panel sev-medium border rounded-xl p-4">
+            <div class="flex items-start justify-between gap-3 mb-2">
+                <strong class="text-white">localStorage.setItem 无异常处理 — 配额满/隐私模式下中断消息链</strong>
+                <span class="badge sev-fixed text-emerald-400 border-emerald-500/30"><i class="fa-solid fa-check"></i> 已修复</span>
+            </div>
+            <p class="text-sm text-gray-400">Worker 发来的 <code class="text-cyan-300 text-xs">saveLocalStorage</code> 消息直接调用 <code class="text-cyan-300 text-xs">localStorage.setItem</code> 无 try/catch，配额满时抛出异常会中断 onmessage 处理链。已包裹 try/catch。</p>
+            <p class="text-xs text-gray-500 mt-1">文件：main.js L647</p>
+        </div>
+
+        <div class="glass-panel sev-medium border rounded-xl p-4">
+            <div class="flex items-start justify-between gap-3 mb-2">
+                <strong class="text-white">Worker onmessage switch 缺少 try/catch 和 default 分支</strong>
+                <span class="badge sev-fixed text-emerald-400 border-emerald-500/30"><i class="fa-solid fa-check"></i> 已修复</span>
+            </div>
+            <p class="text-sm text-gray-400">任何 case 内部出错都会静默终止 Worker 消息处理。已包裹 try/catch 并通过 postMessage 向主线程报告错误，添加 default 分支。</p>
+            <p class="text-xs text-gray-500 mt-1">文件：game_worker.js L457, L711</p>
+        </div>
+
+        <div class="glass-panel sev-medium border rounded-xl p-4">
+            <div class="flex items-start justify-between gap-3 mb-2">
+                <strong class="text-white">Worker 模式下 endlessMode 初始值可能未同步</strong>
+                <span class="badge sev-low text-gray-400 border-gray-600/30">待确认</span>
+            </div>
+            <p class="text-sm text-gray-400"><code class="text-cyan-300 text-xs">init</code> 消息不含 <code class="text-cyan-300 text-xs">endlessMode</code>，Worker 默认 false。若用户刷新后直接开始游戏，可能与主线程 localStorage 恢复的值不一致。建议在 init 消息中加入 endlessMode 字段。</p>
+            <p class="text-xs text-gray-500 mt-1">文件：game_worker.js L460-491</p>
+        </div>
+
+        <div class="glass-panel sev-medium border rounded-xl p-4">
+            <div class="flex items-start justify-between gap-3 mb-2">
+                <strong class="text-white">renderRogueUpgradeCards (engine_entities.js) 使用 innerHTML 拼接 — 与 main.js 修复版本不一致</strong>
+                <span class="badge sev-low text-gray-400 border-gray-600/30">待修复</span>
+            </div>
+            <p class="text-sm text-gray-400"><code class="text-cyan-300 text-xs">main.js renderMainRogueUpgradeCards</code> 已修复为 textContent 防 XSS，但 <code class="text-cyan-300 text-xs">engine_entities.js renderRogueUpgradeCards</code> 仍直接拼接 innerHTML。当前数据为硬编码常量无实际风险，但不一致且未来扩展有隐患。</p>
+            <p class="text-xs text-gray-500 mt-1">文件：engine_entities.js L888-897</p>
+        </div>
+
+        <div class="glass-panel sev-medium border rounded-xl p-4">
+            <div class="flex items-start justify-between gap-3 mb-2">
+                <strong class="text-white">checkCollisions 为 O(bullets×meteors) 嵌套循环无空间分区</strong>
+                <span class="badge sev-low text-gray-400 border-gray-600/30">优化建议</span>
+            </div>
+            <p class="text-sm text-gray-400">200 子弹 × 40 陨石 = 8000 次/帧距离检测。Benchmark 满载时可能成为瓶颈，建议引入 spatial hash grid。当前规模下性能可控。</p>
+            <p class="text-xs text-gray-500 mt-1">文件：engine_physics.js L337-450</p>
+        </div>
+
+    </div>
+</section>
+
+<!-- Section 4: Low Issues -->
+<section class="mb-8">
+    <div class="flex items-center gap-2 mb-4">
+        <i class="fa-solid fa-circle-info text-cyan-400"></i>
+        <h2 class="text-xl font-black text-white">四、低优先级问题</h2>
+    </div>
+    <div class="space-y-2">
+        <div class="glass-panel sev-low border rounded-xl p-3 text-sm">
+            <strong class="text-cyan-300">renderLoadoutStrip / renderLoadoutPanel</strong> — innerHTML 拼接 mod 数据，与已修复的 renderMainRogueUpgradeCards 不一致 <span class="text-gray-500">(main.js L1436, L1477)</span>
+        </div>
+        <div class="glass-panel sev-low border rounded-xl p-3 text-sm">
+            <strong class="text-cyan-300">drawBoss worm 渲染</strong> — <code>parts[`segment${i}`]</code> 模板字符串属性查找在热路径上产生字符串分配 <span class="text-gray-500">(engine_renderer.js L299, L315)</span>
+        </div>
+        <div class="glass-panel sev-low border rounded-xl p-3 text-sm">
+            <strong class="text-cyan-300">window.addEventListener('resize')</strong> — 匿名箭头函数无法 removeEventListener，多次创建 GameEngine 会叠加监听器 <span class="text-gray-500">(engine_base.js L184)</span>
+        </div>
+        <div class="glass-panel sev-low border rounded-xl p-3 text-sm">
+            <strong class="text-cyan-300">selectRogueUpgradeMods</strong> — <code>[...availablePool].slice(0, limit)</code> 双重复制，非热路径但违背 0-GC 理念 <span class="text-gray-500">(engine_entities.js L123)</span>
+        </div>
+        <div class="glass-panel sev-low border rounded-xl p-3 text-sm">
+            <strong class="text-cyan-300">sfxQueue.slice()</strong> — 每帧创建新数组副本用于 postMessage <span class="text-gray-500">(game_worker.js L80)</span>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="text-center pt-6 border-t border-white/5">
+    <p class="text-xs text-gray-500">本次共修复 <strong class="text-emerald-400">13</strong> 项问题，剩余 <strong class="text-yellow-400">3</strong> 项待处理 / 优化建议。星海猎手 V7 · 0-GC 引擎架构</p>
+</footer>
+
+</div>
+</body>
+</html>

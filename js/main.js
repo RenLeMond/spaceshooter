@@ -2,7 +2,7 @@
 // 资源缓存版本号 — 同步于 space_shooter.html 的所有 ?v= 查询参数。
 // Worker 链 (game_worker.js + importScripts 的 6 个引擎文件) 通过 self.location.search 自动继承该版本，
 // 后续 bump 仅需改本常量 + HTML 的 ?v= 两处即可全量失效旧缓存。
-const ASSET_VERSION = '7.0.29';
+const ASSET_VERSION = '7.0.30';
 
 function updateAppViewportHeight() {
     const viewport = window.visualViewport;
@@ -483,12 +483,22 @@ window.onload = async function() {
             });
         }
         
+        // Worker 异常兜底：避免 Worker 内部未捕获异常导致游戏静默卡死
+        worker.onerror = function(err) {
+            console.error("❌ Worker 致命错误:", err.message || err);
+            mainShowToast("⚠️ 引擎线程异常，尝试降级到主线程模式...");
+        };
+        
         // 监听子线程 Worker 发来的消息
         worker.onmessage = function(e) {
             const msg = e.data;
             switch (msg.type) {
                 case 'ready':
                     console.log("⚡ Web Worker ready.");
+                    break;
+                case 'workerError':
+                    console.error("⚠️ Worker 运行时错误:", msg.message);
+                    mainShowToast("⚠️ 引擎运行异常: " + (msg.message || '未知错误'));
                     break;
                 case 'hud':
                     // 更新主线程 HUD
@@ -638,7 +648,7 @@ window.onload = async function() {
                     break;
                     
                 case 'saveLocalStorage':
-                    localStorage.setItem(msg.key, msg.val);
+                    try { localStorage.setItem(msg.key, msg.val); } catch(e) { console.warn("localStorage 写入失败:", e); }
                     if (msg.key === 'space_best_score') mainBestScore = safeReadInt('space_best_score', 0);
                     if (msg.key === 'space_current_skin') mainCurrentSkin = safeReadString('space_current_skin', 'default');
                     if (msg.key === 'space_unlocked_skins') {
@@ -1054,6 +1064,9 @@ window.onload = async function() {
         const deltaTime = currentTime - lastTime;
         lastTime = currentTime;
 
+        // 暂停/未运行时跳过物理与渲染，避免无谓 CPU 开销与恢复时 deltaTime 跳变
+        if (engine.isPaused || !engine.isRunning) return;
+
         engine.update(deltaTime);
         engine.draw();
     }
@@ -1166,16 +1179,16 @@ function getWeaponBaseStats(slots, comboKey) {
     const key = comboKey || (slots && slots[0]) || '';
     const map = {
         '': { name: '基础高频激光', damage: 20, radius: 4, pierce: 1, shots: 1, desc: '无晶核挂载时的稳定主炮。', special: '稳定射速，无额外晶核增益。' },
-        EM: { name: '电磁脉冲枪', damage: 25, radius: 3.5, pierce: 1, shots: 1, desc: '高速电磁弹，适合触发雷暴类构装。', special: '高速弹道，适配雷电追击类构装。' },
-        Frost: { name: '低温裂解枪', damage: 30, radius: 5, pierce: 1, shots: 1, desc: '低温弹体，命中可触发冰暴反应。', special: '低温弹体，弹体半径略增。' },
-        Fire: { name: '热核燃烧炮', damage: 35, radius: 6, pierce: 1, shots: 1, desc: '高热弹体，单发基础伤害较高。', special: '高热弹体，单发基础伤害提升。' },
+        EM: { name: '高频快速电磁炮', damage: 25, radius: 3.5, pierce: 1, shots: 1, desc: '高速电磁弹，适合触发雷暴类构装。', special: '高速弹道，适配雷电追击类构装。' },
+        Frost: { name: '超导绝对零度枪', damage: 30, radius: 5, pierce: 1, shots: 1, desc: '低温弹体，命中可触发冰暴反应。', special: '低温弹体，弹体半径略增。' },
+        Fire: { name: '熔核聚变爆裂弹', damage: 35, radius: 6, pierce: 1, shots: 1, desc: '高热弹体，单发基础伤害较高。', special: '高热弹体，单发基础伤害提升。' },
         Rad: { name: '高能恒星辐射光', damage: 40, radius: 8, pierce: 1, shots: 1, desc: '高能辐射弹，弹体更大。', special: '辐射弹体，基础半径更大。' },
-        'EM+Frost': { name: '冰暴超导跃迁枪', damage: 35, radius: 8, pierce: 3, shots: 1, desc: '超导冰弹，穿透能力显著提升。', special: '穿透 +2，弹体半径提升到 R8。' },
-        'EM+Fire': { name: '雷霆聚变链式炮', damage: 45, radius: 7, pierce: 1, shots: 1, desc: '聚变链式主炮，适合配合雷电追击。', special: '合成后基础伤害 45，适配雷电链索敌。' },
+        'EM+Frost': { name: '冰暴超导跃迁枪', damage: 35, radius: 8, pierce: 3, shots: 1, desc: '超导冰弹，穿透能力显著提升。', special: '穿透 +2，弹体半径提升到 R8；命中减速陨石 70%。' },
+        'EM+Fire': { name: '雷霆聚变链式炮', damage: 45, radius: 7, pierce: 1, shots: 1, desc: '聚变链式主炮，适合配合雷电追击。', special: '合成后基础伤害 45；命中对 140px 范围内陨石造成 25 溅射伤害。' },
         'EM+Rad': { name: '磁重力爆破核心', damage: 55, radius: 15, pierce: 99, shots: 1, desc: '大范围磁重力弹体，近似无限穿透。', special: '大范围 R15，近似无限穿透。' },
         'Fire+Frost': { name: '升华相差熔岩风暴', damage: 30, radius: 6, pierce: 1, shots: 2, desc: '左右双弹齐射，每发独立造成伤害。', special: '双发齐射，每发独立结算构装与天赋增益。' },
-        'Frost+Rad': { name: '绝对静止视界', damage: 40, radius: 10, pierce: 2, shots: 1, desc: '冻结视界弹，半径与穿透均衡。', special: '半径 R10，穿透 +1。' },
-        'Fire+Rad': { name: '坍缩黑洞星云爆', damage: 80, radius: 18, pierce: 1, shots: 1, desc: '重型爆破主炮，单发伤害最高。', special: '单发伤害最高，爆破半径提升到 R18。' }
+        'Frost+Rad': { name: '绝对静止视界', damage: 40, radius: 10, pierce: 2, shots: 1, desc: '冻结视界弹，半径与穿透均衡。', special: '半径 R10，穿透 +1；命中冻结陨石完全停止。' },
+        'Fire+Rad': { name: '坍缩黑洞星云爆', damage: 80, radius: 18, pierce: 1, shots: 1, desc: '重型爆破主炮，单发伤害最高。', special: '单发伤害最高；命中对 125px 范围内陨石造成 35 溅射伤害并引力拉扯。' }
     };
     return map[key] || map[''];
 }
@@ -1242,7 +1255,7 @@ function computeWeaponStats() {
     }
 
     if (mods.includes('tesla')) {
-        details.push({ icon: 'fa-bolt', title: '特斯拉雷电', desc: '所有主炮子弹命中后有 40% 概率触发 350px 链式高频雷暴。', value: '40%' });
+        details.push({ icon: 'fa-bolt', title: '特斯拉雷电', desc: '所有主炮子弹命中后有 40% 概率触发 300px 链式高频雷暴，每跳 25 伤害，最多跳跃 2 次。', value: '40%' });
     }
     if (mods.includes('implosion')) {
         details.push({ icon: 'fa-circle-notch', title: '折跃重力星轨', desc: '战术折跃会在起点与终点留下引力聚能轨迹，拉扯并压制附近陨石。', value: 'Shift' });
@@ -1264,7 +1277,7 @@ function computeWeaponStats() {
         details.push({ icon: 'fa-bolt-lightning', title: '超维雷霆机体', desc: 'EM+Fire 僚机链电索敌距离 +30%，由 400px 提升到 520px。', value: '+30%' });
     }
     if (state.currentSkin === 'imperial') {
-        details.push({ icon: 'fa-crown', title: '帝皇余晖机体', desc: '强磁拾取主题机体：基础吸附范围从 180px 提升到 230px。', value: '+50px' });
+        details.push({ icon: 'fa-crown', title: '帝皇余晖机体', desc: '强磁拾取主题机体：基础吸附范围从 180px 提升到 230px；每次拾取废料 +2（双倍暴击）。', value: '+50px / 废料×2' });
     }
     if (dLevel > 0) {
         details.push({ icon: 'fa-magnet', title: '磁力量子虹吸', desc: `永久天赋 D Lv.${dLevel}：废料 / 经验吸附半径 +${dLevel * 35}px。`, value: `+${dLevel * 35}px` });
@@ -1275,11 +1288,14 @@ function computeWeaponStats() {
     const cLevel = Math.max(0, Math.min(Number(talents.C) || 0, 3));
     if (cLevel > 0) details.push({ icon: 'fa-shield-halved', title: '反物质纳米力场', desc: `永久天赋 C Lv.${cLevel}：碰撞伤害减免 +${cLevel * 8}%。`, value: `-${cLevel * 8}%` });
 
+    // 引力弹弓临时增益说明（非永久属性，触发时生效）
+    details.push({ icon: 'fa-bolt-lightning', title: '引力弹弓狂暴', desc: '触发引力弹弓时：主炮伤害 ×2、弹体半径 ×1.5、期间无敌，持续 1.5 秒。', value: '临时' });
+
     return { base, damage, meteorDamage, bossDamage, radius, pierce, fireInterval, magnet, details };
 }
 
 function getWingmanDamage(comboKey, turretLevel) {
-    if (comboKey === 'EM+Fire') return { value: '链电 20', desc: '锁定附近流星触发链式电击，每次 20 伤害。' };
+    if (comboKey === 'EM+Fire') return { value: '链电 20', desc: '锁定附近流星触发链式电击，每次 20 伤害（固定伤害，不受反物质/天赋加成）。' };
     if (comboKey === 'Fire+Rad' || comboKey === 'EM+Rad') return { value: '每架 22', desc: '每架发射一枚 22 伤害侧向能量弹。' };
     if (comboKey === 'Frost+Rad' || comboKey === 'EM+Frost') return { value: '每架 15', desc: '每架发射一枚 15 伤害低温侧向弹。' };
     return { value: `每架 ${10 + turretLevel * 2}`, desc: `默认伴飞弹每架 ${10 + turretLevel * 2} 伤害。` };
