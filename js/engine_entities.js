@@ -352,7 +352,9 @@ Object.assign(GameEngine.prototype, {
 
     playerFire() {
         const now = Date.now();
-        if (now - this.player.lastShotTime >= this.player.fireInterval) {
+        // V7 修复：引力弹弓期间射速暴增 200%（fireInterval / 3），与 game_manual/game_design 文档一致
+        const effectiveInterval = this.slingshotTime > 0 ? Math.floor(this.player.fireInterval / 3) : this.player.fireInterval;
+        if (now - this.player.lastShotTime >= effectiveInterval) {
             this.player.lastShotTime = now;
             sfx.playShoot();
 

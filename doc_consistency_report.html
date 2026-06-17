@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文档一致性审查报告 · 星海猎手 V7</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="icon" href="favicon.png">
+<style>
+  body{background:#070b14;color:#e5e7eb;font-family:'Segoe UI',system-ui,sans-serif}
+  .glass{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);backdrop-filter:blur(8px)}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.05em}
+  .sev-high{background:rgba(244,63,94,.15);color:#fb7185;border:1px solid rgba(244,63,94,.3)}
+  .sev-mid{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3)}
+  .sev-low{background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.3)}
+  .ev{background:rgba(255,255,255,.15);color:#cbd5e1;border:1px solid rgba(255,255,255,.2)}
+  details summary{cursor:pointer;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  code{background:rgba(0,0,0,.4);padding:1px 5px;border-radius:4px;font-size:11px;color:#7dd3fc}
+  .bar{height:3px;border-radius:2px;background:linear-gradient(90deg,#f43f5e,#f59e0b,#10b981)}
+</style>
+</head>
+<body class="min-h-screen">
+<div class="bar"></div>
+<div class="max-w-5xl mx-auto px-5 py-10">
+
+  <header class="mb-10">
+    <p class="text-[11px] font-black tracking-[0.3em] text-rose-400 mb-2">DOCUMENT CONSISTENCY AUDIT</p>
+    <h1 class="text-3xl font-black text-white mb-2">文档一致性审查报告</h1>
+    <p class="text-sm text-gray-400">范围：game_design · game_manual · v6/v7_hangar · v6/v7_roadmap · version_history &nbsp;|&nbsp; 对照基准：js/ 引擎实现</p>
+    <div class="flex flex-wrap gap-3 mt-4 text-[11px]">
+      <span class="pill ev">共 8 项问题</span>
+      <span class="pill sev-high">严重 ×3</span>
+      <span class="pill sev-mid">中等 ×4</span>
+      <span class="pill sev-low">版本演进 ×1</span>
+    </div>
+  </header>
+
+  <!-- 图例 -->
+  <div class="glass rounded-xl p-4 mb-8 text-[11px] text-gray-400 leading-relaxed">
+    <span class="font-bold text-gray-300">判定规则：</span>
+    以 <code>js/</code> 引擎实际代码为基准。"未实现"指文档描述的特性在代码中不存在；"数值不符"指文档数值与代码数值有出入；"文档矛盾"指多个 HTML 文件对同一事物描述互相冲突。V6 文档视为历史快照，单独标注为"版本演进"。
+  </div>
+
+  <!-- ============ 问题 1 ============ -->
+  <section class="glass rounded-2xl p-6 mb-5">
+    <div class="flex items-start justify-between gap-4 mb-3">
+      <h2 class="text-lg font-black text-white">① 弹弓"射速暴增 200%"未实现</h2>
+      <span class="pill sev-high">严重 · 未实现</span>
+    </div>
+    <div class="text-xs text-gray-400 space-y-2 leading-relaxed">
+      <p><span class="font-bold text-rose-300">文档声称：</span><code>game_manual.html</code> 第四章（L734）称触发弹弓后"射速暴增 200%"；<code>game_design.html</code>（L931）称"激活引力弹弓获得 200% 攻击速度爆发"。</p>
+      <p><span class="font-bold text-emerald-300">实际代码：</span><code>engine_physics.js</code> L35-37 弹弓期间仅 <code>damage*=2</code> 与 <code>radius*=1.5</code>；<code>engine_entities.js</code> <code>playerFire()</code>（L355）<b>从未</b>在弹弓期间缩短 <code>fireInterval</code>（恒定 180ms）。</p>
+      <p><span class="font-bold text-amber-300">额外问题：</span>游戏内 toast（<code>engine_physics.js</code> L295）文案"无敌+狂暴射速已开启！"同样与实现不符——连玩家在游戏中看到的提示都在撒谎。</p>
+    </div>
+    <details class="mt-3"><summary class="text-[11px] text-cyan-400 hover:text-cyan-300">▸ 修复建议</summary>
+      <p class="text-[11px] text-gray-400 mt-2 leading-relaxed">二选一：(A) 在 <code>playerFire()</code> 开头判断 <code>this.slingshotTime&gt;0</code> 时把有效 <code>fireInterval</code> 除以 3（实现 200% 射速暴增）；(B) 将 <code>game_manual.html</code>、<code>game_design.html</code> 文案与 toast 改为"双倍伤害 + 1.5 倍弹体 + 无敌"，删除射速描述。推荐 A（玩家体验更好且文档已宣传）。</p>
+    </details>
+  </section>
+
+  <!-- ============ 问题 2 ============ -->
+  <section class="glass rounded-2xl p-6 mb-5">
+    <div class="flex items-start justify-between gap-4 mb-3">
+      <h2 class="text-lg font-black text-white">② v7_roadmap.html 天赋命名与其他全部文档及代码矛盾</h2>
+      <span class="pill sev-high">严重 · 文档矛盾</span>
+    </div>
+    <div class="text-xs text-gray-400 space-y-2 leading-relaxed">
+      <p><span class="font-bold text-rose-300">v7_roadmap.html（L879/881/882）声称：</span>B = <b>"特斯拉高频谐振 (Tesla Resonance)"</b>、D = <b>"重力废料虹吸 (Scrap Repulsor)"</b>、E = <b>"先驱纳米无人机 (Vanguard Drone)"</b>。</p>
+      <p><span class="font-bold text-emerald-300">实际代码 + 其余全部文档：</span><code>engine_entities.js</code> L131-134 与 <code>game_design.html</code>、<code>game_manual.html</code>、<code>v7_hangar.html</code>、<code>README.md</code>、<code>space_shooter.html</code> 一致：B = <b>"火控晶核增幅 (Core Amplification)"</b>、D = <b>"磁力量子虹吸 (Magnet Siphon)"</b>、E = <b>"僚机副武器齐射 (Wingman Volley)"</b>。</p>
+      <p><span class="font-bold text-amber-300">影响：</span>v7_roadmap.html 描述的 B/D/E 是<b>完全不同的、代码中根本不存在</b>的天赋，且其交互模拟器会展示错误信息误导玩家。</p>
+    </div>
+    <details class="mt-3"><summary class="text-[11px] text-cyan-400 hover:text-cyan-300">▸ 修复建议</summary>
+      <p class="text-[11px] text-gray-400 mt-2 leading-relaxed">将 <code>v7_roadmap.html</code> L879/881/882 的 B/D/E 名称与描述同步为 <code>engine_entities.js</code> 中的真实定义（同 v7_hangar.html L1505-1508），并核对交互模拟器数值。</p>
+    </details>
+  </section>
+
+  <!-- ============ 问题 3 ============ -->
+  <section class="glass rounded-2xl p-6 mb-5">
+    <div class="flex items-start justify-between gap-4 mb-3">
+      <h2 class="text-lg font-black text-white">③ v7_roadmap.html "16颗死星 Kepler 轨道"与"超新星湮灭死光"未实现</h2>
+      <span class="pill sev-high">严重 · 未实现</span>
+    </div>
+    <div class="text-xs text-gray-400 space-y-2 leading-relaxed">
+      <p><span class="font-bold text-rose-300">文档声称：</span><code>v7_roadmap.html</code>（L497）描述巨神兵二阶段"16 颗超大型死星在 Kepler 行星轨道公式计算下环绕核心极速旋转（100% 物理碰撞伤害圈）"，并蓄力发射<b>"超新星湮灭死光 (OVERLOAD GIGA LASER)"</b>。</p>
+      <p><span class="font-bold text-emerald-300">实际代码：</span><code>engine_boss.js</code> 巨神兵仅有三技能——巨石爆弹(rock)、引力涟漪(ripple)、死光(laser)，<b>无</b> Kepler 轨道环绕、<b>无</b> 360° 横扫 OVERLOAD GIGA LASER。整库无 "Kepler"/"GIGA"/"死星" 关键字。</p>
+    </div>
+    <details class="mt-3"><summary class="text-[11px] text-cyan-400 hover:text-cyan-300">▸ 修复建议</summary>
+      <p class="text-[11px] text-gray-400 mt-2 leading-relaxed">将 <code>v7_roadmap.html</code> L497 的二阶段描述改为代码真实行为（蠕虫全灭→巨神兵登场，三技能轮替），删除 "16 颗死星 Kepler 轨道" 与 "超新星湮灭死光" 措辞。</p>
+    </details>
+  </section>
+
+  <!-- ============ 问题 4 ============ -->
+  <section class="glass rounded-2xl p-6 mb-5">
+    <div class="flex items-start justify-between gap-4 mb-3">
+      <h2 class="text-lg font-black text-white">④ game_design.html 折跃充能公式自相矛盾</h2>
+      <span class="pill sev-mid">中等 · 数值不符</span>
+    </div>
+    <div class="text-xs text-gray-400 space-y-2 leading-relaxed">
+      <p><span class="font-bold text-rose-300">同一文档内部矛盾：</span></p>
+      <ul class="list-disc pl-5 space-y-1">
+        <li>第三章（L666）：<code>warpCharge = min(100, warpCharge + 3.5 × dt_clamped)</code></li>
+        <li>第十二章（L1012）：<code>warpCharge ← min(100, warpCharge + 0.333 × (1 + 0.10 × L_A) × dt)</code></li>
+      </ul>
+      <p><span class="font-bold text-emerald-300">实际代码：</span><code>engine_base.js</code> L591 为 <code>0.333 * (1 + 0.10 * talents.A) * dtClamped</code>，即基础 <b>0.333</b>。第三章的 <b>3.5</b> 是错误的（约偏大 10.5 倍）。</p>
+    </div>
+    <details class="mt-3"><summary class="text-[11px] text-cyan-400 hover:text-cyan-300">▸ 修复建议</summary>
+      <p class="text-[11px] text-gray-400 mt-2 leading-relaxed">将 <code>game_design.html</code> L666 的 <code>3.5</code> 改为 <code>0.333</code>，与 L1012 及代码统一。</p>
+    </details>
+  </section>
+
+  <!-- ============ 问题 5 ============ -->
+  <section class="glass rounded-2xl p-6 mb-5">
+    <div class="flex items-start justify-between gap-4 mb-3">
+      <h2 class="text-lg font-black text-white">⑤ 蠕虫节数描述在多份文档间混乱</h2>
+      <span class="pill sev-mid">中等 · 数值不符</span>
+    </div>
+    <div class="text-xs text-gray-400 space-y-2 leading-relaxed">
+      <p><span class="font-bold text-emerald-300">实际代码：</span><code>engine_boss.js</code> L97：<code>Math.min(12 + Math.floor((tier-1)/2), 16)</code> → <b>12～16 节</b>（随阶数递增）。</p>
+      <table class="w-full text-[11px] mt-2">
+        <tr class="text-gray-500"><th class="text-left py-1">文档</th><th class="text-left py-1">描述节数</th><th class="text-left py-1">是否相符</th></tr>
+        <tr><td class="py-1">game_design.html (V7白皮书)</td><td class="py-1 font-mono">10</td><td class="py-1 text-rose-400">不符</td></tr>
+        <tr><td class="py-1">game_manual.html (V7手册)</td><td class="py-1 font-mono">10～14</td><td class="py-1 text-amber-400">接近(上限错)</td></tr>
+        <tr><td class="py-1">v7_roadmap.html</td><td class="py-1 font-mono">12</td><td class="py-1 text-amber-400">下限对,缺上限</td></tr>
+        <tr><td class="py-1">v6_hangar.html / v6_roadmap.html</td><td class="py-1 font-mono">10</td><td class="py-1 text-gray-500">V6历史值</td></tr>
+      </table>
+    </div>
+    <details class="mt-3"><summary class="text-[11px] text-cyan-400 hover:text-cyan-300">▸ 修复建议</summary>
+      <p class="text-[11px] text-gray-400 mt-2 leading-relaxed">将 <code>game_design.html</code> 与 <code>game_manual.html</code> 蠕虫节数统一为"12～16 节（随 Boss 阶数递增）"。V6 文档可保留 10 节作为历史快照（建议加注"V6 实现值"）。</p>
+    </details>
+  </section>
+
+  <!-- ============ 问题 6 ============ -->
+  <section class="glass rounded-2xl p-6 mb-5">
+    <div class="flex items-start justify-between gap-4 mb-3">
+      <h2 class="text-lg font-black text-white">⑥ v6_roadmap.html 蠕虫"吞流星变长回血"与 V7 行为矛盾</h2>
+      <span class="pill sev-mid">中等 · 版本演进</span>
+    </div>
+    <div class="text-xs text-gray-400 space-y-2 leading-relaxed">
+      <p><span class="font-bold text-rose-300">v6_roadmap.html（L275）：</span>"头部吞流星会使身躯<b>变长并回血</b>"——暗示蠕虫主动追陨石且会增长。</p>
+      <p><span class="font-bold text-emerald-300">V7 实际：</span><code>game_manual.html</code> 称"头部始终直追玩家飞船，仅在追玩家途中擦碰到流星才会吞噬"；V7 代码中蠕虫追玩家、沿途擦碰吞噬，但<b>不变长、不回血</b>。</p>
+    </div>
+    <details class="mt-3"><summary class="text-[11px] text-cyan-400 hover:text-cyan-300">▸ 修复建议</summary>
+      <p class="text-[11px] text-gray-400 mt-2 leading-relaxed">属 V6→V7 行为重做。建议在 <code>v6_roadmap.html</code> 蠕虫段加一行小字注明"V6 行为，V7 已重做为追玩家"，避免读者误以为当前版本仍如此。</p>
+    </details>
+  </section>
+
+  <!-- ============ 问题 7 ============ -->
+  <section class="glass rounded-2xl p-6 mb-5">
+    <div class="flex items-start justify-between gap-4 mb-3">
+      <h2 class="text-lg font-black text-white">⑦ v6_roadmap.html 折跃伤害数值与 V7 严重不符</h2>
+      <span class="pill sev-mid">中等 · 版本演进</span>
+    </div>
+    <div class="text-xs text-gray-400 space-y-2 leading-relaxed">
+      <p><span class="font-bold text-rose-300">v6_roadmap.html（L258）：</span>起点伤害 <b>25</b>、终点伤害 <b>40</b>。</p>
+      <p><span class="font-bold text-emerald-300">V7 实际：</span><code>game_design.html</code> 与代码 <code>engine_base.js</code> L1164-1165 一致：终点 <b>300 点</b>伤害、<b>200px</b> 范围。</p>
+    </div>
+    <details class="mt-3"><summary class="text-[11px] text-cyan-400 hover:text-cyan-300">▸ 修复建议</summary>
+      <p class="text-[11px] text-gray-400 mt-2 leading-relaxed">V6→V7 折跃大幅重做。建议 <code>v6_roadmap.html</code> 加注"V6 数值，V7 已重做为 300 点/200px"，或直接更新为 V7 数值并标注版本。</p>
+    </details>
+  </section>
+
+  <!-- ============ 问题 8 ============ -->
+  <section class="glass rounded-2xl p-6 mb-5">
+    <div class="flex items-start justify-between gap-4 mb-3">
+      <h2 class="text-lg font-black text-white">⑧ game_manual.html 蠕虫"多阶连战"表述与代码冷却机制可对齐但建议明确</h2>
+      <span class="pill sev-low">低 · 表述待明确</span>
+    </div>
+    <div class="text-xs text-gray-400 space-y-2 leading-relaxed">
+      <p><span class="font-bold text-rose-300">文档：</span><code>game_manual.html</code> 称 Boss"多阶连战（分数门槛递增 + 12 秒冷却）"。</p>
+      <p><span class="font-bold text-emerald-300">实际代码：</span><code>engine_base.js</code> L129 默认 <code>nextBossThreshold=3500</code>，<code>engine_boss.js</code> L9-13 阶梯公式 <code>3500 + Σ 3800×1.26^(n-2)</code>。冷却数值需在 boss 模块确认 12s 是否精确匹配。属"可对齐但建议核对数值精度"。</p>
+    </div>
+    <details class="mt-3"><summary class="text-[11px] text-cyan-400 hover:text-cyan-300">▸ 修复建议</summary>
+      <p class="text-[11px] text-gray-400 mt-2 leading-relaxed">核对 boss 歼灭后冷却常量是否为 12s，若不符则统一文档或代码。</p>
+    </details>
+  </section>
+
+  <!-- 总结 -->
+  <section class="glass rounded-2xl p-6 mt-8">
+    <h2 class="text-lg font-black text-white mb-3">总结与优先级</h2>
+    <ol class="text-xs text-gray-300 space-y-2 leading-relaxed list-decimal pl-5">
+      <li><b class="text-rose-300">立即修复（影响玩家信任）：</b>①弹弓射速未实现（文档+游戏内提示双重撒谎）、②v7_roadmap天赋命名错误、③Kepler轨道/GIGA死光虚构特性。</li>
+      <li><b class="text-amber-300">尽快修复（技术文档准确性）：</b>④折跃充能公式 3.5→0.333、⑤蠕虫节数统一为 12～16。</li>
+      <li><b class="text-emerald-300">可选优化（版本可追溯性）：</b>⑥⑦为 V6 历史文档加版本注释，⑧核对 12s 冷却精度。</li>
+    </ol>
+    <p class="text-[10px] text-gray-500 mt-4">注：V6 文档（v6_hangar/v6_roadmap）属历史快照，其与 V7 的差异多数为正常版本演进，但未标注版本可能误导读者以为描述的是当前实现。建议统一加版本水印。</p>
+  </section>
+
+  <footer class="text-center text-[10px] text-gray-600 mt-10">星海猎手 · 文档一致性审查报告 · 生成于 V7 审计</footer>
+</div>
+</body>
+</html>

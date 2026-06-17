@@ -660,10 +660,10 @@
                 <div class="p-4 bg-black/40 border border-purple-500/20 rounded-xl">
                     <span class="font-bold text-white block text-sm mb-2"><i class="fa-solid fa-battery-three-quarters text-purple-400 mr-1"></i> 星能折跃充能方程 (Energy Accumulation)</span>
                     <p class="text-[11px] text-gray-400 leading-relaxed mb-2">
-                        跃迁需消耗 100% 折跃能量。在主物理循环中，引擎每帧按帧延迟的 $3.5$ 倍线性累加折跃电荷。充能状态方程：
+                        跃迁需消耗 100% 折跃能量。在主物理循环中，引擎每帧按帧延迟的 $0.333$ 倍线性累加折跃电荷（约 5 秒充满）。充能状态方程：
                     </p>
                     <div class="bg-black/50 p-2.5 rounded font-mono text-center text-xs text-purple-300">
-                        $\text{warpCharge} = \min(100, \text{warpCharge} + 3.5 \times dt_{\text{clamped}})$
+                        $\text{warpCharge} = \min(100, \text{warpCharge} + 0.333 \times dt_{\text{clamped}})$
                     </div>
                 </div>
             </div>
@@ -733,7 +733,7 @@
                     <div class="p-4 bg-black/30 border border-lime-500/10 rounded-xl space-y-3">
                         <span class="font-bold text-white block text-sm"><i class="fa-solid fa-link text-lime-400 mr-1.5"></i> 1. 多关节逆运动学追随 (IK LERP Follow)</span>
                         <p class="text-[11px] leading-relaxed">
-                            蠕虫由 10 个独立刚体节点组成，头部 $S_0$（$1500\text{HP}$，半径 $R_0 = 40\text{px}$）引领，后继节点 $S_i$（$i \in [1, 9]$，半径 $R_i = 30 - 1.5i$，最大 HP $400$）。当相邻节点距离超过阈值 $D_{\text{limit}}$ 时，后继节点平滑插值拉扯跟进：
+                            蠕虫由 12～16 个独立刚体节点组成（节数随 Boss 阶数递增，$N = \min(12 + \lfloor (\text{tier}-1)/2 \rfloor, 16)$），头部 $S_0$（$1500\text{HP}$，半径 $R_0 = 40\text{px}$）引领，后继节点 $S_i$（$i \in [1, N-1]$，半径 $R_i = 30 - 1.5i$，最大 HP $400$）。当相邻节点距离超过阈值 $D_{\text{limit}}$ 时，后继节点平滑插值拉扯跟进：
                         </p>
                         <div class="bg-black/50 p-2.5 rounded font-mono text-[9px] text-lime-300">
                             $$\vec{p}_{S_i} = \vec{p}_{S_i} + (\vec{p}_{S_{i-1}} - \vec{p}_{S_i}) \times \text{lerpRate}$$
@@ -754,7 +754,7 @@
                 <div class="p-4 bg-black/40 border border-lime-500/20 rounded-xl">
                     <span class="font-bold text-white block text-sm mb-2"><i class="fa-solid fa-scissors text-rose-400 mr-1.5"></i> 3. 躯体断裂裂变算法 (Segment Fission Engine)</span>
                     <p class="text-[11px] text-gray-400 leading-relaxed mb-3">
-                        当蠕虫中间任一骨节 $S_k$（$k \in [1, 8]$）的 $\text{HP}_k \le 0$ 时，该关节断开失活。引擎触发突变逻辑：后继骨节 $S_{k+1}$ 立即觉醒，重新突变为一只新的独立蠕虫头部（其 <code>isHead = true</code> 并开始追随陨石与玩家），使原有一条长虫分裂为两条短虫，屏幕显示高亮危险警报 <code>🦠 躯体断裂！产生分裂突变！</code>。
+                        当蠕虫中间任一骨节 $S_k$（$k \in [1, N-2]$）的 $\text{HP}_k \le 0$ 时，该关节断开失活。引擎触发突变逻辑：后继骨节 $S_{k+1}$ 立即觉醒，重新突变为一只新的独立蠕虫头部（其 <code>isHead = true</code> 并开始追随陨石与玩家），使原有一条长虫分裂为两条短虫，屏幕显示高亮危险警报 <code>🦠 躯体断裂！产生分裂突变！</code>。
                     </p>
                     <div class="bg-black/50 p-3 rounded font-mono text-[9px] text-rose-300 overflow-x-auto">
                         // 裂变代码核心逻辑片段

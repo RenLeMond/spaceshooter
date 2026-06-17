@@ -494,13 +494,13 @@
                             <span class="px-2 py-0.5 bg-purple-500/10 border border-purple-500/30 rounded text-[9px] font-black text-purple-400 uppercase tracking-widest">PHASE 2 • 轨道屏障奇点</span>
                             <h4 class="text-lg font-black text-white mt-1">星云泰坦星环核心</h4>
                             <p class="text-xs text-gray-400 leading-relaxed">
-                                蛇体被完全破坏后核心暴走！16 颗超大型死星在 Kepler 行星轨道公式计算下环绕核心极速旋转（形成 100% 物理碰撞伤害圈）。核心释放引力旋涡把流星拉入旋涡爆裂，并蓄力发射 360 度横扫的<b>「超新星湮灭死光 (OVERLOAD GIGA LASER)」</b>！
+                                蛇体被完全破坏后核心暴走！巨神兵核心坐镇中央，释放引力旋涡把流星拉入旋涡爆裂，并轮替发动巨石爆弹、引力涟漪与直线死光三大技能，构成多技能交叉火力网压制玩家。
                             </p>
                         </div>
                     </div>
                     <div class="mt-6 pt-4 border-t border-white/5 flex justify-between items-center text-[10px] font-mono text-purple-400 font-bold">
-                        <span>KEPLER ORBIT PHYSICS</span>
-                        <span>360° SWEAPING DEATH LASER</span>
+                        <span>MULTI-SKILL CORE</span>
+                        <span>ROCK / RIPPLE / LASER</span>
                     </div>
                 </div>
             </div>
@@ -875,11 +875,11 @@
         // WIDGET B: 先驱者六角星盘天赋矩阵模拟器逻辑
         // ==========================================
         const TALENT_NODES = {
-            'A': { name: '量子超频催化 (Quantum Overload)', class: 'TACTICAL PATH', desc: '降低空间折跃 (Shift) 的能量冷却时间，并使量子轰鸣的爆破半径增加 30px。使飞船在弹幕群中穿梭时形同虚设。', cost: 120, maxLevel: 3, level: 0 },
-            'B': { name: '特斯拉高频谐振 (Tesla Resonance)', class: 'FIREPOWER PATH', desc: '激活高阶 EM 晶核，使电浆闪电的连锁最大目标数从 3 级提高至 6 级，并且电击爆裂伤害获得双倍暴击字样。', cost: 150, maxLevel: 3, level: 0 },
-            'C': { name: '反物质纳米装甲 (Antimatter Hull)', class: 'DEFENSE PATH', desc: '永久减少受撞击陨石产生的动能震荡伤害。满级时允许每次撞击以 25% 概率自动吸收动能补充核弹电槽。', cost: 100, maxLevel: 3, level: 0 },
-            'D': { name: '重力废料虹吸 (Scrap Repulsor)', class: 'DEFENSE PATH', desc: '强力增幅合金废料 (Scrap) 的磁力回收吸引半径 60px。拾取废料时有 8% 概率转化为飞船的纳米回血微修复。', cost: 80, maxLevel: 3, level: 0 },
-            'E': { name: '先驱纳米无人机 (Vanguard Drone)', class: 'TACTICAL PATH', desc: '装配一架独立的自动索敌巡航切割能盾无人僚机，释放元素射击，在母舰 Boss 战斗中起到交叉火网掩护。', cost: 180, maxLevel: 2, level: 0 }
+            'A': { name: '量子超频催化 (Quantum Overclock)', class: 'TACTICAL PATH', desc: '提高战术量子折跃 (Shift) 充能效率 10% - 30%，强化机动手感但不直接抬高火力。', cost: 120, maxLevel: 3, level: 0 },
+            'B': { name: '火控晶核增幅 (Core Amplification)', class: 'FIREPOWER PATH', desc: '普通陨石子弹伤害提升 4% - 12%；Boss 目标仅提升 1% - 3%，避免开局碾压首领。', cost: 150, maxLevel: 3, level: 0 },
+            'C': { name: '反物质纳米力场 (Antimatter Field)', class: 'DEFENSE PATH', desc: '在飞船身侧加固一层能核护盾圈，物理减免陨石碰撞所产生的动能碾压伤害 8% - 24%。', cost: 100, maxLevel: 3, level: 0 },
+            'D': { name: '磁力量子虹吸 (Magnet Siphon)', class: 'DEFENSE PATH', desc: '使合金废料与经验晶体回收虹吸引力吸引半径扩大 35px - 105px。', cost: 80, maxLevel: 3, level: 0 },
+            'E': { name: '僚机副武器齐射 (Wingman Volley)', class: 'FIREPOWER PATH', desc: '释放主武器时，有 12% - 20% 的概率追加低伤害侧翼副武器齐射，不参与局内构装伤害乘区。', cost: 180, maxLevel: 2, level: 0 }
         };
 
         let currentScrap = 500;
