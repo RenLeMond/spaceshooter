@@ -2,7 +2,7 @@
 // 星海猎手 V7: GameEngine - BOSS 模块
 // =============================================
 
-var BOSS_SPAWN_COOLDOWN_MS = 12000;
+const BOSS_SPAWN_COOLDOWN_MS = 12000;
 
 Object.assign(GameEngine.prototype, {
     // 第 n 阶首领所需累计分数：3500 起，之后每阶间隔 3800 × 1.26^(n-2)

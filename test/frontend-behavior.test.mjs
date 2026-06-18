@@ -478,3 +478,14 @@ test('local launcher binds to loopback and only stops its own server process', a
   assert.match(server, /http:\/\/127\.0\.0\.1:\$Port\//);
   assert.match(server, /StartsWith\(\$root/);
 });
+
+test('main thread registers a pagehide/visibilitychange sync guard for dirty cloud saves', async () => {
+  const mainSource = await readFile(new URL('../js/main.js', import.meta.url), 'utf8');
+
+  assert.match(mainSource, /function bindUnloadSyncGuard\(/);
+  assert.match(mainSource, /addEventListener\('pagehide', flushSync\)/);
+  assert.match(mainSource, /addEventListener\('visibilitychange'/);
+  assert.match(mainSource, /navigator\.sendBeacon/);
+  assert.match(mainSource, /syncCloudSaveFromLocal/);
+  assert.match(mainSource, /hasLocalCloudSaveChanges/);
+});

@@ -260,6 +260,9 @@
                 body: JSON.stringify(payload)
             });
         } catch (err) {
+            // 仅当服务端因身份未建立而返回 identity_required 时，自动补一次 guest session 再试。
+            // 其他错误（invalid_credentials / bad_password / account_locked 等）必须原样抛出，
+            // 由 UI 主动提示用户输入正确密码或选择其他账号，避免误报"密码错"消耗用户耐心。
             if (!err || !err.data || err.data.error !== 'identity_required') throw err;
             await ensureGuestSession();
             payload.user_id = ensureUserId();

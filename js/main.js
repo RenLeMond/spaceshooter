@@ -1537,3 +1537,68 @@ function closeLoadoutPanel() {
     if (strip) strip.addEventListener('click', openLoadoutPanel);
     if (closeBtn) closeBtn.addEventListener('click', closeLoadoutPanel);
 })();
+
+// =============================================
+// 页面退出/切后台兜底同步 — 防止移动端切后台立即关屏导致云端分数/save 丢失
+// =============================================
+(function bindUnloadSyncGuard() {
+    const api = () => (typeof window !== 'undefined' ? window.StarseaLeaderboard : null);
+    if (typeof window === 'undefined') return;
+    const isDirty = () => {
+        const a = api();
+        if (a && typeof a.hasLocalCloudSaveChanges === 'function') {
+            try { return a.hasLocalCloudSaveChanges(); } catch (_) { return false; }
+        }
+        try { return !!window.localStorage.getItem('space_cloud_save_dirty_at'); } catch (_) { return false; }
+    };
+    const flushSync = () => {
+        const a = api();
+        if (!a || typeof a.syncCloudSaveFromLocal !== 'function') return;
+        if (!isDirty()) return;
+        try {
+            const base = typeof a.getApiBase === 'function' ? a.getApiBase() : '';
+            const path = '/api/cloud-save';
+            const token = (typeof a.getSessionToken === 'function' ? a.getSessionToken() : '') || '';
+            const payload = {
+                revision: typeof a.getCloudRevision === 'function' ? a.getCloudRevision() : 0,
+                save: typeof a.collectLocalCloudSave === 'function' ? a.collectLocalCloudSave() : null
+            };
+            if (!payload.save) return;
+            const url = base ? base + path : path;
+            const body = JSON.stringify(payload);
+            
+            // Prefer fetch with keepalive because it supports setting custom Authorization headers,
+            // which is required by the server. navigator.sendBeacon is kept as a fallback.
+            let sent = false;
+            if (typeof fetch === 'function' && token) {
+                try {
+                    fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + token
+                        },
+                        body: body,
+                        keepalive: true
+                    }).catch(() => {});
+                    sent = true;
+                } catch (_) {}
+            }
+            
+            if (!sent && typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+                const blob = new Blob([body], { type: 'application/json' });
+                try { navigator.sendBeacon(url, blob); } catch (_) { /* noop */ }
+            }
+            
+            // 同步链降级路径：visibilitychange 触发时仍可走 fetch（pagehide 时 fetch 可能被 abort）
+            if (typeof a.syncCloudSaveFromLocal === 'function') {
+                try { a.syncCloudSaveFromLocal(); } catch (_) { /* noop */ }
+            }
+        } catch (_) { /* noop */ }
+    };
+    window.addEventListener('pagehide', flushSync);
+    window.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') flushSync();
+    });
+    window.addEventListener('beforeunload', flushSync);
+})();
