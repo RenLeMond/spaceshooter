@@ -990,6 +990,8 @@ class GameEngine {
             hp: 100,
             maxHp: 100,
             elementSlots: [], 
+            comboKey: '',
+            synergyName: '',
             lastShotTime: 0,
             fireInterval: 180,
             level: 1,
@@ -1012,6 +1014,11 @@ class GameEngine {
         if (this.hazardOverlay) this.hazardOverlay.classList.add('hidden');
 
         this.updateHUD();
+        // V7 修复：晶核槽/共鸣武器名 HUD 仅在拾取晶核时刷新，重置时须主动清空，
+        // 否则单线程模式下上一局的武器槽位与武器名会残留显示到本局首次拾取为止。
+        if (typeof this.updateElementsHUD === 'function' && this.slot1UI) {
+            this.updateElementsHUD();
+        }
         this.gameOverScreen.classList.add('hidden');
         this.pauseScreen.classList.add('hidden');
         this.workshopScreen.classList.add('hidden');
