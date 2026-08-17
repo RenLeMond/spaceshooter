@@ -4,6 +4,19 @@
 // 后续 bump 仅需改本常量 + HTML 的 ?v= 两处即可全量失效旧缓存。
 const ASSET_VERSION = '7.0.31';
 
+// 开发者作弊（热更新调试：+分/+废料/+HP）默认关闭，避免污染全球排行榜完整性。
+// 仅在 URL 带 ?dev=1 或本地手动设置 localStorage('space_dev_cheats'='1') 时启用。
+const DEV_CHEATS_ENABLED = (function () {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('dev') === '1' || params.has('devcheats')) return true;
+        return localStorage.getItem('space_dev_cheats') === '1';
+    } catch (_) {
+        return false;
+    }
+})();
+window.DEV_CHEATS_ENABLED = DEV_CHEATS_ENABLED;
+
 function updateAppViewportHeight() {
     const viewport = window.visualViewport;
     const height = viewport && viewport.height ? viewport.height : window.innerHeight;
@@ -112,6 +125,14 @@ window.onload = async function() {
     
     // 如果启用多线程 Worker 模式
     if (useWorker && worker) {
+        let pendingWorkerMessages = [];
+        let workerMessageHandler = null;
+        if (!worker.onmessage) {
+            worker.onmessage = (e) => {
+                if (workerMessageHandler) workerMessageHandler(e);
+                else pendingWorkerMessages.push(e);
+            };
+        }
         console.log("⚡ Web Worker Dual-Threaded Mode activated successfully! OffscreenCanvas transferred.");
         
         // 转移 Canvas 控制权给 Web Worker
@@ -211,7 +232,8 @@ window.onload = async function() {
             currentSkin: mainCurrentSkin,
             bestScore: mainBestScore,
             talents: mainTalents,
-            permanentCores: mainPermanentCores
+            permanentCores: mainPermanentCores,
+            devCheats: DEV_CHEATS_ENABLED
         }, [offscreen]);
         
         window.addEventListener('resize', updateMainScale);
@@ -382,7 +404,8 @@ window.onload = async function() {
                 hangar: mainHangar,
                 unlockedSkins: mainUnlockedSkins,
                 currentSkin: mainCurrentSkin,
-                talents: mainTalents
+                talents: mainTalents,
+                permanentCores: mainPermanentCores
             });
         }
 
@@ -420,7 +443,8 @@ window.onload = async function() {
                 hangar: mainHangar,
                 unlockedSkins: mainUnlockedSkins,
                 currentSkin: mainCurrentSkin,
-                talents: mainTalents
+                talents: mainTalents,
+                permanentCores: mainPermanentCores
             });
         }
 
@@ -457,12 +481,13 @@ window.onload = async function() {
                 hangar: mainHangar,
                 unlockedSkins: mainUnlockedSkins,
                 currentSkin: mainCurrentSkin,
-                talents: mainTalents
+                talents: mainTalents,
+                permanentCores: mainPermanentCores
             });
         }
         
         // 双击得分作弊器桥接 — 用 click 计数器（400ms 内连点两次），desktop/touch 都生效，比 dblclick 在移动端更可靠
-        const scoreCell = document.getElementById('scoreCell') || document.getElementById('scoreText');
+        const scoreCell = DEV_CHEATS_ENABLED ? (document.getElementById('scoreCell') || document.getElementById('scoreText')) : null;
         if (scoreCell) {
             let lastScoreTap = 0;
             const fireCheat = (e) => {
@@ -483,14 +508,28 @@ window.onload = async function() {
             });
         }
         
-        // Worker 异常兜底：避免 Worker 内部未捕获异常导致游戏静默卡死
+        // Worker 致命异常兜底：画布控制权已 transferControlToOffscreen，无法在同一 canvas 原地恢复主线程渲染，
+        // 因此停止 Worker 并给出明确的刷新提示，而不是显示误导性的“正在降级”后静默卡死。
+        let workerFatalHandled = false;
+        function handleWorkerFatal(reason) {
+            if (workerFatalHandled) return;
+            workerFatalHandled = true;
+            console.error("❌ Worker 致命错误，已停止双核引擎:", reason);
+            try { worker.terminate(); } catch (_) {}
+            const overlay = document.getElementById('toastMessage');
+            if (overlay) {
+                overlay.innerText = "⚠️ 引擎线程异常，请刷新页面重新开始";
+                overlay.style.opacity = '1';
+            }
+            // 暴露重载入口，方便用户一键恢复
+            if (typeof window !== 'undefined') window.__starseaWorkerDead = true;
+        }
         worker.onerror = function(err) {
-            console.error("❌ Worker 致命错误:", err.message || err);
-            mainShowToast("⚠️ 引擎线程异常，尝试降级到主线程模式...");
+            handleWorkerFatal(err && (err.message || err.filename) ? (err.message || err.filename) : err);
         };
         
-        // 监听子线程 Worker 发来的消息
-        worker.onmessage = function(e) {
+        // 监听子线程 Worker 发来的消息（须在 init 之前注册，避免丢失 ready/workerError）
+        workerMessageHandler = function(e) {
             const msg = e.data;
             switch (msg.type) {
                 case 'ready':
@@ -505,7 +544,10 @@ window.onload = async function() {
                     document.getElementById('scoreText').innerText = String(msg.score).padStart(6, '0');
                     document.getElementById('scrapText').innerText = msg.scrap;
                     document.getElementById('waveText').innerText = msg.wave;
-                    document.getElementById('hpBar').style.width = `${msg.playerHp}%`;
+                    // 使用 hp/maxHp 比率而非裸 hp 值，否则反物质过载(maxHp=70)时满血只显示约 70%
+                    const hpMax = msg.playerMaxHp > 0 ? msg.playerMaxHp : 100;
+                    const hpPct = Math.max(0, Math.min(100, (msg.playerHp / hpMax) * 100));
+                    document.getElementById('hpBar').style.width = `${hpPct}%`;
                     
                     const shieldPercent = msg.shieldTime > 0 ? (msg.shieldTime / 8000) * 100 : 0;
                     document.getElementById('shieldBar').style.width = `${shieldPercent}%`;
@@ -624,13 +666,6 @@ window.onload = async function() {
                     }
                     break;
                     
-                case 'sound':
-                    // 在主线程播放合成声效
-                    if (sfx[msg.method]) {
-                        sfx[msg.method](...(msg.args || []));
-                    }
-                    break;
-
                 case 'soundBatch':
                     // P1: 单帧聚合的多个 sfx 调用，减少跨线程往返
                     if (msg.calls) {
@@ -765,6 +800,8 @@ window.onload = async function() {
                 }
             }
         };
+        pendingWorkerMessages.forEach((evt) => workerMessageHandler(evt));
+        pendingWorkerMessages.length = 0;
         
         // 选择操控模式功能桥接
         let mainControlMode = 'touch';
@@ -914,6 +951,8 @@ window.onload = async function() {
         const closeBench = document.getElementById('benchCloseBtn');
         if (closeBench) {
             closeBench.addEventListener('click', () => {
+                // 关闭跑分弹窗时必须通知 Worker 终止压测，否则子线程继续满负荷模拟+绘制（耗电/发热）
+                worker.postMessage({ type: 'stopBenchmark' });
                 document.getElementById('benchmarkModal').classList.add('hidden');
                 document.getElementById('startScreen').classList.remove('hidden');
                 document.getElementById('hud').classList.add('opacity-0');
@@ -1056,6 +1095,7 @@ window.onload = async function() {
     // 优雅优雅降级：主线程单线程运行模式 (CORS 本地沙盒被拦截或不支持时自动无缝降级)
     console.warn("⚠️ Web Worker CORS restrict or not supported, auto fallback to Main Thread seamlessly!");
     const engine = new GameEngine();
+    engine.devCheatsEnabled = DEV_CHEATS_ENABLED;
     window.gameEngine = engine; // 挂载全局调试实例
 
     let lastTime = performance.now();
@@ -1064,8 +1104,11 @@ window.onload = async function() {
         const deltaTime = currentTime - lastTime;
         lastTime = currentTime;
 
-        // 暂停/未运行时跳过物理与渲染，避免无谓 CPU 开销与恢复时 deltaTime 跳变
-        if (engine.isPaused || !engine.isRunning) return;
+        // 暂停/未运行时跳过物理与渲染；Boss 坍缩期间仍需推进状态机
+        const bossImplosionDuringPause = engine.isPaused
+            && engine.boss && engine.boss.active && engine.boss.state === 'implosion';
+        if (!engine.isRunning) return;
+        if (engine.isPaused && !bossImplosionDuringPause) return;
 
         engine.update(deltaTime);
         engine.draw();

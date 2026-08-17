@@ -27,6 +27,11 @@ class GameEngine {
         this.maxBullets = 200;
         this.maxMeteors = 40;
         this.bullets = Array.from({ length: this.maxBullets }, () => ({ active: false }));
+        // 0-GC：射击热路径复用同一 props 对象，避免每发子弹分配临时字面量
+        this._bulletSpawnScratch = {
+            x: 0, y: 0, vx: 0, vy: 0, radius: 4, damage: 10, color: '#06b6d4',
+            pierce: 1, comboEffect: null, isSplitBullet: false, isTalentVolley: false
+        };
         this.maxMeteorPoints = 12; // numPoints 范围 8~11，预留 12
         this.meteors = Array.from({ length: this.maxMeteors }, () => ({
             active: false,
@@ -172,7 +177,12 @@ class GameEngine {
         // 不能依赖 DOM 元素是否存在来判断线程，因为 Worker 的 document mock 对任意 id 都返回 truthy。
         this.isWorkerContext = (typeof importScripts === 'function');
         this.endlessMode = false;
+        this.devCheatsEnabled = false; // 开发者作弊默认关闭，由 main.js 依据 ?dev=1 / localStorage 开关注入
         this.equippedMods = [];
+        this.uiPauseDepth = 0;
+        this.pointerActive = false;
+        this.pointerTargetX = 0;
+        this.pointerTargetY = 0;
         this.disasterActive = false;
         this.disasterTime = 0;
         this.disasterType = '';
@@ -255,9 +265,10 @@ class GameEngine {
         this.scoreText = document.getElementById('scoreText');
         // 监听挂在父级 scoreCell（HUD 父层 pointer-events-none，必须用 scoreCell 的 pointer-events-auto 接事件）
         // 用 click 计数器替代 dblclick，desktop/touch 都生效
-        const scoreCell = document.getElementById('scoreCell') || this.scoreText;
+        const scoreCell = this.devCheatsEnabled ? (document.getElementById('scoreCell') || this.scoreText) : null;
         let lastScoreTap = 0;
         const fireCheat = (e) => {
+            if (!this.devCheatsEnabled) return;
             if (e && e.stopPropagation) e.stopPropagation();
             const now = performance.now();
             if (now - lastScoreTap < 400) {
@@ -272,11 +283,13 @@ class GameEngine {
                 lastScoreTap = now;
             }
         };
-        scoreCell.addEventListener('click', fireCheat);
-        scoreCell.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            fireCheat(e);
-        });
+        if (scoreCell) {
+            scoreCell.addEventListener('click', fireCheat);
+            scoreCell.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                fireCheat(e);
+            });
+        }
         this.scrapText = document.getElementById('scrapText');
         this.bestScoreText = document.getElementById('bestScoreText');
         this.waveText = document.getElementById('waveText');
@@ -536,7 +549,18 @@ class GameEngine {
     }
 
     update(deltaTime) {
-        if (!this.isRunning || this.isPaused) return;
+        if (!this.isRunning) return;
+
+        const dt = deltaTime / 16.666;
+        const dtClamped = Math.min(dt, 3.0);
+        const dtClampedMs = dtClamped * 16.666;
+
+        // Boss 坍缩在 UI 暂停期间仍需推进，避免机库/升级界面打开时状态机卡死
+        if (this.isPaused && this.boss && this.boss.active && this.boss.state === 'implosion' && typeof this._tickBossImplosion === 'function') {
+            this._tickBossImplosion(dtClamped, dtClampedMs);
+        }
+
+        if (this.isPaused) return;
 
         // 采样实时 FPS
         const now = performance.now();
@@ -549,9 +573,7 @@ class GameEngine {
 
         const physStart = performance.now();
 
-        const dt = deltaTime / 16.666;
-        const dtClamped = Math.min(dt, 3.0);
-        const dtClampedMs = dtClamped * 16.666; // P2: 用于 ms 计时器，避免切标签后裸 deltaTime 一次性榨干 shield/slingshot
+        // dt / dtClamped / dtClampedMs 已在函数开头计算
 
         this.applyBlackHoleGravity(dtClamped);
         this.applyWhiteHoleGravity(dtClamped);
@@ -697,6 +719,17 @@ class GameEngine {
             }
         } else {
             this.playerFire();
+            if (this.pointerActive) {
+                const dx = this.pointerTargetX - this.player.x;
+                const dy = this.pointerTargetY - this.player.y;
+                const distSq = dx * dx + dy * dy;
+                if (distSq > 0.25) {
+                    const dist = Math.sqrt(distSq);
+                    const step = Math.min(dist, moveSpeed * 2.5);
+                    this.player.x += (dx / dist) * step;
+                    this.player.y += (dy / dist) * step;
+                }
+            }
         }
 
         if (this.player.x < 30) this.player.x = 30;
@@ -951,6 +984,9 @@ class GameEngine {
         this.spawnTimer = 0;
         this.blackHoleSpawnTimer = 0;
         this.waveTransitionTimer = 0;
+        this.keys = {};
+        this.uiPauseDepth = 0;
+        this.pointerActive = false;
         
         this.hangar = { turretLevel: 0, engineLevel: 0, wingsLevel: 0 };
         this.blackHole = null;
@@ -1104,6 +1140,9 @@ class GameEngine {
 
     triggerWarp(tx, ty) {
         if (!this.isRunning || this.isPaused || this.warpCharge < 100) return;
+
+        tx = Math.max(30, Math.min(this.logicalWidth - 30, tx));
+        ty = Math.max(50, Math.min(this.logicalHeight - 50, ty));
         
         const startX = this.player.x;
         const startY = this.player.y;
@@ -1197,7 +1236,7 @@ class GameEngine {
                     this.triggerWarp(this.player.x, Math.max(20, this.player.y - 300));
                 }
             }
-            if (e.code === 'KeyK' && this.isRunning && !this.isPaused) {
+            if (e.code === 'KeyK' && this.devCheatsEnabled && this.isRunning && !this.isPaused) {
                 this.score += 1000;
                 this.scrap += 10;
                 this.player.hp = Math.min(this.player.maxHp, this.player.hp + 20);
@@ -1246,21 +1285,15 @@ class GameEngine {
             const scaleY = this.logicalHeight / rect.height;
             const touchX = (touch.clientX - rect.left) * scaleX;
             const touchY = (touch.clientY - rect.top) * scaleY;
-            
-            const dx = touchX - touchStartX;
-            const dy = touchY - touchStartY;
-            this.player.x += dx;
-            this.player.y += dy;
-            touchStartX = touchX;
-            touchStartY = touchY;
-
-            if (this.player.x < 30) this.player.x = 30;
-            if (this.player.x > this.logicalWidth - 30) this.player.x = this.logicalWidth - 30;
-            if (this.player.y < 50) this.player.y = 50;
-            if (this.player.y > this.logicalHeight - 50) this.player.y = this.logicalHeight - 50;
+            this.pointerActive = true;
+            this.pointerTargetX = touchX;
+            this.pointerTargetY = touchY;
         };
 
-        const onTouchEnd = () => { isDragging = false; };
+        const onTouchEnd = () => {
+            isDragging = false;
+            this.pointerActive = false;
+        };
 
         const onDblClick = (e) => {
             if (!this.isRunning || this.isPaused) return;
@@ -1302,20 +1335,15 @@ class GameEngine {
             const scaleY = this.logicalHeight / rect.height;
             const mouseX = (e.clientX - rect.left) * scaleX;
             const mouseY = (e.clientY - rect.top) * scaleY;
-            const dx = mouseX - mouseStartX;
-            const dy = mouseY - mouseStartY;
-            this.player.x += dx;
-            this.player.y += dy;
-            mouseStartX = mouseX;
-            mouseStartY = mouseY;
-
-            if (this.player.x < 30) this.player.x = 30;
-            if (this.player.x > this.logicalWidth - 30) this.player.x = this.logicalWidth - 30;
-            if (this.player.y < 50) this.player.y = 50;
-            if (this.player.y > this.logicalHeight - 50) this.player.y = this.logicalHeight - 50;
+            this.pointerActive = true;
+            this.pointerTargetX = mouseX;
+            this.pointerTargetY = mouseY;
         };
 
-        const onMouseUp = () => { isMouseDragging = false; };
+        const onMouseUp = () => {
+            isMouseDragging = false;
+            this.pointerActive = false;
+        };
 
         this.canvas.addEventListener('mousedown', onMouseDown);
         window.addEventListener('mousemove', onMouseMove);
@@ -1459,8 +1487,21 @@ class GameEngine {
 
 
     // Pause functionality
+    lockUiPause() {
+        this.uiPauseDepth = (this.uiPauseDepth || 0) + 1;
+        this.isPaused = true;
+    }
+
+    unlockUiPause() {
+        this.uiPauseDepth = Math.max(0, (this.uiPauseDepth || 0) - 1);
+        if (this.uiPauseDepth === 0) {
+            this.isPaused = false;
+        }
+    }
+
     togglePause() {
         if (!this.isRunning) return;
+        if ((this.uiPauseDepth || 0) > 0) return;
         this.isPaused = !this.isPaused;
         if (this.isPaused) {
             this.pauseScreen.classList.remove('hidden');

@@ -7,18 +7,47 @@ class SoundFX {
         this.ctx = null;
         this.muted = false;
         this.lastPlayTime = {};
-        this.recentPlaysBuffer = new Float64Array(8); // V7: 固定长度环形缓冲区 (0-GC)
+        this.recentPlaysBuffer = new Float64Array(8);
         this.recentPlaysHead = 0;
         this.recentPlaysCount = 0;
+        this._noiseBuffers = null;
     }
 
     init() {
+        if (typeof window === 'undefined') return;
         if (!this.ctx) {
-            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            this.ctx = new AudioCtx();
         }
         if (this.ctx && this.ctx.state === 'suspended') {
-            this.ctx.resume();
+            this.ctx.resume().catch(() => {});
         }
+        if (!this._noiseBuffers && this.ctx) {
+            this._noiseBuffers = {
+                small: this._createNoiseBuffer(0.25),
+                large: this._createNoiseBuffer(0.4),
+                laser: this._createNoiseBuffer(0.8)
+            };
+        }
+    }
+
+    _createNoiseBuffer(duration) {
+        const bufferSize = Math.floor(this.ctx.sampleRate * duration);
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        return buffer;
+    }
+
+    _scheduleDisconnect(nodes, delaySec) {
+        if (!this.ctx) return;
+        const ms = Math.max(0, delaySec * 1000 + 30);
+        setTimeout(() => {
+            for (let i = 0; i < nodes.length; i++) {
+                try { nodes[i].disconnect(); } catch (_) {}
+            }
+        }, ms);
     }
 
     toggleMute() {
@@ -33,7 +62,7 @@ class SoundFX {
     checkThrottle(key, cooldown = 0) {
         if (this.muted) return false;
         this.init();
-        if (!this.ctx) return false;
+        if (!this.ctx || this.ctx.state === 'closed') return false;
 
         const now = this.ctx.currentTime;
 
@@ -79,6 +108,7 @@ class SoundFX {
         gain.connect(this.ctx.destination);
         osc.start(now);
         osc.stop(now + 0.15);
+        this._scheduleDisconnect([osc, gain], 0.15);
     }
 
     playHit() {
@@ -99,6 +129,7 @@ class SoundFX {
         gain.connect(this.ctx.destination);
         osc.start(now);
         osc.stop(now + 0.12);
+        this._scheduleDisconnect([osc, gain], 0.12);
     }
 
     playExplosion(isLarge = false) {
@@ -107,12 +138,10 @@ class SoundFX {
         const now = this.ctx.currentTime;
 
         const duration = isLarge ? 0.4 : 0.25;
-        const bufferSize = this.ctx.sampleRate * duration;
-        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = Math.random() * 2 - 1;
-        }
+        const buffer = this._noiseBuffers
+            ? (isLarge ? this._noiseBuffers.large : this._noiseBuffers.small)
+            : null;
+        if (!buffer) return;
         
         const noise = this.ctx.createBufferSource();
         noise.buffer = buffer;
@@ -131,12 +160,14 @@ class SoundFX {
         gain.connect(this.ctx.destination);
         noise.start(now);
         noise.stop(now + duration);
+        this._scheduleDisconnect([noise, filter, gain], duration);
     }
 
     playPowerup() {
         if (!this.checkThrottle('powerup', 0.15)) return;
         const now = this.ctx.currentTime;
         const freqs = [330, 440, 554, 660];
+        const nodes = [];
         freqs.forEach((freq, idx) => {
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
@@ -149,7 +180,9 @@ class SoundFX {
             gain.connect(this.ctx.destination);
             osc.start(now + idx * 0.05);
             osc.stop(now + idx * 0.05 + 0.2);
+            nodes.push(osc, gain);
         });
+        this._scheduleDisconnect(nodes, 0.35);
     }
 
     playBomb() {
@@ -166,6 +199,7 @@ class SoundFX {
         gain.connect(this.ctx.destination);
         osc.start(now);
         osc.stop(now + 1.2);
+        this._scheduleDisconnect([osc, gain], 1.2);
     }
 
     playGameOver() {
@@ -182,6 +216,7 @@ class SoundFX {
         gain.connect(this.ctx.destination);
         osc.start(now);
         osc.stop(now + 0.8);
+        this._scheduleDisconnect([osc, gain], 0.8);
     }
 
     playSlingshot() {
@@ -214,21 +249,15 @@ class SoundFX {
         osc2.start(now);
         osc.stop(now + 0.5);
         osc2.stop(now + 0.5);
+        this._scheduleDisconnect([osc, osc2, fmGain, gainNode], 0.5);
     }
 
     playTitanLaser() {
         if (!this.checkThrottle('titanlaser', 0.2)) return;
         const now = this.ctx.currentTime;
         const duration = 0.8;
-        const bufferSize = this.ctx.sampleRate * duration;
-        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = Math.random() * 2 - 1;
-        }
-        
         const noise = this.ctx.createBufferSource();
-        noise.buffer = buffer;
+        noise.buffer = this._noiseBuffers ? this._noiseBuffers.laser : this._createNoiseBuffer(duration);
         
         const filter = this.ctx.createBiquadFilter();
         filter.type = 'lowpass';
@@ -253,6 +282,7 @@ class SoundFX {
         osc.start(now);
         noise.stop(now + duration);
         osc.stop(now + duration);
+        this._scheduleDisconnect([noise, filter, osc, gainNode], duration);
     }
 
     playGravityRipple() {
@@ -284,6 +314,7 @@ class SoundFX {
         lfo.start(now);
         osc.stop(now + 0.6);
         lfo.stop(now + 0.6);
+        this._scheduleDisconnect([osc, gainNode, lfo, lfoGain], 0.6);
     }
 
     playWarp() {
@@ -322,6 +353,7 @@ class SoundFX {
         mod.start(now);
         osc.stop(now + 0.45);
         mod.stop(now + 0.45);
+        this._scheduleDisconnect([osc, mod, modGain, filter, gainNode], 0.45);
     }
 
     playSkinSwitch() {
@@ -351,6 +383,7 @@ class SoundFX {
         osc2.start(now);
         osc1.stop(now + 0.25);
         osc2.stop(now + 0.25);
+        this._scheduleDisconnect([osc1, osc2, gainNode], 0.25);
     }
 }
 

@@ -247,8 +247,19 @@ class FakeStatement {
     }
     if (sql.includes('INSERT INTO player_cloud_saves')) {
       const [userId, permanentCores, talentsJson, unlockedSkinsJson, currentSkin, bestScore, profileJson, revision] = this.args;
+      const expectedPrevRevision = sql.includes('WHERE player_cloud_saves.revision') ? this.args[8] : null;
+      const existing = this.db.cloudSaves.get(userId);
+      if (expectedPrevRevision !== null && expectedPrevRevision !== undefined) {
+        if (existing) {
+          if (existing.revision !== expectedPrevRevision) {
+            return { meta: { changes: 0 } };
+          }
+        } else if (expectedPrevRevision !== 0) {
+          return { meta: { changes: 0 } };
+        }
+      }
       this.db.cloudSaves.set(userId, { user_id: userId, permanent_cores: permanentCores, talents_json: talentsJson, unlocked_skins_json: unlockedSkinsJson, current_skin: currentSkin, best_score: bestScore, profile_json: profileJson, revision, updated_at: this.db.now });
-      return {};
+      return { meta: { changes: 1 } };
     }
     if (sql.includes('INSERT INTO match_history')) {
       const [matchId, userId, score, wave, skin, isNewBest, permanentCoresEarned, playedAt] = this.args;
@@ -278,6 +289,16 @@ class FakeStatement {
     if (sql.includes('INSERT INTO leaderboard_entries')) {
       const [entryId, userId, score, shipType] = this.args;
       this.db.leaderboardEntries.push({ entry_id: entryId, user_id: userId, score, ship_type: shipType, updated_at: this.db.now });
+      return {};
+    }
+    if (sql.includes('DELETE FROM leaderboard_entries')) {
+      const [userId, limit] = this.args;
+      const kept = this.db.leaderboardEntries
+        .filter(row => row.user_id === userId)
+        .sort((a, b) => b.score - a.score || a.updated_at.localeCompare(b.updated_at) || a.entry_id.localeCompare(b.entry_id))
+        .slice(0, limit);
+      const keptIds = new Set(kept.map(row => row.entry_id));
+      this.db.leaderboardEntries = this.db.leaderboardEntries.filter(row => row.user_id !== userId || keptIds.has(row.entry_id));
       return {};
     }
     throw new Error('Unhandled run SQL: ' + sql);

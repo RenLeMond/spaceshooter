@@ -27,15 +27,25 @@ function safeReadJSON(key, fallback) {
 }
 
 function safeReadInt(key, fallback) {
-    const raw = localStorage.getItem(key);
-    if (raw === null || raw === '') return fallback;
-    const n = parseInt(raw, 10);
-    return Number.isFinite(n) ? n : fallback;
+    try {
+        if (typeof localStorage === 'undefined') return fallback;
+        const raw = localStorage.getItem(key);
+        if (raw === null || raw === '') return fallback;
+        const n = parseInt(raw, 10);
+        return Number.isFinite(n) ? n : fallback;
+    } catch (_) {
+        return fallback;
+    }
 }
 
 function safeReadString(key, fallback) {
-    const raw = localStorage.getItem(key);
-    return (raw !== null && raw !== '') ? raw : fallback;
+    try {
+        if (typeof localStorage === 'undefined') return fallback;
+        const raw = localStorage.getItem(key);
+        return (raw !== null && raw !== '') ? raw : fallback;
+    } catch (_) {
+        return fallback;
+    }
 }
 
 var PERMANENT_CORES_KEY = 'space_permanent_cores';
@@ -384,59 +394,43 @@ Object.assign(GameEngine.prototype, {
             }
 
             if (comboKey === 'EM+Frost') {
-                this.spawnBulletInPool({
-                    x: p.x, y: p.y - 30, vx: 0, vy: -14, radius: 8, damage: 35,
-                    color: '#60a5fa', pierce: 3, comboEffect: 'EM+Frost'
-                });
+                this.spawnBullet(p.x, p.y - 30, 0, -14, 8, 35, '#60a5fa', 3, 'EM+Frost');
             } else if (comboKey === 'EM+Fire') {
-                this.spawnBulletInPool({
-                    x: p.x, y: p.y - 30, vx: 0, vy: -15, radius: 7, damage: 45,
-                    color: '#fb7185', pierce: 1, comboEffect: 'EM+Fire'
-                });
+                this.spawnBullet(p.x, p.y - 30, 0, -15, 7, 45, '#fb7185', 1, 'EM+Fire');
             } else if (comboKey === 'EM+Rad') {
-                this.spawnBulletInPool({
-                    x: p.x, y: p.y - 30, vx: 0, vy: -11, radius: 15, damage: 55,
-                    color: '#a78bfa', pierce: 99, comboEffect: 'EM+Rad'
-                });
+                this.spawnBullet(p.x, p.y - 30, 0, -11, 15, 55, '#a78bfa', 99, 'EM+Rad');
             } else if (comboKey === 'Fire+Frost') {
-                this.spawnBulletInPool({ x: p.x - 12, y: p.y - 30, vx: -1, vy: -13, radius: 6, damage: 30, color: '#3b82f6', pierce: 1, comboEffect: 'EM+Frost' });
-                this.spawnBulletInPool({ x: p.x + 12, y: p.y - 30, vx: 1, vy: -13, radius: 6, damage: 30, color: '#f43f5e', pierce: 1, comboEffect: 'EM+Fire' });
+                this.spawnBullet(p.x - 12, p.y - 30, -1, -13, 6, 30, '#3b82f6', 1, 'Fire+Frost');
+                this.spawnBullet(p.x + 12, p.y - 30, 1, -13, 6, 30, '#f43f5e', 1, 'Fire+Frost');
             } else if (comboKey === 'Frost+Rad') {
-                this.spawnBulletInPool({
-                    x: p.x, y: p.y - 30, vx: 0, vy: -12, radius: 10, damage: 40,
-                    color: '#818cf8', pierce: 2, comboEffect: 'Frost+Rad'
-                });
+                this.spawnBullet(p.x, p.y - 30, 0, -12, 10, 40, '#818cf8', 2, 'Frost+Rad');
             } else if (comboKey === 'Fire+Rad') {
-                this.spawnBulletInPool({
-                    x: p.x, y: p.y - 30, vx: 0, vy: -9, radius: 18, damage: 80,
-                    color: '#fbbf24', pierce: 1, comboEffect: 'Fire+Rad'
-                });
+                this.spawnBullet(p.x, p.y - 30, 0, -9, 18, 80, '#fbbf24', 1, 'Fire+Rad');
             } else {
                 if (slots[0] === 'EM') {
-                    this.spawnBulletInPool({ x: p.x, y: p.y - 30, vx: 0, vy: -18, radius: 3.5, damage: 25, color: '#22d3ee', pierce: 1 });
+                    this.spawnBullet(p.x, p.y - 30, 0, -18, 3.5, 25, '#22d3ee');
                 } else if (slots[0] === 'Frost') {
-                    this.spawnBulletInPool({ x: p.x, y: p.y - 30, vx: 0, vy: -14, radius: 5, damage: 30, color: '#3b82f6', pierce: 1, comboEffect: 'EM+Frost' });
+                    this.spawnBullet(p.x, p.y - 30, 0, -14, 5, 30, '#3b82f6');
                 } else if (slots[0] === 'Fire') {
-                    this.spawnBulletInPool({ x: p.x, y: p.y - 30, vx: 0, vy: -12, radius: 6, damage: 35, color: '#f43f5e', pierce: 1 });
+                    this.spawnBullet(p.x, p.y - 30, 0, -12, 6, 35, '#f43f5e');
                 } else if (slots[0] === 'Rad') {
-                    this.spawnBulletInPool({ x: p.x, y: p.y - 30, vx: 0, vy: -10, radius: 8, damage: 40, color: '#fbbf24', pierce: 1 });
+                    this.spawnBullet(p.x, p.y - 30, 0, -10, 8, 40, '#fbbf24');
                 } else {
-                    this.spawnBulletInPool({ x: p.x, y: p.y - 30, vx: 0, vy: -15, radius: 4, damage: 20, color: '#06b6d4', pierce: 1 });
+                    this.spawnBullet(p.x, p.y - 30, 0, -15, 4, 20, '#06b6d4');
                 }
             }
 
             if (p.equippedMods && p.equippedMods.includes('split')) {
                 const baseColor = comboKey ? '#c084fc' : (slots[0] === 'EM' ? '#22d3ee' : (slots[0] === 'Frost' ? '#3b82f6' : (slots[0] === 'Fire' ? '#f43f5e' : (slots[0] === 'Rad' ? '#fbbf24' : '#06b6d4'))));
-                this.spawnBulletInPool({ x: p.x - 16, y: p.y - 20, vx: -2.5, vy: -12.5, radius: 4, damage: 15, color: baseColor, isSplitBullet: true });
-                this.spawnBulletInPool({ x: p.x + 16, y: p.y - 20, vx: 2.5, vy: -12.5, radius: 4, damage: 15, color: baseColor, isSplitBullet: true });
+                this.spawnBullet(p.x - 16, p.y - 20, -2.5, -12.5, 4, 15, baseColor, 1, null, true);
+                this.spawnBullet(p.x + 16, p.y - 20, 2.5, -12.5, 4, 15, baseColor, 1, null, true);
             }
 
-            // V7 永久天赋 E「僚机副武器齐射」：横向补火，不参与局内构装/弹弓伤害乘区
             const volleyChanceByLevel = [0, 0.12, 0.20];
             const eLevel = Math.min(2, (this.talents && this.talents.E) || 0);
             if (eLevel > 0 && Math.random() < volleyChanceByLevel[eLevel]) {
-                this.spawnBulletInPool({ x: p.x - 22, y: p.y - 8, vx: -3, vy: -11, radius: 3.5, damage: 8, color: '#fbbf24', isSplitBullet: true, isTalentVolley: true });
-                this.spawnBulletInPool({ x: p.x + 22, y: p.y - 8, vx: 3, vy: -11, radius: 3.5, damage: 8, color: '#fbbf24', isSplitBullet: true, isTalentVolley: true });
+                this.spawnBullet(p.x - 22, p.y - 8, -3, -11, 3.5, 8, '#fbbf24', 1, null, true, true);
+                this.spawnBullet(p.x + 22, p.y - 8, 3, -11, 3.5, 8, '#fbbf24', 1, null, true, true);
             }
         }
     },
@@ -498,10 +492,12 @@ Object.assign(GameEngine.prototype, {
             this.spawnBoss();
         }
 
-        // 机舱节奏：阶梯阈值（1500 × 1.4^(w-1) 段差）+ 最小 45s 间隔
-        const threshold = this.waveScoreThresholds[this.wave] || Infinity;
-        if (!this.boss && this.score >= threshold) {
+        // 机舱节奏：单次 update 内追平波次数字，但只弹一次提示并最多尝试开机库一次
+        const waveBeforeCatchUp = this.wave;
+        while (!this.boss && this.score >= (this.waveScoreThresholds[this.wave] || Infinity)) {
             this.wave++;
+        }
+        if (this.wave > waveBeforeCatchUp) {
             this.addFloatText(this.logicalWidth / 2, this.logicalHeight / 2 - 50, `WAVE ${this.wave} COMPLETED!`, '#10b981', 22);
             sfx.playPowerup();
             const now = performance.now();
@@ -708,7 +704,7 @@ Object.assign(GameEngine.prototype, {
             this.spawnPowerup(m.x, m.y);
         }
 
-        if (m.type === 'splitter' && m.size > 40) {
+        if (m.type === 'splitter' && m.size > 40 && !this._suppressMeteorSplit) {
             const splitSize = m.size * 0.55;
             this.spawnMeteor(m.x - 20, m.y, splitSize, -1.8);
             this.spawnMeteor(m.x + 20, m.y, splitSize, 1.8);
@@ -723,6 +719,7 @@ Object.assign(GameEngine.prototype, {
         this.bombCharge = 0;
         this.createExplosionParticles(this.logicalWidth / 2, this.logicalHeight / 2, 400, '#fbbf24');
         
+        this._suppressMeteorSplit = true;
         for (let i = 0; i < this.maxMeteors; i++) {
             const m = this.meteors[i];
             if (m.active) {
@@ -730,6 +727,7 @@ Object.assign(GameEngine.prototype, {
                 m.active = false;
             }
         }
+        this._suppressMeteorSplit = false;
 
         if (this.boss && this.boss.active) {
             const parts = this.boss.parts;
@@ -863,7 +861,7 @@ Object.assign(GameEngine.prototype, {
             return;
         }
 
-        this.isPaused = true;
+        this.lockUiPause();
         sfx.playPowerup();
         this.createScreenShake(12);
 
@@ -895,7 +893,7 @@ Object.assign(GameEngine.prototype, {
         // 兜底防软锁：无可选模组时关闭弹窗并恢复战斗（triggerLevelUp 通常已拦截，此处双保险）
         if (selected.length === 0) {
             this.rogueUpgradeScreen.classList.add('hidden');
-            this.isPaused = false;
+            this.unlockUiPause();
             return;
         }
 
@@ -927,7 +925,7 @@ Object.assign(GameEngine.prototype, {
             card.addEventListener('click', () => {
                 this.applyModCard(mod.id);
                 this.rogueUpgradeScreen.classList.add('hidden');
-                this.isPaused = false;
+                this.unlockUiPause();
                 sfx.playPowerup();
                 this.updateHUD();
             });

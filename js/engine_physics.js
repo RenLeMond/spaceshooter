@@ -3,6 +3,22 @@
 // =============================================
 
 Object.assign(GameEngine.prototype, {
+    spawnBullet(x, y, vx, vy, radius, damage, color, pierce, comboEffect, isSplitBullet, isTalentVolley) {
+        const s = this._bulletSpawnScratch;
+        s.x = x;
+        s.y = y;
+        s.vx = vx;
+        s.vy = vy;
+        s.radius = radius;
+        s.damage = damage;
+        s.color = color;
+        s.pierce = pierce === undefined ? 1 : pierce;
+        s.comboEffect = comboEffect || null;
+        s.isSplitBullet = !!isSplitBullet;
+        s.isTalentVolley = !!isTalentVolley;
+        return this.spawnBulletInPool(s);
+    },
+
     spawnBulletInPool(props) {
         let bullet = null;
         for (let i = 0; i < this.maxBullets; i++) {
@@ -95,6 +111,7 @@ Object.assign(GameEngine.prototype, {
             meteor.numPoints = numPoints;
             meteor.color = props.color;
             meteor.shieldCount = props.shieldCount || 0;
+            meteor.isBossVolley = !!props.isBossVolley;
             meteor.active = true;
             return meteor;
         }
@@ -430,9 +447,13 @@ Object.assign(GameEngine.prototype, {
                     }
 
                     if (blockedByShield) {
-                        bullet.active = false;
-                        bulletRemoved = true;
-                        break;
+                        bullet.pierce--;
+                        if (bullet.pierce <= 0) {
+                            bullet.active = false;
+                            bulletRemoved = true;
+                            break;
+                        }
+                        continue;
                     }
 
                     bullet.pierce--;
@@ -527,6 +548,9 @@ Object.assign(GameEngine.prototype, {
             m.vy = 0;
             m.vx = 0;
             m.color = '#818cf8';
+        } else if (bullet.comboEffect === 'Fire+Frost') {
+            m.vy *= 0.45;
+            m.color = '#c084fc';
         } else if (bullet.comboEffect === 'Fire+Rad') {
             this.createExplosionParticles(m.x, m.y, 45, '#fbbf24');
             for (let i = 0; i < this.maxMeteors; i++) {

@@ -1,25 +1,37 @@
 // ⚡ 《星海猎手 V7：机载超维构装与深空天象》Web Worker 子线程引擎核心
 // 声明顶层代理与全局 Mock 防线，使得包含 DOM/Audio 依赖的 JS 文件能在 DOM-less Web Worker 中直接执行
+function createMockElement() {
+    // 返回一个符合 DOM 节点要求的代理对象，防止调用任何方法或属性时抛出 ReferenceError/TypeError
+    return {
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        appendChild: () => {},
+        removeChild: () => {},
+        remove: () => {},
+        setAttribute: () => {},
+        classList: {
+            add: () => {},
+            remove: () => {},
+            toggle: () => {},
+            contains: () => false
+        },
+        style: {},
+        querySelector: () => null,
+        querySelectorAll: () => [],
+        innerText: '',
+        innerHTML: '',
+        textContent: '',
+        className: '',
+        getContext: () => ({})
+    };
+}
+
 self.document = {
-    getElementById: (id) => {
-        // 返回一个符合 DOM 节点要求的代理对象，防止调用任何方法或属性时抛出 ReferenceError/TypeError
-        return {
-            addEventListener: () => {},
-            removeEventListener: () => {},
-            classList: {
-                add: () => {},
-                remove: () => {},
-                contains: () => false
-            },
-            style: {},
-            querySelector: () => null,
-            querySelectorAll: () => [],
-            innerText: '',
-            innerHTML: '',
-            className: '',
-            getContext: () => ({})
-        };
-    },
+    getElementById: () => createMockElement(),
+    // 补齐 createElement：任何走 document.createElement 的引擎路径在 Worker 中也不会抛错
+    createElement: () => createMockElement(),
+    createDocumentFragment: () => createMockElement(),
+    body: createMockElement(),
     addEventListener: () => {},
     removeEventListener: () => {}
 };
@@ -355,7 +367,7 @@ class GameEngineWorker extends GameEngine {
 
     // 重写改装车间开启
     openHangar() {
-        this.isPaused = true;
+        this.lockUiPause();
         postMessage({
             type: 'openHangar',
             scrap: this.scrap,
@@ -398,7 +410,10 @@ class GameEngineWorker extends GameEngine {
         const requestAnimationFrameMock = self.requestAnimationFrame ? self.requestAnimationFrame.bind(self) : (cb => setTimeout(() => cb(performance.now()), 1000 / 60));
         
         const loop = (currentTime) => {
-            if (!this.isRunning || this.isPaused) return;
+            if (!this.isRunning) return;
+            const bossImplosionDuringPause = this.isPaused
+                && this.boss && this.boss.active && this.boss.state === 'implosion';
+            if (this.isPaused && !bossImplosionDuringPause) return;
             this.rafId = requestAnimationFrameMock(loop);
             
             const deltaTime = currentTime - this.lastTime;
@@ -433,6 +448,7 @@ class GameEngineWorker extends GameEngine {
 
     togglePause() {
         if (!this.isRunning) return;
+        if ((this.uiPauseDepth || 0) > 0) return;
         this.isPaused = !this.isPaused;
         postMessage({
             type: 'togglePause',
@@ -471,6 +487,7 @@ self.onmessage = function(e) {
             self.permanentCores = data.permanentCores || 0;
             
             engineInstance = new GameEngineWorker();
+            engineInstance.devCheatsEnabled = !!data.devCheats;
             engineInstance.unlockedSkins = Array.isArray(self.unlockedSkins) ? self.unlockedSkins : ["default"];
             engineInstance.currentSkin = self.currentSkin || 'default';
             engineInstance.bestScore = self.bestScore || 0;
@@ -587,7 +604,7 @@ self.onmessage = function(e) {
                     // Shift → 向上跳 300px 折跃
                     engineInstance.triggerWarp(engineInstance.player.x, Math.max(20, engineInstance.player.y - 300));
                 }
-                if (data.code === 'KeyK' && engineInstance.isRunning && !engineInstance.isPaused) {
+                if (data.code === 'KeyK' && engineInstance.devCheatsEnabled && engineInstance.isRunning && !engineInstance.isPaused) {
                     engineInstance.score += 1000;
                     engineInstance.scrap += 10;
                     engineInstance.player.hp = Math.min(engineInstance.player.maxHp, engineInstance.player.hp + 20);
@@ -643,6 +660,11 @@ self.onmessage = function(e) {
                     engineInstance.talents = data.talents;
                     self.talents = data.talents;
                 }
+                // 同步永久星核余额，避免 Worker 端 localStorage mock 读到过期值
+                if (typeof data.permanentCores === 'number') {
+                    self.permanentCores = Math.max(0, Math.floor(data.permanentCores));
+                    engineInstance.permanentCores = self.permanentCores;
+                }
                 
                 // 强制更新僚机对象，如果升级了僚机的话 — side 必须显式设置（见 wingmanFire 对 w.side 的使用）
                 if (engineInstance.hangar.turretLevel > 0 && engineInstance.wingmen.length === 0) {
@@ -657,7 +679,7 @@ self.onmessage = function(e) {
             
         case 'exitHangar':
             if (engineInstance) {
-                engineInstance.isPaused = false;
+                engineInstance.unlockUiPause();
                 engineInstance.startLoop();
                 engineInstance.showToast(`🛰 舰队重新起航！当前波数: ${engineInstance.wave}`);
             }
@@ -678,7 +700,7 @@ self.onmessage = function(e) {
 
         case 'resumeGame':
             if (engineInstance) {
-                engineInstance.isPaused = false;
+                engineInstance.unlockUiPause();
                 engineInstance.lastTime = performance.now();
                 engineInstance.startLoop();
             }
@@ -699,15 +721,31 @@ self.onmessage = function(e) {
                 if (data.shouldStart) {
                     engineInstance.startLoop();
                 } else {
+                    // 返回菜单：resetGame 内部会把 isRunning 置 true，这里必须复位为 false，
+                    // 否则开始界面按 Esc/暂停/作弊仍会生效、暂停浮层可能盖在菜单上。
+                    engineInstance.isRunning = false;
+                    engineInstance.isPaused = false;
+                    engineInstance.keys = {};
                     engineInstance.stopLoop();
                 }
+            }
+            break;
+
+        case 'stopBenchmark':
+            // 关闭跑分弹窗时终止压测，停止子线程的模拟与渲染循环
+            if (engineInstance) {
+                engineInstance.isBenchmarking = false;
+                engineInstance.isRunning = false;
+                engineInstance.isPaused = false;
+                engineInstance.keys = {};
+                engineInstance.stopLoop();
             }
             break;
             
         case 'modSelected':
             if (engineInstance) {
                 engineInstance.applyModCard(data.modId);
-                engineInstance.isPaused = false;
+                engineInstance.unlockUiPause();
                 engineInstance.startLoop();
                 engineInstance.updateHUD();
             }

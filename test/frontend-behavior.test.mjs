@@ -80,9 +80,13 @@ async function loadLeaderboardApi(storage = new Map(), fetchImpl = async () => (
 test('ngrok previews use the production same-site API host', async () => {
   const ngrok = await runConfigForHost('finalize-sacrament-bagginess.ngrok-free.dev');
   const prod = await runConfigForHost('game.rlmbest.xyz');
+  const mirror = await runConfigForHost('game.renlimeng.qzz.io');
+  const workersDev = await runConfigForHost('spaceshooter.842695824.workers.dev');
 
   assert.equal(ngrok.apiBase, 'https://game.rlmbest.xyz');
   assert.equal(prod.apiBase, '');
+  assert.equal(mirror.apiBase, '');
+  assert.equal(workersDev.apiBase, 'https://game.rlmbest.xyz');
 });
 
 test('entry pages use the current cache-busting asset version', async () => {

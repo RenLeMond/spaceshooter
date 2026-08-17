@@ -7,6 +7,11 @@
 [![0-GC Optimization](https://img.shields.io/badge/Performance-0--GC_Optimized-10b981?style=for-the-badge)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays)
 [![Dual-Mode Engine](https://img.shields.io/badge/Architecture-Web_Worker_Offscreen-8b5cf6?style=for-the-badge)](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API)
 [![CORS-Free](https://img.shields.io/badge/Offline-100%25_CORS--Free-e11d48?style=for-the-badge)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
+[![Play Online](https://img.shields.io/badge/Play-game.rlmbest.xyz-f59e0b?style=for-the-badge)](https://game.rlmbest.xyz)
+
+**仓库：** [github.com/RenLeMond/spaceshooter](https://github.com/RenLeMond/spaceshooter)
+
+**在线游玩：** [game.rlmbest.xyz](https://game.rlmbest.xyz) · [game.renlimeng.qzz.io](https://game.renlimeng.qzz.io)
 
 ---
 
@@ -85,14 +90,17 @@
 
 ## 🚀 启动与调试 (Getting Started)
 
-### 方案 A：本地极速挂载服务 (推荐)
-Windows 操作系统下，直接双击运行项目根目录下的 [**`start.bat`**](file:///c:/Users/huayu/Desktop/github/spaceshooter/start.bat)：
+### 方案 A：在线直接玩
+打开 [**https://game.rlmbest.xyz**](https://game.rlmbest.xyz)（备用：[game.renlimeng.qzz.io](https://game.renlimeng.qzz.io)），无需安装。排行榜 API 挂在同源 `/api/*`。
+
+### 方案 B：本地极速挂载服务
+Windows 操作系统下，直接双击运行项目根目录下的 [**`start.bat`**](start.bat)：
 1.  脚本将自动检测环境，按 **Python $\rightarrow$ NodeJS $\rightarrow$ Windows 原生 PowerShell 网络监听器** 的顺序在后台挂载本地 `http://localhost:9999` 服务。
 2.  输入 `1` 即可在默认浏览器中以 **Web Worker 双核最高性能模式** 启动游戏本体。
 3.  输入 `2` 安全释放 9999 端口并清理后台挂载服务。
 
-### 方案 B：离线无环境极速畅玩
-直接双击双击 [**`space_shooter.html`**](file:///c:/Users/huayu/Desktop/github/spaceshooter/space_shooter.html) 文件！在没有任何运行环境的电脑上，依然能以单线程降级引擎完美战斗！
+### 方案 C：离线无环境极速畅玩
+直接双击 [**`space_shooter.html`**](space_shooter.html) 文件！在没有任何运行环境的电脑上，依然能以单线程降级引擎完美战斗！
 
 ### 🧪 开发者热更新调试指令 (局内彩蛋)
 在游戏战斗进行中，通过键盘按下 `K` 键，或双击顶部得分栏文本，即可触发**极客热更新调试**：
@@ -145,5 +153,5 @@ spaceshooter/
 
 ## 📜 极客白皮书与手册文档
 
-*   [**`game_design.html` (极客底盘白皮书)**](file:///c:/Users/huayu/Desktop/github/spaceshooter/game_design.html)：深入研究了多关节利维坦吞噬蠕虫的阻尼追随受力方程式、0-GC TypedArray 连续存储索引偏移公式、量子折跃起点终点的量子密度方程等。*采用优雅的 KaTeX 离线渲染。*
-*   [**`game_manual.html` (终极战略手册)**](file:///c:/Users/huayu/Desktop/github/spaceshooter/game_manual.html)：包含了 V7 版本时空折跃的战术切入与流星物理震荡弹射技巧、Roguelike 3选1 构装模组最佳配装路线、以及在无尽模式下如何规避太阳磁暴致命边缘辐射的高级应对路线图。
+*   [**`game_design.html` (极客底盘白皮书)**](game_design.html)：深入研究了多关节利维坦吞噬蠕虫的阻尼追随受力方程式、0-GC TypedArray 连续存储索引偏移公式、量子折跃起点终点的量子密度方程等。*采用优雅的 KaTeX 离线渲染。*
+*   [**`game_manual.html` (终极战略手册)**](game_manual.html)：包含了 V7 版本时空折跃的战术切入与流星物理震荡弹射技巧、Roguelike 3选1 构装模组最佳配装路线、以及在无尽模式下如何规避太阳磁暴致命边缘辐射的高级应对路线图。

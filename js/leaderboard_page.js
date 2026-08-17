@@ -297,7 +297,9 @@
 
     function rankLabel(rank) {
         if (rank === 1) return '<i class="fa-solid fa-crown"></i>';
-        return `#${rank || '-'}`;
+        const n = Number(rank);
+        if (!Number.isFinite(n) || n < 1) return '#-';
+        return `#${Math.floor(n)}`;
     }
 
     function renderMatchHistory() {

@@ -27,6 +27,36 @@ Object.assign(GameEngine.prototype, {
         return Math.floor(base * this.getBossHpScale(tier));
     },
 
+    _tickBossImplosion(dtClamped) {
+        const b = this.boss;
+        if (!b || b.state !== 'implosion') return;
+        b.implosionTimer -= 16.666 * dtClamped;
+        this.createScreenShake(12);
+        for (let i = 0; i < this.maxMeteors; i++) {
+            const m = this.meteors[i];
+            if (!m.active) continue;
+            const dx = b.x - m.x;
+            const dy = b.y - m.y;
+            const distSq = dx * dx + dy * dy;
+
+            if (distSq < 900) {
+                this.createExplosionParticles(m.x, m.y, m.size * 0.4, m.color);
+                m.active = false;
+                this.scrap += 1;
+                continue;
+            }
+
+            const dist = Math.sqrt(distSq) || 1;
+            const force = 12000 / (distSq + 100);
+            m.vx += (dx / dist) * force * dtClamped;
+            m.vy += (dy / dist) * force * dtClamped;
+        }
+
+        if (b.implosionTimer <= 0) {
+            this.triggerNebulaTitanEvolution();
+        }
+    },
+
     _bossTierLabel(tier) {
         return tier > 1 ? ` · 第${tier}阶` : '';
     },
@@ -243,31 +273,7 @@ Object.assign(GameEngine.prototype, {
             this._updateMothershipHud();
         }
         else if (b.state === 'implosion') {
-            b.implosionTimer -= 16.666 * dtClamped;
-            this.createScreenShake(12);
-            for (let i = 0; i < this.maxMeteors; i++) {
-                const m = this.meteors[i];
-                if (!m.active) continue;
-                const dx = b.x - m.x;
-                const dy = b.y - m.y;
-                const distSq = dx * dx + dy * dy;
-
-                if (distSq < 900) {
-                    this.createExplosionParticles(m.x, m.y, m.size * 0.4, m.color);
-                    m.active = false;
-                    this.scrap += 1;
-                    continue;
-                }
-
-                const dist = Math.sqrt(distSq) || 1;
-                const force = 12000 / (distSq + 100);
-                m.vx += (dx / dist) * force * dtClamped;
-                m.vy += (dy / dist) * force * dtClamped;
-            }
-
-            if (b.implosionTimer <= 0) {
-                this.triggerNebulaTitanEvolution();
-            }
+            this._tickBossImplosion(dtClamped);
         }
         else if (b.state === 'titan') {
             const tier = b.encounterTier || 1;
@@ -409,7 +415,7 @@ Object.assign(GameEngine.prototype, {
                 // 沿途吞噬：只咬碰到的陨石，不改变追玩家方向
                 for (let j = 0; j < this.maxMeteors; j++) {
                     const m = this.meteors[j];
-                    if (!m.active) continue;
+                    if (!m.active || m.isBossVolley) continue;
                     const distSq = (m.x - part.x) ** 2 + (m.y - part.y) ** 2;
                     const eatRadius = part.radius + m.radius;
                     if (distSq < eatRadius * eatRadius) {
@@ -533,11 +539,17 @@ Object.assign(GameEngine.prototype, {
         b.laserAnglePhase = 0;  // 死光横扫角度相位，同上
         b.vx = 1.2 + (tier - 1) * 0.08;
 
-        b.parts.core.active = true;
-        b.parts.core.hp = titanCoreHp;
-        b.parts.core.maxHp = titanCoreHp;
-        b.parts.core.radius = 45 + (tier - 1) * 3;
-        b.parts.core.label = "巨神兵心脏";
+        // Titan 形态仅保留核心部件，关闭母舰相位盾/机翼/尾炮，避免隐形盾门禁
+        b.parts = {
+            core: {
+                hp: titanCoreHp,
+                maxHp: titanCoreHp,
+                active: true,
+                offset: { x: 0, y: 20 },
+                radius: 45 + (tier - 1) * 3,
+                label: "巨神兵心脏"
+            }
+        };
 
         b.rockTimer = 0;
         b.rippleTimer = 0;
@@ -630,6 +642,8 @@ Object.assign(GameEngine.prototype, {
         if (!b || !b.laserActive) return;
 
         const angles = [Math.PI / 2 - 0.4 + b.laserAngle, Math.PI / 2 + 0.4 - b.laserAngle];
+        let playerDamagedThisFrame = false;
+        let blockedTextShown = false;
 
         for (let ai = 0; ai < angles.length; ai++) {
             const angle = angles[ai];
@@ -656,15 +670,19 @@ Object.assign(GameEngine.prototype, {
             const distSq = (px - nx) * (px - nx) + (py - ny) * (py - ny);
             if (distSq < 900) {
                 if (this.shieldTime <= 0 && this.slingshotTime <= 0) {
-                    b.laserDamageCarry = (b.laserDamageCarry || 0) + 1.2 * dtClamped;
-                    const laserDamage = Math.floor(b.laserDamageCarry);
-                    if (laserDamage > 0) {
-                        b.laserDamageCarry -= laserDamage;
-                        this.damagePlayer(laserDamage);
-                        this.createScreenShake(6);
+                    if (!playerDamagedThisFrame) {
+                        b.laserDamageCarry = (b.laserDamageCarry || 0) + 1.2 * dtClamped;
+                        const laserDamage = Math.floor(b.laserDamageCarry);
+                        if (laserDamage > 0) {
+                            b.laserDamageCarry -= laserDamage;
+                            this.damagePlayer(laserDamage);
+                            this.createScreenShake(6);
+                        }
+                        playerDamagedThisFrame = true;
                     }
-                } else {
+                } else if (!blockedTextShown) {
                     this.addFloatText(px, py - 30, "LASER BLOCKED!", "#06b6d4", 11);
+                    blockedTextShown = true;
                 }
             }
         }
@@ -689,6 +707,7 @@ Object.assign(GameEngine.prototype, {
                     hp: bulletHp,
                     maxHp: bulletHp,
                     type: 'fast',
+                    isBossVolley: true,
                     angle: 0,
                     spinSpeed: 0.01,
                     numPoints: 8,

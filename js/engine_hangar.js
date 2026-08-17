@@ -4,7 +4,7 @@
 
 Object.assign(GameEngine.prototype, {
     openHangar() {
-        this.isPaused = true;
+        this.lockUiPause();
         this.workshopScreen.classList.remove('hidden');
         this.updateHangarUI();
     },
@@ -148,7 +148,11 @@ Object.assign(GameEngine.prototype, {
         }
         savePermanentCores(permanentCores - def.cost);
         this.talents[id] = lv + 1;
-        localStorage.setItem('space_v7_talents', JSON.stringify(this.talents));
+        try {
+            localStorage.setItem('space_v7_talents', JSON.stringify(this.talents));
+        } catch (_) {
+            this.showToast('⚠️ 本地存储已满，天赋进度未能保存');
+        }
         sfx.playPowerup();
         this.showToast(`🧬 永久天赋【${def.name}】已强化至 LV.${this.talents[id]}！`);
         this.updateHangarUI();
@@ -189,7 +193,9 @@ Object.assign(GameEngine.prototype, {
         if (this.unlockedSkins.includes(skinId)) {
             // Equip skin
             this.currentSkin = skinId;
-            localStorage.setItem('space_current_skin', skinId);
+            try {
+                localStorage.setItem('space_current_skin', skinId);
+            } catch (_) {}
             sfx.playSkinSwitch();
             const names = { void: '🌌 星渊幻影', thunder: '⚡ 超维雷霆', imperial: '✨ 帝皇余晖' };
             this.showToast(`🎨 成功切换机体涂装为: ${names[skinId] || skinId}`);
@@ -199,9 +205,13 @@ Object.assign(GameEngine.prototype, {
             if (permanentCores >= cost) {
                 savePermanentCores(permanentCores - cost);
                 this.unlockedSkins.push(skinId);
-                localStorage.setItem('space_unlocked_skins', JSON.stringify(this.unlockedSkins));
+                try {
+                    localStorage.setItem('space_unlocked_skins', JSON.stringify(this.unlockedSkins));
+                } catch (_) {}
                 this.currentSkin = skinId;
-                localStorage.setItem('space_current_skin', skinId);
+                try {
+                    localStorage.setItem('space_current_skin', skinId);
+                } catch (_) {}
                 sfx.playPowerup();
                 const names = { void: '🌌 星渊幻影', thunder: '⚡ 超维雷霆', imperial: '✨ 帝皇余晖' };
                 this.showToast(`✨ 成功解锁并装配超维机体: ${names[skinId] || skinId}`);
@@ -215,7 +225,7 @@ Object.assign(GameEngine.prototype, {
 
     exitHangar() {
         this.workshopScreen.classList.add('hidden');
-        this.isPaused = false;
+        this.unlockUiPause();
         this.showToast(`🛰 舰队重新起航！当前波数: ${this.wave}`);
     }
 

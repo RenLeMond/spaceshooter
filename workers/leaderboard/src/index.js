@@ -11,6 +11,7 @@ const WRITE_BODY_LIMITS = {
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
 const PBKDF2_ITERATIONS = 120000;
 const MATCH_HISTORY_LIMIT = 50;
+const LEADERBOARD_ENTRIES_PER_USER = 25;
 const DEFAULT_NICKNAME = '星海先驱者';
 const DEFAULT_AVATAR = 'fa-user-astronaut';
 const DEFAULT_ALLOWED_ORIGINS = 'https://renlimeng.qzz.io,https://rlmbest.xyz,http://localhost:5173,http://127.0.0.1:5173,http://localhost:8787,http://127.0.0.1:8787,http://localhost:8080,http://127.0.0.1:8080,http://localhost:9999,http://127.0.0.1:9999';
@@ -112,7 +113,12 @@ export default {
           if (revision !== current.revision) {
             return jsonResponse({ error: 'revision_conflict', save: current }, corsHeaders, 409);
           }
-          const save = await replaceCloudSave(env.DB, session.user_id, payload.save || {}, current.revision + 1);
+          // 传入期望的前序 revision，由 replaceCloudSave 内部做原子 CAS；并发同 revision 写入只有一方成功。
+          const save = await replaceCloudSave(env.DB, session.user_id, payload.save || {}, current.revision + 1, current.revision);
+          if (!save) {
+            const latest = await loadCloudSave(env.DB, session.user_id);
+            return jsonResponse({ error: 'revision_conflict', save: latest }, corsHeaders, 409);
+          }
           return jsonResponse({ success: true, user_id: session.user_id, save }, corsHeaders);
         }
       }
@@ -150,7 +156,8 @@ export default {
         return jsonResponse({ error: 'payload_too_large' }, corsHeaders, 413);
       }
       console.error(err);
-      return jsonResponse({ error: 'internal_error', message: String(err.message || err) }, corsHeaders, 500);
+      // 不向客户端回传内部异常细节，避免泄露实现/堆栈信息；详情仅写入服务端日志。
+      return jsonResponse({ error: 'internal_error' }, corsHeaders, 500);
     }
   }
 };
@@ -237,41 +244,36 @@ async function checkRateLimit(db, request, pathname, config) {
   const now = Math.floor(Date.now() / 1000);
   const ip = getClientIp(request);
   const key = `${pathname}:${ip}`;
-  const current = await db.prepare(`
-    SELECT count, window_start
-    FROM request_rate_limits
-    WHERE key = ?1
-  `).bind(key).first();
 
-  if (current && now - current.window_start < config.windowSeconds) {
-    if (current.count >= config.limit) {
-      return {
-        allowed: false,
-        retryAfter: Math.max(1, config.windowSeconds - (now - current.window_start))
-      };
-    }
-
-    await db.prepare(`
-      UPDATE request_rate_limits
-      SET count = count + 1
-      WHERE key = ?1
-    `).bind(key).run();
-    return { allowed: true };
-  }
-
+  // 原子化「自增或重置窗口」：单条 upsert 完成计数推进，避免读取-自增两步间的并发竞态导致超额放行。
+  // 窗口仍在有效期内则 count+1，否则重置为新窗口的第 1 次。
   await db.prepare(`
     INSERT INTO request_rate_limits (key, count, window_start)
     VALUES (?1, 1, ?2)
     ON CONFLICT(key) DO UPDATE SET
-      count = 1,
-      window_start = excluded.window_start
-  `).bind(key, now).run();
+      count = CASE WHEN ?2 - request_rate_limits.window_start < ?3
+                   THEN request_rate_limits.count + 1 ELSE 1 END,
+      window_start = CASE WHEN ?2 - request_rate_limits.window_start < ?3
+                   THEN request_rate_limits.window_start ELSE ?2 END
+  `).bind(key, now, config.windowSeconds).run();
 
-  await db.prepare(`
-    DELETE FROM request_rate_limits
-    WHERE window_start < ?1
-  `).bind(now - 3600).run();
+  const current = await db.prepare(`
+    SELECT count, window_start FROM request_rate_limits WHERE key = ?1
+  `).bind(key).first();
 
+  // 偶发清理过期窗口行（采样触发，避免每次请求都执行删除）
+  if (Math.random() < 0.02) {
+    await db.prepare(`DELETE FROM request_rate_limits WHERE window_start < ?1`).bind(now - 3600).run();
+  }
+
+  const count = current ? current.count : 1;
+  const windowStart = current ? current.window_start : now;
+  if (count > config.limit) {
+    return {
+      allowed: false,
+      retryAfter: Math.max(1, config.windowSeconds - (now - windowStart))
+    };
+  }
   return { allowed: true };
 }
 
@@ -280,28 +282,39 @@ async function checkRateLimit(db, request, pathname, config) {
 async function ensureRuntimeCompat(db) {
   if (profileColumnsChecked) return;
   // 兼容旧数据库；正式部署仍应先执行 schema.sql / migration。
+  // 仅静默「列/表已存在」这类幂等错误；其它异常记录日志以免真实迁移失败被隐藏。
   await Promise.all([
-    db.prepare("ALTER TABLE users ADD COLUMN avatar TEXT NOT NULL DEFAULT 'fa-user-astronaut'").run().catch(() => {}),
-    db.prepare("ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''").run().catch(() => {}),
-    db.prepare("ALTER TABLE accounts ADD COLUMN password_algorithm TEXT NOT NULL DEFAULT 'sha256'").run().catch(() => {}),
-    db.prepare("ALTER TABLE accounts ADD COLUMN password_iterations INTEGER NOT NULL DEFAULT 1").run().catch(() => {}),
-    db.prepare("ALTER TABLE account_sessions ADD COLUMN expires_at INTEGER NOT NULL DEFAULT 0").run().catch(() => {}),
-    db.prepare("ALTER TABLE player_cloud_saves ADD COLUMN revision INTEGER NOT NULL DEFAULT 0").run().catch(() => {}),
+    db.prepare("ALTER TABLE users ADD COLUMN avatar TEXT NOT NULL DEFAULT 'fa-user-astronaut'").run().catch(ignoreIdempotentMigrationError),
+    db.prepare("ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''").run().catch(ignoreIdempotentMigrationError),
+    db.prepare("ALTER TABLE accounts ADD COLUMN password_algorithm TEXT NOT NULL DEFAULT 'sha256'").run().catch(ignoreIdempotentMigrationError),
+    db.prepare("ALTER TABLE accounts ADD COLUMN password_iterations INTEGER NOT NULL DEFAULT 1").run().catch(ignoreIdempotentMigrationError),
+    db.prepare("ALTER TABLE account_sessions ADD COLUMN expires_at INTEGER NOT NULL DEFAULT 0").run().catch(ignoreIdempotentMigrationError),
+    db.prepare("ALTER TABLE player_cloud_saves ADD COLUMN revision INTEGER NOT NULL DEFAULT 0").run().catch(ignoreIdempotentMigrationError),
     db.prepare(`
       CREATE TABLE IF NOT EXISTS guest_identities (
         user_id TEXT PRIMARY KEY,
         key_hash TEXT NOT NULL,
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       )
-    `).run().catch(() => {})
+    `).run().catch(ignoreIdempotentMigrationError)
   ]);
   profileColumnsChecked = true;
 }
 
+function ignoreIdempotentMigrationError(err) {
+  const message = String((err && err.message) || err).toLowerCase();
+  const idempotent = message.includes('duplicate column')
+    || message.includes('already exists');
+  if (!idempotent) {
+    console.error('[runtime-compat] unexpected migration error:', message);
+  }
+}
+
 function getClientIp(request) {
-  return request.headers.get('CF-Connecting-IP')
-    || request.headers.get('X-Forwarded-For')
-    || 'unknown';
+  // 仅信任 Cloudflare 注入的 CF-Connecting-IP（边缘不可伪造）。
+  // X-Forwarded-For 可被客户端任意伪造，绝不能用于限流键，否则攻击者轮换该头即可绕过限流。
+  // 非 CF 环境（本地 miniflare）无此头时退化到共享 'unknown' 桶，仅影响本地开发。
+  return request.headers.get('CF-Connecting-IP') || 'unknown';
 }
 
 function clampInt(value, min, max, fallback) {
@@ -557,10 +570,12 @@ async function loadCloudSave(db, userId) {
   } : { matchHistory: matches, revision: 0 });
 }
 
-async function replaceCloudSave(db, userId, incomingSave, revision) {
+// expectedPrevRevision 非 null 时启用乐观并发 CAS：仅当现存行 revision 等于期望值才更新；
+// 冲突（changes===0 且非新插入）返回 null，由调用方回 409。null 时为无守卫写入（账号绑定首存）。
+async function replaceCloudSave(db, userId, incomingSave, revision, expectedPrevRevision = null) {
   const snapshot = normalizeCloudSave({ ...(incomingSave || {}), revision });
-  await upsertUserProfile(db, userId, snapshot.profile);
-  await db.prepare(`
+  const guard = expectedPrevRevision === null ? '' : ' WHERE player_cloud_saves.revision = ?9';
+  let stmt = db.prepare(`
     INSERT INTO player_cloud_saves (
       user_id, permanent_cores, talents_json, unlocked_skins_json, current_skin,
       best_score, profile_json, revision, updated_at
@@ -574,8 +589,9 @@ async function replaceCloudSave(db, userId, incomingSave, revision) {
       best_score = excluded.best_score,
       profile_json = excluded.profile_json,
       revision = excluded.revision,
-      updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
-  `).bind(
+      updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')${guard}
+  `);
+  const params = [
     userId,
     snapshot.permanentCores,
     JSON.stringify(snapshot.talents),
@@ -584,7 +600,16 @@ async function replaceCloudSave(db, userId, incomingSave, revision) {
     snapshot.bestScore,
     JSON.stringify(snapshot.profile),
     snapshot.revision
-  ).run();
+  ];
+  if (expectedPrevRevision !== null) params.push(expectedPrevRevision);
+  const res = await stmt.bind(...params).run();
+  if (expectedPrevRevision !== null) {
+    const changes = res && res.meta ? res.meta.changes : 0;
+    if (changes === 0) {
+      return null; // CAS 失败：期间已有并发写入推进了 revision
+    }
+  }
+  await upsertUserProfile(db, userId, snapshot.profile);
   await upsertMatchHistory(db, userId, snapshot.matchHistory);
   return loadCloudSave(db, userId);
 }
@@ -932,6 +957,20 @@ async function upsertScore(db, userId, username, score, shipType, avatar, bio) {
       await legacyLeaderboardWrite.run();
     } catch (_) {}
   }
+
+  // 限制每个玩家在 leaderboard_entries 中保留的历史条目上限，避免表无限增长拖慢 rank 查询。
+  try {
+    await db.prepare(`
+      DELETE FROM leaderboard_entries
+      WHERE user_id = ?1
+        AND entry_id NOT IN (
+          SELECT entry_id FROM leaderboard_entries
+          WHERE user_id = ?1
+          ORDER BY score DESC, updated_at ASC, entry_id ASC
+          LIMIT ?2
+        )
+    `).bind(userId, LEADERBOARD_ENTRIES_PER_USER).run();
+  } catch (_) {}
 
   return {
     updated: score > previousScore,

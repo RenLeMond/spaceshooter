@@ -186,11 +186,34 @@
         }
         options = options || {};
         const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
-        const response = await fetch(buildUrl(path), Object.assign({}, options, { headers }));
+        const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        const timeoutMs = 15000;
+        let timeoutId = null;
+        if (controller) {
+            timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        }
+        let response;
+        try {
+            const fetchOpts = Object.assign({}, options, { headers });
+            if (controller) fetchOpts.signal = controller.signal;
+            response = await fetch(buildUrl(path), fetchOpts);
+        } catch (err) {
+            if (err && err.name === 'AbortError') {
+                const timeoutErr = new Error('request_timeout');
+                timeoutErr.status = 0;
+                throw timeoutErr;
+            }
+            throw err;
+        } finally {
+            if (timeoutId) clearTimeout(timeoutId);
+        }
         let data = null;
         try {
             data = await response.json();
         } catch (_) {
+            data = null;
+        }
+        if (data !== null && typeof data !== 'object') {
             data = null;
         }
         if (!response.ok) {
