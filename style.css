@@ -720,8 +720,9 @@ canvas {
     overflow: hidden;
 }
 
-#startScreen.hidden {
-    display: none;
+/* 游戏浮层隐藏：不依赖 Tailwind CDN 的 .hidden 工具类（仅作用于主游戏容器内） */
+#canvas-container .hidden {
+    display: none !important;
 }
 
 /* 动态深空背景与流光微粒网格 */

@@ -328,6 +328,13 @@ test('gameplay HUD uses the compact spacing pass', async () => {
   assert.match(css, /#hud #bossHpGroup\s*{[^}]*padding:\s*6px 8px !important/s);
 });
 
+test('style.css provides offline hidden fallback scoped to the game container', async () => {
+  const css = await readFile(new URL('../style.css', import.meta.url), 'utf8');
+
+  assert.match(css, /#canvas-container\s+\.hidden\s*{[^}]*display:\s*none\s*!important/s);
+  assert.doesNotMatch(css, /^\s*\.hidden\s*{/m);
+});
+
 test('start screen bottom dock stays inside mobile visual viewport', async () => {
   const html = await readFile(new URL('../space_shooter.html', import.meta.url), 'utf8');
   const css = await readFile(new URL('../style.css', import.meta.url), 'utf8');
