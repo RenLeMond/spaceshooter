@@ -10,3 +10,4 @@ docs/superpowers/
 !.dev.vars.example
 .env*
 !.env.example
+.codebuddy
