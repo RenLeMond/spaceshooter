@@ -11,7 +11,7 @@
 
 **仓库：** [github.com/RenLeMond/spaceshooter](https://github.com/RenLeMond/spaceshooter)
 
-**在线游玩：** [game.rlmbest.xyz](https://game.rlmbest.xyz) · [game.renlimeng.qzz.io](https://game.renlimeng.qzz.io)
+**在线游玩：** [game.rlmbest.xyz](https://game.rlmbest.xyz)
 
 ---
 
@@ -91,7 +91,7 @@
 ## 🚀 启动与调试 (Getting Started)
 
 ### 方案 A：在线直接玩
-打开 [**https://game.rlmbest.xyz**](https://game.rlmbest.xyz)（备用：[game.renlimeng.qzz.io](https://game.renlimeng.qzz.io)），无需安装。排行榜 API 挂在同源 `/api/*`。
+打开 [**https://game.rlmbest.xyz**](https://game.rlmbest.xyz)，无需安装。排行榜 API 挂在同源 `/api/*`。
 
 ### 方案 B：本地极速挂载服务
 Windows 操作系统下，直接双击运行项目根目录下的 [**`start.bat`**](start.bat)：
