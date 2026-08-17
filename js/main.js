@@ -2,7 +2,7 @@
 // 资源缓存版本号 — 同步于 space_shooter.html 的所有 ?v= 查询参数。
 // Worker 链 (game_worker.js + importScripts 的 6 个引擎文件) 通过 self.location.search 自动继承该版本，
 // 后续 bump 仅需改本常量 + HTML 的 ?v= 两处即可全量失效旧缓存。
-const ASSET_VERSION = '7.0.31';
+const ASSET_VERSION = '7.1';
 
 // 开发者作弊（热更新调试：+分/+废料/+HP）默认关闭，避免污染全球排行榜完整性。
 // 仅在 URL 带 ?dev=1 或本地手动设置 localStorage('space_dev_cheats'='1') 时启用。

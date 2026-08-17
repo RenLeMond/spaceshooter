@@ -90,11 +90,12 @@ test('ngrok previews use the production same-site API host', async () => {
 });
 
 test('entry pages use the current cache-busting asset version', async () => {
-  const expected = '7.0.31';
+  const expected = '7.1';
   const files = ['index.html', 'space_shooter.html', 'leaderboard.html', 'v7_hangar.html'];
   for (const file of files) {
     const html = await readFile(new URL('../' + file, import.meta.url), 'utf8');
-    assert.equal(/7\.0\.2[0-8]/.test(html), false, `${file} should not link old 7.0.2x assets`);
+    assert.equal(/7\.0\./.test(html), false, `${file} should not link old 7.0.x assets`);
+    assert.match(html, new RegExp(`\\?v=${expected}`), `${file} should use asset version ${expected}`);
   }
 
   const mainSource = await readFile(new URL('../js/main.js', import.meta.url), 'utf8');
