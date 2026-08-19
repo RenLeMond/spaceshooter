@@ -354,12 +354,12 @@ test('start screen bottom dock stays inside mobile visual viewport', async () =>
 
 test('leaderboard mobile rows keep the uploaded time visible', async () => {
   const html = await readFile(new URL('../leaderboard.html', import.meta.url), 'utf8');
+  const pageScript = await readFile(new URL('../js/leaderboard_page.js', import.meta.url), 'utf8');
 
-  assert.match(html, /@media \(max-width: 640px\)[\s\S]*\.date-column\s*{[^}]*display:\s*block/s);
-  assert.match(html, /@media \(max-width: 640px\)[\s\S]*\.date-column\s*{[^}]*grid-column:\s*2 \/ -1/s);
-  assert.match(html, /@media \(max-width: 640px\)[\s\S]*\.date-column\s*{[^}]*width:\s*100%/s);
-  assert.match(html, /@media \(max-width: 640px\)[\s\S]*\.date-column\s*{[^}]*white-space:\s*normal/s);
-  assert.match(html, /@media \(max-width: 640px\)[\s\S]*\.date-column\s*{[^}]*overflow:\s*visible/s);
+  assert.match(pageScript, /class="score-date">\$\{formatDate\(entry\.updated_at\)\}/);
+  assert.match(html, /\.score-date\s*{[^}]*font-size:\s*9px/s);
+  assert.match(html, /@media \(max-width: 900px\)[\s\S]*\.score-date\s*{[^}]*white-space:\s*normal/s);
+  assert.match(html, /@media \(max-width: 640px\)[\s\S]*\.score-date\s*{[^}]*white-space:\s*normal/s);
 });
 
 test('frontend leaderboard API authenticates guest score submissions and handles identity migration', async () => {

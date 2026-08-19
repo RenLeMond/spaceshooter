@@ -481,20 +481,9 @@
                 gap: 8px;
             }
 
-            .date-column {
-                display: block;
-                grid-column: 2 / -1;
-                justify-self: start;
-                width: 100%;
-                min-width: 0;
-                text-align: left;
-                margin-top: 2px;
-                color: rgba(148, 163, 184, 0.78);
-                font-size: 10px;
-                line-height: 1.45;
+            .score-date {
+                font-size: 9px;
                 white-space: normal;
-                overflow: visible;
-                text-overflow: clip;
             }
         }
 
@@ -768,7 +757,7 @@
         /* Leaderboard table header */
         .leaderboard-header-row {
             display: grid;
-            grid-template-columns: 48px 1fr 120px 100px;
+            grid-template-columns: 48px 1fr 120px;
             align-items: center;
             padding: 8px 16px 10px;
             margin-bottom: 6px;
@@ -781,8 +770,7 @@
             border-bottom: 1px solid rgba(0, 240, 255, 0.1);
         }
 
-        .leaderboard-header-row span:nth-child(3),
-        .leaderboard-header-row span:nth-child(4) {
+        .leaderboard-header-row span:nth-child(3) {
             text-align: right;
         }
 
@@ -798,7 +786,7 @@
 
         .leaderboard-item {
             display: grid;
-            grid-template-columns: 48px 1fr 120px 100px;
+            grid-template-columns: 48px 1fr 120px;
             align-items: center;
             padding: 13px 16px;
             background:
@@ -968,6 +956,15 @@
         }
 
         .score-column {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .score-value {
             font-family: 'Orbitron', sans-serif;
             font-weight: 800;
             font-size: 15px;
@@ -975,12 +972,15 @@
             letter-spacing: 0.06em;
             color: var(--neon-cyan);
             text-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+            line-height: 1.1;
         }
 
-        .date-column {
+        .score-date {
             font-size: 10px;
             color: var(--text-muted);
             text-align: right;
+            line-height: 1.35;
+            white-space: nowrap;
         }
 
         /* Legacy terminal styles kept harmless for cached markup fallback */
@@ -1750,6 +1750,10 @@
             }
 
             .score-column {
+                align-items: flex-end;
+            }
+
+            .score-value {
                 font-size: 13px;
             }
 
@@ -2013,6 +2017,10 @@
         }
 
         .score-column {
+            align-items: flex-end;
+        }
+
+        .score-value {
             font-size: 16px;
             color: #67e8f9;
         }
@@ -2087,23 +2095,16 @@
             }
 
             .score-column {
+                align-items: flex-end;
+            }
+
+            .score-value {
                 font-size: 13px;
             }
 
-            .date-column {
-                display: block;
-                grid-column: 2 / -1;
-                justify-self: start;
-                width: 100%;
-                min-width: 0;
-                text-align: left;
-                margin-top: 2px;
-                color: rgba(148, 163, 184, 0.78);
+            .score-date {
                 font-size: 9px;
-                line-height: 1.45;
                 white-space: normal;
-                overflow: visible;
-                text-overflow: clip;
             }
         }
     </style>
@@ -2238,7 +2239,6 @@
                     <span>排名</span>
                     <span>飞行员</span>
                     <span>得分</span>
-                    <span>时间</span>
                 </div>
                 <div class="leaderboard-list" id="leaderboardList"></div>
             </section>

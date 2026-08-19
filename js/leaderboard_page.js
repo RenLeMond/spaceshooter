@@ -280,8 +280,10 @@
                         <span class="user-ship-name">${escapeHtml(entry.bio || ship.name)}</span>
                     </div>
                 </div>
-                <div class="score-column">${formatNumber(entry.score)}</div>
-                <div class="date-column">${formatDate(entry.updated_at)}</div>
+                <div class="score-column">
+                    <div class="score-value">${formatNumber(entry.score)}</div>
+                    <div class="score-date">${formatDate(entry.updated_at)}</div>
+                </div>
             `;
             el.leaderboardList.appendChild(item);
         });
