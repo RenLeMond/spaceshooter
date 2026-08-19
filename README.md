@@ -7,11 +7,11 @@
 [![0-GC Optimization](https://img.shields.io/badge/Performance-0--GC_Optimized-10b981?style=for-the-badge)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays)
 [![Dual-Mode Engine](https://img.shields.io/badge/Architecture-Web_Worker_Offscreen-8b5cf6?style=for-the-badge)](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API)
 [![CORS-Free](https://img.shields.io/badge/Offline-100%25_CORS--Free-e11d48?style=for-the-badge)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
-[![Play Online](https://img.shields.io/badge/Play-game.rlmbest.xyz-f59e0b?style=for-the-badge)](https://game.rlmbest.xyz)
+[![Play Online](https://img.shields.io/badge/Play-game.renlimeng.qzz.io-f59e0b?style=for-the-badge)](https://game.renlimeng.qzz.io)
 
 **仓库：** [github.com/RenLeMond/spaceshooter](https://github.com/RenLeMond/spaceshooter)
 
-**在线游玩：** [game.rlmbest.xyz](https://game.rlmbest.xyz)
+**在线游玩：** [game.renlimeng.qzz.io](https://game.renlimeng.qzz.io)
 
 ---
 
@@ -91,7 +91,7 @@
 ## 🚀 启动与调试 (Getting Started)
 
 ### 方案 A：在线直接玩
-打开 [**https://game.rlmbest.xyz**](https://game.rlmbest.xyz)，无需安装。排行榜 API 挂在同源 `/api/*`。
+打开 [**https://game.renlimeng.qzz.io**](https://game.renlimeng.qzz.io)，无需安装。排行榜 API 挂在同源 `/api/*`。
 
 ### 方案 B：本地极速挂载服务
 Windows 操作系统下，直接双击运行项目根目录下的 [**`start.bat`**](start.bat)：

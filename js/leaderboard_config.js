@@ -1,9 +1,8 @@
 // 排行榜 API 配置 — 无同源 /api 路由的域名回落到主站
 (function () {
   const hostname = window.location.hostname;
-  const API_ORIGIN = 'https://game.rlmbest.xyz';
+  const API_ORIGIN = 'https://game.renlimeng.qzz.io';
   const SAME_ORIGIN_API_HOSTS = new Set([
-    'game.rlmbest.xyz',
     'game.renlimeng.qzz.io',
     'localhost',
     '127.0.0.1'

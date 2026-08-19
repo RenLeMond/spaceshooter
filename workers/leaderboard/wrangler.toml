@@ -2,7 +2,6 @@ name = "e92c11bf-8429-471d-93ea-9fe086c3b3f5"
 main = "src/index.js"
 compatibility_date = "2026-06-02"
 routes = [
-  { pattern = "game.rlmbest.xyz/api/*", zone_name = "rlmbest.xyz" },
   { pattern = "game.renlimeng.qzz.io/api/*", zone_name = "renlimeng.qzz.io" }
 ]
 
@@ -14,6 +13,6 @@ database_id = "e92c11bf-8429-471d-93ea-9fe086c3b3f5"
 
 [vars]
 # 逗号分隔的允许跨域来源；部署后请改为你的实际域名
-ALLOWED_ORIGINS = "https://renlimeng.qzz.io,https://rlmbest.xyz,https://game.renlimeng.qzz.io,https://game.rlmbest.xyz,https://spaceshooter.842695824.workers.dev,http://localhost:5173,http://127.0.0.1:5173,http://localhost:8787,http://127.0.0.1:8787,http://localhost:8080,http://127.0.0.1:8080,http://localhost:9999,http://127.0.0.1:9999,https://finalize-sacrament-bagginess.ngrok-free.dev"
+ALLOWED_ORIGINS = "https://renlimeng.qzz.io,https://game.renlimeng.qzz.io,https://spaceshooter.842695824.workers.dev,http://localhost:5173,http://127.0.0.1:5173,http://localhost:8787,http://127.0.0.1:8787,http://localhost:8080,http://127.0.0.1:8080,http://localhost:9999,http://127.0.0.1:9999,https://finalize-sacrament-bagginess.ngrok-free.dev"
 
-# ALLOWED_ORIGINS = "https://renlimeng.qzz.io,https://rlmbest.xyz,http://localhost:8787,http://127.0.0.1:8787,http://localhost:8080,http://127.0.0.1:8080"
+# ALLOWED_ORIGINS = "https://renlimeng.qzz.io,https://game.renlimeng.qzz.io,http://localhost:8787,http://127.0.0.1:8787,http://localhost:8080,http://127.0.0.1:8080"

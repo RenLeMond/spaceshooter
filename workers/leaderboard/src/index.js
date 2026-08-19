@@ -14,7 +14,7 @@ const MATCH_HISTORY_LIMIT = 50;
 const LEADERBOARD_ENTRIES_PER_USER = 25;
 const DEFAULT_NICKNAME = '星海先驱者';
 const DEFAULT_AVATAR = 'fa-user-astronaut';
-const DEFAULT_ALLOWED_ORIGINS = 'https://renlimeng.qzz.io,https://rlmbest.xyz,http://localhost:5173,http://127.0.0.1:5173,http://localhost:8787,http://127.0.0.1:8787,http://localhost:8080,http://127.0.0.1:8080,http://localhost:9999,http://127.0.0.1:9999';
+const DEFAULT_ALLOWED_ORIGINS = 'https://renlimeng.qzz.io,https://game.renlimeng.qzz.io,http://localhost:5173,http://127.0.0.1:5173,http://localhost:8787,http://127.0.0.1:8787,http://localhost:8080,http://127.0.0.1:8080,http://localhost:9999,http://127.0.0.1:9999';
 const RATE_LIMITS = {
   '/api/leaderboard': { limit: 120, windowSeconds: 60 },
   '/api/submit-score': { limit: 20, windowSeconds: 60 },
