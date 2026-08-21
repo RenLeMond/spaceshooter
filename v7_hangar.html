@@ -9,25 +9,57 @@
     <!-- Tailwind CSS & Icons & Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Noto+Sans+SC:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Outfit:wght@300;400;600;800;900&family=Noto+Sans+SC:wght@300;500;700;900&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --color-bg: #020206;
-            --color-panel: rgba(8, 12, 28, 0.7);
-            --color-border: rgba(255, 255, 255, 0.04);
-            --neon-cyan: hsl(180, 100%, 50%);
-            --neon-purple: hsl(280, 100%, 65%);
-            --neon-gold: hsl(38, 92%, 50%);
-            --neon-rose: hsl(343, 90%, 60%);
+            --color-bg: #050814;
+            --color-panel: rgba(6, 13, 31, 0.78);
+            --color-border: rgba(34, 211, 238, 0.12);
+            --neon-cyan: #22d3ee;
+            --neon-gold: #e0b15a;
+            --neon-rose: #e11d48;
+            --text-primary: #eef6ff;
+            --text-muted: #94a3b8;
+            --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         body {
             background-color: var(--color-bg);
-            color: #e2e8f0;
+            color: var(--text-primary);
             font-family: 'Outfit', 'Noto Sans SC', sans-serif;
             overflow-x: hidden;
             scroll-behavior: smooth;
+        }
+
+        .skip-link {
+            position: absolute;
+            left: -9999px;
+            top: 0;
+            z-index: 200;
+            padding: 10px 16px;
+            background: var(--neon-cyan);
+            color: #050814;
+            font-weight: 800;
+            text-decoration: none;
+            border-radius: 0 0 10px 0;
+        }
+        .skip-link:focus {
+            left: 0;
+        }
+
+        .stat-num {
+            font-family: 'Orbitron', monospace;
+            font-variant-numeric: tabular-nums;
+        }
+
+        a, button {
+            transition: var(--transition-smooth);
+        }
+        a:focus-visible,
+        button:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.55);
         }
 
         /* V7 Nebula Ambient background */
@@ -36,12 +68,11 @@
             top: 0;
             left: 0;
             width: 100vw;
-            height: 100vh;
-            background: 
-                radial-gradient(circle at 15% 20%, rgba(6, 182, 212, 0.06) 0%, transparent 45%),
-                radial-gradient(circle at 85% 75%, rgba(139, 92, 246, 0.07) 0%, transparent 45%),
-                radial-gradient(circle at 50% 50%, rgba(244, 63, 94, 0.03) 0%, transparent 60%),
-                #020205;
+            height: 100dvh;
+            background:
+                radial-gradient(circle at 15% 20%, rgba(34, 211, 238, 0.07) 0%, transparent 45%),
+                radial-gradient(circle at 85% 75%, rgba(34, 211, 238, 0.04) 0%, transparent 45%),
+                var(--color-bg);
             z-index: -3;
         }
 
@@ -55,7 +86,7 @@
             background-image: 
                 radial-gradient(1px 1px at 40px 80px, #ffffff, rgba(0,0,0,0)),
                 radial-gradient(1.5px 1.5px at 180px 240px, rgba(34, 211, 238, 0.5), rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 320px 480px, rgba(168, 85, 247, 0.4), rgba(0,0,0,0));
+                radial-gradient(2px 2px at 320px 480px, rgba(34, 211, 238, 0.25), rgba(0,0,0,0));
             background-repeat: repeat;
             background-size: 600px 600px;
             animation: slowRotate 200s linear infinite;
@@ -78,14 +109,16 @@
             transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
 
-        .glass-panel:hover {
-            border-color: rgba(6, 182, 212, 0.25);
-            box-shadow: 0 25px 60px rgba(6, 182, 212, 0.08);
+        .glass-panel.interactive:hover,
+        .talent-module:hover,
+        .skin-hangar-card:hover,
+        .skin-bay-card:hover {
+            border-color: rgba(34, 211, 238, 0.28);
+            box-shadow: 0 22px 50px rgba(0, 0, 0, 0.42), 0 0 24px rgba(34, 211, 238, 0.06);
         }
 
-        .neon-border-cyan { border-color: rgba(6, 182, 212, 0.35); box-shadow: 0 0 25px rgba(6, 182, 212, 0.08); }
-        .neon-border-purple { border-color: rgba(168, 85, 247, 0.35); box-shadow: 0 0 25px rgba(168, 85, 247, 0.08); }
-        .neon-border-gold { border-color: rgba(245, 158, 11, 0.35); box-shadow: 0 0 25px rgba(245, 158, 11, 0.08); }
+        .neon-border-cyan { border-color: rgba(34, 211, 238, 0.28); box-shadow: 0 0 24px rgba(34, 211, 238, 0.06); }
+        .neon-border-gold { border-color: rgba(224, 177, 90, 0.28); box-shadow: 0 0 24px rgba(224, 177, 90, 0.06); }
 
         .neon-text-cyan { text-shadow: 0 0 10px rgba(6, 182, 212, 0.6), 0 0 20px rgba(6, 182, 212, 0.2); }
         .neon-text-purple { text-shadow: 0 0 10px rgba(168, 85, 247, 0.6), 0 0 20px rgba(168, 85, 247, 0.2); }
@@ -102,8 +135,8 @@
             inset: 8% 4%;
             border-radius: 999px;
             background:
-                radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.18), transparent 28%),
-                radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.12), transparent 58%);
+                radial-gradient(circle at 50% 50%, rgba(34, 211, 238, 0.18), transparent 28%),
+                radial-gradient(circle at 50% 50%, rgba(224, 177, 90, 0.10), transparent 58%);
             filter: blur(16px);
             opacity: 0.85;
             pointer-events: none;
@@ -148,65 +181,65 @@
             opacity: 0.36;
             pointer-events: none;
         }
-        .talent-node {
+        .talent-matrix-svg .talent-node {
             cursor: pointer;
             transform-box: fill-box;
             transform-origin: center;
             transition: transform 0.25s ease, opacity 0.25s ease, filter 0.25s ease;
         }
-        .talent-node:hover,
-        .talent-node.selected {
+        .talent-matrix-svg .talent-node:hover,
+        .talent-matrix-svg .talent-node.selected {
             transform: translateY(-2px) scale(1.06);
         }
-        .talent-node .node-halo {
+        .talent-matrix-svg .talent-node .node-halo {
             fill: rgba(2, 6, 23, 0.72);
             stroke: rgba(148, 163, 184, 0.16);
             stroke-width: 1;
         }
-        .talent-node .node-shell {
+        .talent-matrix-svg .talent-node .node-shell {
             fill: #1e1b4b;
             stroke: #312e81;
             stroke-width: 2.2;
             transition: fill 0.3s ease, stroke 0.3s ease, filter 0.3s ease;
         }
-        .talent-node .node-glyph,
-        .talent-node .node-level {
+        .talent-matrix-svg .talent-node .node-glyph,
+        .talent-matrix-svg .talent-node .node-level {
             fill: #cbd5e1;
             font-family: 'Outfit', sans-serif;
             font-weight: 900;
             pointer-events: none;
         }
-        .talent-node .node-name {
+        .talent-matrix-svg .talent-node .node-name {
             fill: rgba(148, 163, 184, 0.74);
             font-size: 5px;
             font-weight: 900;
             letter-spacing: 0.08em;
             pointer-events: none;
         }
-        .talent-node.locked {
+        .talent-matrix-svg .talent-node.locked {
             filter: drop-shadow(0 0 2px rgba(0,0,0,0.5));
             opacity: 0.82;
         }
-        .talent-node.unlocked .node-shell {
+        .talent-matrix-svg .talent-node.unlocked .node-shell {
             fill: #083344;
             stroke: #0891b2;
         }
-        .talent-node.unlocked {
+        .talent-matrix-svg .talent-node.unlocked {
             filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.4));
         }
-        .talent-node.maxed .node-shell {
+        .talent-matrix-svg .talent-node.maxed .node-shell {
             fill: #311042;
             stroke: #d946ef;
         }
-        .talent-node.maxed {
+        .talent-matrix-svg .talent-node.maxed {
             filter: drop-shadow(0 0 12px rgba(217, 70, 239, 0.5));
         }
-        .talent-node.selected .node-halo {
+        .talent-matrix-svg .talent-node.selected .node-halo {
             stroke: rgba(34, 211, 238, 0.75);
             stroke-width: 1.8;
             filter: drop-shadow(0 0 12px rgba(34, 211, 238, 0.55));
         }
-        .talent-node.just-powered {
+        .talent-matrix-svg .talent-node.just-powered {
             animation: nodePowerPulse 0.7s ease-out;
         }
         .matrix-core-node {
@@ -699,8 +732,8 @@
             box-shadow: 0 0 7px var(--module-accent);
         }
         .talent-module.maxed {
-            border-color: rgba(217, 70, 239, 0.62);
-            box-shadow: 0 12px 30px rgba(0,0,0,0.38), 0 0 22px rgba(217,70,239,0.24);
+            border-color: color-mix(in srgb, var(--module-accent) 58%, var(--neon-gold));
+            box-shadow: 0 12px 30px rgba(0,0,0,0.38), 0 0 22px var(--module-glow);
         }
         .talent-module.selected {
             transform: translateY(-2px);
@@ -733,17 +766,15 @@
             }
 
             nav.sticky {
-                padding: 12px 14px;
-                gap: 10px;
+                padding: 10px 12px;
+                gap: 8px;
                 align-items: center;
-                flex-wrap: wrap;
+                flex-wrap: nowrap;
             }
 
             nav.sticky > div:first-child {
                 min-width: 0;
-                flex: 1 1 100%;
-                justify-content: center;
-                text-align: left;
+                flex: 1 1 auto;
             }
 
             nav.sticky > div:first-child .text-base {
@@ -751,33 +782,33 @@
                 line-height: 1.1;
             }
 
-            nav.sticky > div:last-child {
-                width: 100%;
-                display: grid;
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-                gap: 8px;
-                align-items: stretch;
-            }
-
-            #reactorBtn,
-            nav.sticky > div:last-child a {
-                width: 100%;
-                min-height: 42px;
+            .hangar-nav-actions {
+                flex: 0 0 auto;
                 display: flex;
+                flex-wrap: nowrap;
                 align-items: center;
-                justify-content: center;
-                padding: 8px 6px;
-                font-size: 8px;
-                line-height: 1.15;
-                text-align: center;
-                white-space: normal;
-                gap: 5px;
-                margin: 0;
+                gap: 6px;
             }
 
-            #reactorBtn span,
-            nav.sticky > div:last-child a {
-                min-width: 0;
+            .core-chip {
+                padding: 6px 10px;
+                gap: 6px;
+            }
+
+            .core-chip .core-chip-label {
+                display: none;
+            }
+
+            .nav-link-btn {
+                padding: 0 10px;
+                min-height: 36px;
+                font-size: 10px;
+                white-space: nowrap;
+            }
+
+            .nav-icon-btn {
+                width: 36px;
+                height: 36px;
             }
 
             main {
@@ -828,10 +859,6 @@
                 align-items: flex-start;
                 gap: 10px;
                 flex-wrap: wrap;
-            }
-
-            #scrapDisplay {
-                margin-left: auto;
             }
 
             .talent-matrix-stage {
@@ -1002,11 +1029,6 @@
                 align-items: flex-start;
             }
 
-            #scrapDisplay {
-                margin-left: 0;
-                max-width: 100%;
-            }
-
             .matrix-card-header,
             .skin-card-meta {
                 flex-wrap: wrap;
@@ -1017,11 +1039,6 @@
             .matrix-card-header > span:first-child {
                 min-width: 0;
                 flex: 1 1 190px;
-            }
-
-            .matrix-card-header #scrapDisplay {
-                margin-left: 0;
-                flex: 0 0 auto;
             }
 
             .skin-card-meta .skin-state-pill {
@@ -1072,182 +1089,407 @@
                 align-items: flex-start;
             }
         }
+
+        /* Hangar polish: nav, layout, toast, reset confirm */
+        .hangar-nav {
+            border-bottom: 1px solid rgba(34, 211, 238, 0.12);
+            border-radius: 0;
+            flex-wrap: nowrap;
+            min-width: 0;
+        }
+        .hangar-brand {
+            min-width: 0;
+            flex: 1 1 auto;
+        }
+        .hangar-brand-title {
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .hangar-logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            border: 1px solid rgba(34, 211, 238, 0.34);
+            background: radial-gradient(circle at 50% 35%, rgba(34, 211, 238, 0.28), rgba(15, 23, 42, 0.9) 66%);
+            display: grid;
+            place-items: center;
+            color: var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.12);
+        }
+        .hangar-subtitle {
+            font-size: 9px;
+            color: rgba(148, 163, 184, 0.78);
+            letter-spacing: 0.14em;
+        }
+        .core-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(224, 177, 90, 0.28);
+            background: rgba(224, 177, 90, 0.08);
+            color: var(--neon-gold);
+            font-size: 11px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+        .core-chip strong {
+            font-family: 'Orbitron', monospace;
+            font-variant-numeric: tabular-nums;
+            font-size: 14px;
+            color: #fff;
+        }
+        .nav-icon-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            background: rgba(15, 23, 42, 0.66);
+            color: var(--text-muted);
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+        }
+        .nav-icon-btn:hover {
+            border-color: rgba(34, 211, 238, 0.35);
+            color: var(--neon-cyan);
+        }
+        .hangar-nav-actions {
+            flex: 0 0 auto;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .hangar-nav-actions::-webkit-scrollbar {
+            display: none;
+        }
+        .nav-link-label {
+            white-space: nowrap;
+        }
+        @media (max-width: 1180px) {
+            .hangar-subtitle {
+                display: none;
+            }
+            .hangar-nav-actions .nav-link-label {
+                display: none;
+            }
+            .hangar-nav-actions .nav-link-btn {
+                width: 38px;
+                padding: 0;
+                justify-content: center;
+                gap: 0;
+            }
+            .core-chip .core-chip-label {
+                display: none;
+            }
+            .core-chip {
+                padding: 6px 10px;
+                gap: 6px;
+            }
+        }
+        .nav-link-btn {
+            min-height: 38px;
+            padding: 0 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(34, 211, 238, 0.2);
+            background: rgba(34, 211, 238, 0.06);
+            color: #cffafe;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .nav-link-btn:hover {
+            background: rgba(34, 211, 238, 0.12);
+            border-color: rgba(34, 211, 238, 0.4);
+        }
+        .nav-link-btn:active,
+        .nav-icon-btn:active,
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .hangar-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 24px;
+        }
+        @media (min-width: 960px) {
+            .hangar-layout {
+                grid-template-columns: minmax(280px, 0.92fr) minmax(0, 1.08fr);
+                align-items: start;
+            }
+        }
+
+        .skin-bay-card {
+            display: grid;
+            grid-template-columns: 120px minmax(0, 1fr);
+            gap: 16px;
+            padding: 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(34, 211, 238, 0.2);
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.08), rgba(3, 7, 18, 0.55));
+            margin-bottom: 18px;
+        }
+        .skin-bay-card .skin-hologram-stage {
+            width: 110px;
+            height: 96px;
+            margin: 0;
+        }
+        .skin-bay-copy h3 {
+            margin: 6px 0 4px;
+            font-size: 18px;
+            font-weight: 900;
+            color: #fff;
+        }
+        .skin-bay-copy p {
+            margin: 0;
+            font-size: 12px;
+            line-height: 1.55;
+            color: var(--text-muted);
+        }
+        .skin-bay-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--neon-cyan);
+            border: 1px solid rgba(34, 211, 238, 0.24);
+            background: rgba(34, 211, 238, 0.08);
+        }
+
+        .skin-shop-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .skin-hangar-card {
+            display: flex;
+            flex-direction: column;
+            min-height: 280px;
+        }
+        .skin-hangar-card[data-state="locked"] {
+            opacity: 0.72;
+        }
+        .skin-hangar-card .skin-card-actions {
+            margin-top: auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .skin-hangar-card:not(.is-equipped) .skin-hologram-stage {
+            transform: scale(0.94);
+            opacity: 0.88;
+        }
+
+        .section-kicker {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            color: var(--neon-cyan);
+        }
+        .section-title {
+            font-size: 22px;
+            font-weight: 900;
+            color: #fff;
+            margin-top: 4px;
+        }
+        .section-desc {
+            font-size: 12px;
+            line-height: 1.55;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        #talentDetailCard .talent-class-label {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            color: rgba(34, 211, 238, 0.85);
+            text-transform: uppercase;
+        }
+        #talentNameText {
+            font-size: 15px !important;
+        }
+        #talentDescText {
+            font-size: 12px !important;
+            line-height: 1.55 !important;
+        }
+        #talentLevelText {
+            font-family: 'Orbitron', monospace;
+            font-size: 11px !important;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .reset-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .reset-confirm {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(225, 29, 72, 0.28);
+            background: rgba(225, 29, 72, 0.08);
+            font-size: 11px;
+            color: #fecdd3;
+        }
+        .reset-confirm.active {
+            display: flex;
+        }
+        .reset-confirm button {
+            border-radius: 10px;
+            padding: 8px 12px;
+            font-size: 10px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .reset-confirm-yes {
+            border: 1px solid rgba(225, 29, 72, 0.45);
+            background: rgba(225, 29, 72, 0.18);
+            color: #fff;
+        }
+        .reset-confirm-no {
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            background: rgba(15, 23, 42, 0.6);
+            color: var(--text-muted);
+        }
+
+        .custom-toast {
+            position: fixed;
+            left: 50%;
+            bottom: 22px;
+            transform: translate(-50%, 24px);
+            z-index: 120;
+            opacity: 0;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 18px;
+            border-radius: 12px;
+            color: var(--neon-cyan);
+            background: rgba(5, 8, 20, 0.94);
+            border: 1px solid rgba(34, 211, 238, 0.35);
+            box-shadow: 0 0 30px rgba(34, 211, 238, 0.12), 0 12px 30px rgba(0,0,0,0.5);
+            transition: var(--transition-smooth);
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .custom-toast.active {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+        .custom-toast.success { border-color: rgba(16, 185, 129, 0.4); color: #6ee7b7; }
+        .custom-toast.error { border-color: rgba(225, 29, 72, 0.4); color: #fda4af; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .skin-bay-card {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            .skin-bay-card .skin-hologram-stage {
+                margin: 0 auto;
+            }
+            .skin-shop-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body class="min-h-screen relative pb-16">
 
+    <a class="skip-link" href="#mainContent">跳到主要内容</a>
+
     <!-- Ambient stardust layer -->
-    <div class="space-bg"></div>
-    <div class="dust-layer"></div>
-    
-    <!-- Combat float texts container -->
-    <div id="combatFloatContainer"></div>
+    <div class="space-bg" aria-hidden="true"></div>
+    <div class="dust-layer" aria-hidden="true"></div>
 
     <!-- Navigation Header -->
-    <nav class="sticky top-0 w-full z-50 glass-panel border-t-0 border-x-0 bg-slate-950/75 backdrop-blur-md px-6 py-4 flex justify-between items-center">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-purple-600 to-rose-500 flex items-center justify-center text-white text-lg font-black shadow-lg shadow-cyan-500/25">
-                <i class="fa-solid fa-compass animate-pulse"></i>
+    <nav class="sticky top-0 w-full z-50 glass-panel hangar-nav border-t-0 border-x-0 bg-slate-950/75 backdrop-blur-md px-4 md:px-6 py-3 flex flex-nowrap justify-between items-center gap-3">
+        <div class="hangar-brand flex items-center gap-3 min-w-0">
+            <div class="hangar-logo shrink-0">
+                <i class="fa-solid fa-compass"></i>
             </div>
-            <div>
-                <span class="text-base font-black tracking-wider text-white neon-text-cyan">星海猎手 V7</span>
-                <span class="text-[9px] text-cyan-400 font-bold block uppercase tracking-widest -mt-1">PIONEER META-HANGAR</span>
+            <div class="min-w-0">
+                <span class="hangar-brand-title text-base font-black tracking-wide text-white neon-text-cyan">星海猎手 V7</span>
+                <span class="hangar-subtitle block">永久机库</span>
             </div>
         </div>
-        
-        <div class="flex items-center gap-4">
-            <button onclick="toggleAudioReactor()" id="reactorBtn" class="px-4 py-2 glass-panel border-cyan-500/20 hover:border-cyan-400/50 text-cyan-400 text-[10px] font-black rounded-xl tracking-wider uppercase active:scale-95 flex items-center gap-1.5 transition">
-                <i class="fa-solid fa-atom text-xs animate-spin-slow"></i>
-                <span>核反应堆: <span id="reactorStatus" class="text-rose-500">离线</span></span>
+
+        <div class="hangar-nav-actions flex items-center gap-2 md:gap-3 shrink-0">
+            <div class="core-chip" id="navCoreChip" title="星核余额">
+                <i class="fa-solid fa-gem"></i>
+                <span class="core-chip-label">星核</span>
+                <strong id="navCoreBalance" class="stat-num">0</strong>
+            </div>
+            <button type="button" onclick="toggleAudioReactor()" id="reactorBtn" class="nav-icon-btn" title="机库环境音" aria-label="机库环境音">
+                <i class="fa-solid fa-atom"></i>
             </button>
-            <a href="leaderboard.html" class="px-4 py-2 border border-cyan-500/30 hover:border-cyan-400 transition text-cyan-300 text-[10px] font-black rounded-xl tracking-wider uppercase bg-cyan-500/5 active:scale-95">
-                全球排行 <i class="fa-solid fa-trophy ml-1.5"></i>
+            <a href="leaderboard.html?v=7.5" class="nav-link-btn" title="全球排行" aria-label="全球排行">
+                <i class="fa-solid fa-trophy"></i><span class="nav-link-label">排行</span>
             </a>
-            <a href="space_shooter.html?v=7.3" class="px-4 py-2 border border-cyan-500/30 hover:border-cyan-400 transition text-cyan-400 text-[10px] font-black rounded-xl tracking-wider uppercase bg-cyan-500/5 active:scale-95">
-                进入折跃战区 <i class="fa-solid fa-plane-departure ml-1.5"></i>
+            <a href="space_shooter.html?v=7.5" class="nav-link-btn" title="进入游戏" aria-label="进入游戏">
+                <i class="fa-solid fa-plane-departure"></i><span class="nav-link-label">出战</span>
             </a>
         </div>
     </nav>
 
     <!-- Main Container -->
-    <main class="max-w-5xl mx-auto px-4 mt-8 space-y-8">
+    <main id="mainContent" class="max-w-6xl mx-auto px-4 mt-6 md:mt-8 space-y-8">
 
-        <!-- Hangar Matrix Matrix -->
-        <section class="max-w-3xl mx-auto">
-            
-            <!-- Left Console: Six hex matrix tree nodes -->
-            <div class="flex flex-col gap-6">
-                <div class="glass-panel rounded-3xl p-6 border-white/5 flex flex-col justify-between neon-border-purple flex-1">
-                    <div>
-                        <div class="matrix-card-header flex justify-between items-center border-b border-white/10 pb-4 mb-4">
-                            <span class="text-xs font-black text-cyan-400 tracking-widest uppercase flex items-center gap-1.5">
-                                <i class="fa-solid fa-circle-nodes"></i> 永久天赋先驱矩阵
-                            </span>
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-500/10 border border-cyan-500/30 rounded-lg text-[10px] font-black text-cyan-300 shadow-[0_0_16px_rgba(34,211,238,0.14)]" id="scrapDisplay">
-                                <i class="fa-solid fa-gem"></i> 星核余额 0
-                            </span>
-                        </div>
-
-                        <!-- Full Talent Module Dock -->
-                        <div class="talent-matrix-stage flex items-center justify-center py-4 relative">
-                            <div class="talent-module-board" aria-label="永久天赋模块装配台">
-                                <div id="line-A" class="talent-conduit line-A"></div>
-                                <div id="line-B" class="talent-conduit line-B"></div>
-                                <div id="line-C" class="talent-conduit line-C"></div>
-                                <div id="line-D" class="talent-conduit line-D"></div>
-                                <div id="line-E" class="talent-conduit line-E"></div>
-
-                                <button class="talent-core-dock" type="button" onclick="selectHangarNode('CORE')">
-                                    <span class="core-emblem"><i class="fa-solid fa-microchip"></i></span>
-                                    <strong>CORE</strong>
-                                    <em>ACTIVE</em>
-                                </button>
-
-                                <button id="node-A" class="talent-module talent-node talent-A locked" type="button" onclick="selectHangarNode('A')">
-                                    <span class="upg-scan"></span>
-                                    <span class="module-state"></span>
-                                    <span class="module-icon"><i class="fa-solid fa-gauge-high"></i></span>
-                                    <span class="module-copy">
-                                        <span class="module-title">量子超频</span>
-                                        <span class="module-sub">OVERLOCK</span>
-                                        <span class="module-dots"><span></span><span></span><span></span></span>
-                                    </span>
-                                </button>
-
-                                <button id="node-B" class="talent-module talent-node talent-B locked" type="button" onclick="selectHangarNode('B')">
-                                    <span class="upg-scan"></span>
-                                    <span class="module-state"></span>
-                                    <span class="module-icon"><i class="fa-solid fa-burst"></i></span>
-                                    <span class="module-copy">
-                                        <span class="module-title">火控增幅</span>
-                                        <span class="module-sub">AMPLIFIER</span>
-                                        <span class="module-dots"><span></span><span></span><span></span></span>
-                                    </span>
-                                </button>
-
-                                <button id="node-C" class="talent-module talent-node talent-C locked" type="button" onclick="selectHangarNode('C')">
-                                    <span class="upg-scan"></span>
-                                    <span class="module-state"></span>
-                                    <span class="module-icon"><i class="fa-solid fa-shield-halved"></i></span>
-                                    <span class="module-copy">
-                                        <span class="module-title">纳米力场</span>
-                                        <span class="module-sub">DEFENSE</span>
-                                        <span class="module-dots"><span></span><span></span><span></span></span>
-                                    </span>
-                                </button>
-
-                                <button id="node-D" class="talent-module talent-node talent-D locked" type="button" onclick="selectHangarNode('D')">
-                                    <span class="upg-scan"></span>
-                                    <span class="module-state"></span>
-                                    <span class="module-icon"><i class="fa-solid fa-magnet"></i></span>
-                                    <span class="module-copy">
-                                        <span class="module-title">量子虹吸</span>
-                                        <span class="module-sub">SIPHON</span>
-                                        <span class="module-dots"><span></span><span></span><span></span></span>
-                                    </span>
-                                </button>
-
-                                <button id="node-E" class="talent-module talent-node talent-E locked" type="button" onclick="selectHangarNode('E')">
-                                    <span class="upg-scan"></span>
-                                    <span class="module-state"></span>
-                                    <span class="module-icon"><i class="fa-solid fa-angles-up"></i></span>
-                                    <span class="module-copy">
-                                        <span class="module-title">僚机齐射</span>
-                                        <span class="module-sub">VOLLEY</span>
-                                        <span class="module-dots"><span></span><span></span></span>
-                                    </span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Selected Node Info -->
-                        <div class="mt-4 p-4 rounded-2xl bg-black/40 border border-white/5 flex flex-col justify-between min-h-[140px]" id="talentDetailCard">
-                            <div>
-                                <span class="px-2 py-0.5 bg-purple-500/10 border border-purple-500/30 rounded text-[7px] font-black text-purple-400 uppercase tracking-widest" id="talentClassLabel">SYSTEM CORE</span>
-                                <h4 class="text-sm font-black text-white mt-1" id="talentNameText">先驱者核心引擎</h4>
-                                <p class="text-[9px] text-gray-400 mt-1 leading-relaxed" id="talentDescText">
-                                    这是飞船的元聚变核心。所有外部六角天赋节点必须与核心引擎保持高维激光导线导通，才能激活高阶永久属性。
-                                </p>
-                            </div>
-                            <div class="flex justify-between items-center mt-3 pt-3 border-t border-white/5">
-                                <span class="text-[8px] font-mono text-gray-500" id="talentLevelText">ACTIVE</span>
-                                <button id="upgradeTalentBtn" disabled class="px-4 py-2 rounded-lg bg-gray-900 border border-white/10 text-gray-500 text-[9px] font-black uppercase tracking-wider">
-                                    核心引擎默认激活
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Reset Talent Button -->
-                    <button onclick="resetHangarTalents()" class="w-full mt-4 py-2.5 border border-white/10 hover:border-rose-500/30 text-xs font-black rounded-xl text-gray-300 hover:text-rose-400 active:scale-95 transition bg-white/5 flex items-center justify-center gap-1.5">
-                        <i class="fa-solid fa-rotate-left"></i> 重置星盘天赋并返还全部星核
-                    </button>
-                </div>
+        <!-- Permanent Skin User Center (first: current ship) -->
+        <section class="glass-panel rounded-3xl p-5 md:p-6 border-white/5 neon-border-gold">
+            <div class="border-b border-white/10 pb-4 mb-5">
+                <span class="section-kicker"><i class="fa-solid fa-palette"></i> 永久涂装中心</span>
+                <h2 class="section-title">超维机体资产</h2>
+                <p class="section-desc">购买、装配或出售涂装；出售会锁回涂装并返还对应星核。</p>
             </div>
-        </section>
 
-        <!-- Permanent Skin User Center -->
-        <section class="glass-panel rounded-3xl p-6 border-white/5 neon-border-gold">
-            <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 border-b border-white/10 pb-4 mb-5">
-                <div>
-                    <span class="text-[10px] font-black text-amber-400 uppercase tracking-widest flex items-center gap-1.5">
-                        <i class="fa-solid fa-palette"></i> 永久涂装中心
-                    </span>
-                    <h2 class="text-2xl font-black text-white mt-1 tracking-wider">超维机体资产</h2>
-                    <p class="text-xs text-gray-400 mt-1">购买、装配或出售涂装；出售会锁回涂装并返还对应星核。</p>
+            <div class="skin-bay-card" id="currentShipBay">
+                <div class="skin-hologram-stage" id="currentShipStage" aria-hidden="true">
+                    <div class="skin-orbit-ring"></div>
+                    <div class="skin-engine-flare"></div>
+                    <svg class="skin-mini-ship" id="currentShipSvg" viewBox="0 0 100 100"></svg>
+                    <div class="skin-particle-burst"><span></span><span></span><span></span><span></span></div>
                 </div>
-                <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-cyan-500/10 border border-cyan-500/30 rounded-xl self-start md:self-auto">
-                    <i class="fa-solid fa-gem text-cyan-300 text-xs"></i>
-                    <span class="text-[10px] text-cyan-300 font-black uppercase tracking-wider">星核余额</span>
-                    <span id="skinCoreBalanceText" class="text-sm text-white font-black">0</span>
+                <div class="skin-bay-copy">
+                    <span class="skin-bay-tag" id="currentShipTag"><i class="fa-solid fa-circle-check"></i> 当前出战</span>
+                    <h3 id="currentShipName">先驱者默认</h3>
+                    <p id="currentShipDesc">标准量子能盾与折跃推进，适合初次深空巡航。</p>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="skinHangarGrid">
+            <div class="skin-shop-grid" id="skinHangarGrid">
                 <article class="skin-hangar-card p-4 flex flex-col gap-4" data-skin="void">
                     <div class="skin-card-meta relative z-10 flex items-center justify-between">
-                        <span class="text-[9px] font-black text-purple-300 uppercase tracking-widest">SKIN · 001</span>
-                        <span id="skinStateVoid" class="skin-state-pill text-gray-400"><i class="fa-solid fa-lock"></i> Locked</span>
+                        <span class="text-[9px] font-black text-purple-300 uppercase tracking-widest">涂装 · 001</span>
+                        <span id="skinStateVoid" class="skin-state-pill text-gray-400"><i class="fa-solid fa-lock"></i> 未解锁</span>
                     </div>
                     <div class="relative z-10 text-center py-2">
                         <div class="skin-hologram-stage" aria-hidden="true">
@@ -1269,19 +1511,19 @@
                             <div class="skin-particle-burst"><span></span><span></span><span></span><span></span></div>
                         </div>
                         <h3 class="text-lg font-black text-white mt-3">星渊幻影</h3>
-                        <p class="text-[9px] text-purple-300 font-black uppercase tracking-widest">VOID PHANTOM</p>
+                        <p class="text-[9px] text-purple-300 font-black tracking-widest">VOID PHANTOM</p>
                     </div>
-                    <p class="relative z-10 text-[10px] text-gray-400 leading-relaxed flex-1">机翼紫蓝能流、引力弹弓特效与量子残影外观。适合偏机动与视觉反馈的飞行员。</p>
-                    <div class="relative z-10 grid grid-cols-2 gap-2">
-                        <button id="skinPrimaryVoidBtn" onclick="interactHangarSkin('void')" class="py-2 rounded-xl bg-cyan-600/20 border border-cyan-500/30 text-cyan-300 text-[10px] font-black active:scale-95 transition">购买 · 80</button>
-                        <button id="skinSellVoidBtn" onclick="sellHangarSkin('void')" class="py-2 rounded-xl bg-rose-600/10 border border-rose-500/25 text-rose-300 text-[10px] font-black active:scale-95 transition">出售</button>
+                    <p class="relative z-10 text-[11px] text-gray-400 leading-relaxed flex-1">机翼紫蓝能流、引力弹弓特效与量子残影外观。</p>
+                    <div class="skin-card-actions relative z-10">
+                        <button id="skinPrimaryVoidBtn" onclick="interactHangarSkin('void')" type="button" class="py-2 rounded-xl bg-cyan-600/20 border border-cyan-500/30 text-cyan-300 text-[10px] font-black">购买 · 80</button>
+                        <button id="skinSellVoidBtn" onclick="sellHangarSkin('void')" type="button" class="py-2 rounded-xl bg-rose-600/10 border border-rose-500/25 text-rose-300 text-[10px] font-black">出售</button>
                     </div>
                 </article>
 
                 <article class="skin-hangar-card p-4 flex flex-col gap-4" data-skin="thunder">
                     <div class="skin-card-meta relative z-10 flex items-center justify-between">
-                        <span class="text-[9px] font-black text-cyan-300 uppercase tracking-widest">SKIN · 002</span>
-                        <span id="skinStateThunder" class="skin-state-pill text-gray-400"><i class="fa-solid fa-lock"></i> Locked</span>
+                        <span class="text-[9px] font-black text-cyan-300 uppercase tracking-widest">涂装 · 002</span>
+                        <span id="skinStateThunder" class="skin-state-pill text-gray-400"><i class="fa-solid fa-lock"></i> 未解锁</span>
                     </div>
                     <div class="relative z-10 text-center py-2">
                         <div class="skin-hologram-stage" aria-hidden="true">
@@ -1303,19 +1545,19 @@
                             <div class="skin-particle-burst"><span></span><span></span><span></span><span></span></div>
                         </div>
                         <h3 class="text-lg font-black text-white mt-3">超维雷霆</h3>
-                        <p class="text-[9px] text-cyan-300 font-black uppercase tracking-widest">DIMENSION THUNDER</p>
+                        <p class="text-[9px] text-cyan-300 font-black tracking-widest">DIMENSION THUNDER</p>
                     </div>
-                    <p class="relative z-10 text-[10px] text-gray-400 leading-relaxed flex-1">蓝黄电弧尾流、雷暴风格装甲与高能推进器外观。适合喜欢高亮战斗读数的飞行员。</p>
-                    <div class="relative z-10 grid grid-cols-2 gap-2">
-                        <button id="skinPrimaryThunderBtn" onclick="interactHangarSkin('thunder')" class="py-2 rounded-xl bg-cyan-600/20 border border-cyan-500/30 text-cyan-300 text-[10px] font-black active:scale-95 transition">购买 · 100</button>
-                        <button id="skinSellThunderBtn" onclick="sellHangarSkin('thunder')" class="py-2 rounded-xl bg-rose-600/10 border border-rose-500/25 text-rose-300 text-[10px] font-black active:scale-95 transition">出售</button>
+                    <p class="relative z-10 text-[11px] text-gray-400 leading-relaxed flex-1">蓝黄电弧尾流、雷暴风格装甲与高能推进器外观。</p>
+                    <div class="skin-card-actions relative z-10">
+                        <button id="skinPrimaryThunderBtn" onclick="interactHangarSkin('thunder')" type="button" class="py-2 rounded-xl bg-cyan-600/20 border border-cyan-500/30 text-cyan-300 text-[10px] font-black">购买 · 100</button>
+                        <button id="skinSellThunderBtn" onclick="sellHangarSkin('thunder')" type="button" class="py-2 rounded-xl bg-rose-600/10 border border-rose-500/25 text-rose-300 text-[10px] font-black">出售</button>
                     </div>
                 </article>
 
                 <article class="skin-hangar-card p-4 flex flex-col gap-4" data-skin="imperial">
                     <div class="skin-card-meta relative z-10 flex items-center justify-between">
-                        <span class="text-[9px] font-black text-amber-300 uppercase tracking-widest">SKIN · 003</span>
-                        <span id="skinStateImperial" class="skin-state-pill text-gray-400"><i class="fa-solid fa-lock"></i> Locked</span>
+                        <span class="text-[9px] font-black text-amber-300 uppercase tracking-widest">涂装 · 003</span>
+                        <span id="skinStateImperial" class="skin-state-pill text-gray-400"><i class="fa-solid fa-lock"></i> 未解锁</span>
                     </div>
                     <div class="relative z-10 text-center py-2">
                         <div class="skin-hologram-stage" aria-hidden="true">
@@ -1338,18 +1580,132 @@
                             <div class="skin-particle-burst"><span></span><span></span><span></span><span></span></div>
                         </div>
                         <h3 class="text-lg font-black text-white mt-3">帝皇余晖</h3>
-                        <p class="text-[9px] text-amber-300 font-black uppercase tracking-widest">IMPERIAL AFTERGLOW</p>
+                        <p class="text-[9px] text-amber-300 font-black tracking-widest">IMPERIAL AFTERGLOW</p>
                     </div>
-                    <p class="relative z-10 text-[10px] text-gray-400 leading-relaxed flex-1">红金尾焰、强磁拾取主题与重装舰首外观。适合偏资源回收和厚重质感的飞行员。</p>
-                    <div class="relative z-10 grid grid-cols-2 gap-2">
-                        <button id="skinPrimaryImperialBtn" onclick="interactHangarSkin('imperial')" class="py-2 rounded-xl bg-cyan-600/20 border border-cyan-500/30 text-cyan-300 text-[10px] font-black active:scale-95 transition">购买 · 120</button>
-                        <button id="skinSellImperialBtn" onclick="sellHangarSkin('imperial')" class="py-2 rounded-xl bg-rose-600/10 border border-rose-500/25 text-rose-300 text-[10px] font-black active:scale-95 transition">出售</button>
+                    <p class="relative z-10 text-[11px] text-gray-400 leading-relaxed flex-1">红金尾焰、强磁拾取主题与重装舰首外观。</p>
+                    <div class="skin-card-actions relative z-10">
+                        <button id="skinPrimaryImperialBtn" onclick="interactHangarSkin('imperial')" type="button" class="py-2 rounded-xl bg-cyan-600/20 border border-cyan-500/30 text-cyan-300 text-[10px] font-black">购买 · 120</button>
+                        <button id="skinSellImperialBtn" onclick="sellHangarSkin('imperial')" type="button" class="py-2 rounded-xl bg-rose-600/10 border border-rose-500/25 text-rose-300 text-[10px] font-black">出售</button>
                     </div>
                 </article>
             </div>
         </section>
 
+        <!-- Talent Matrix -->
+        <section class="glass-panel rounded-3xl p-5 md:p-6 border-white/5 neon-border-cyan">
+            <div class="border-b border-white/10 pb-4 mb-4">
+                <span class="section-kicker"><i class="fa-solid fa-circle-nodes"></i> 永久天赋先驱矩阵</span>
+                <h2 class="section-title">星盘天赋</h2>
+                <p class="section-desc">点亮节点永久强化机体；重置会返还已投入的星核。</p>
+            </div>
+
+            <div class="talent-matrix-stage flex items-center justify-center py-4 relative">
+                <div class="talent-module-board" aria-label="永久天赋模块装配台">
+                    <div id="line-A" class="talent-conduit line-A"></div>
+                    <div id="line-B" class="talent-conduit line-B"></div>
+                    <div id="line-C" class="talent-conduit line-C"></div>
+                    <div id="line-D" class="talent-conduit line-D"></div>
+                    <div id="line-E" class="talent-conduit line-E"></div>
+
+                    <button class="talent-core-dock" type="button" onclick="selectHangarNode('CORE')">
+                        <span class="core-emblem"><i class="fa-solid fa-microchip"></i></span>
+                        <strong>核心</strong>
+                        <em>运行中</em>
+                    </button>
+
+                    <button id="node-A" class="talent-module talent-A locked" type="button" onclick="selectHangarNode('A')">
+                        <span class="upg-scan"></span>
+                        <span class="module-state"></span>
+                        <span class="module-icon"><i class="fa-solid fa-gauge-high"></i></span>
+                        <span class="module-copy">
+                            <span class="module-title">量子超频</span>
+                            <span class="module-sub">OVERLOCK</span>
+                            <span class="module-dots"><span></span><span></span><span></span></span>
+                        </span>
+                    </button>
+
+                    <button id="node-B" class="talent-module talent-B locked" type="button" onclick="selectHangarNode('B')">
+                        <span class="upg-scan"></span>
+                        <span class="module-state"></span>
+                        <span class="module-icon"><i class="fa-solid fa-burst"></i></span>
+                        <span class="module-copy">
+                            <span class="module-title">火控增幅</span>
+                            <span class="module-sub">AMPLIFIER</span>
+                            <span class="module-dots"><span></span><span></span><span></span></span>
+                        </span>
+                    </button>
+
+                    <button id="node-C" class="talent-module talent-C locked" type="button" onclick="selectHangarNode('C')">
+                        <span class="upg-scan"></span>
+                        <span class="module-state"></span>
+                        <span class="module-icon"><i class="fa-solid fa-shield-halved"></i></span>
+                        <span class="module-copy">
+                            <span class="module-title">纳米力场</span>
+                            <span class="module-sub">DEFENSE</span>
+                            <span class="module-dots"><span></span><span></span><span></span></span>
+                        </span>
+                    </button>
+
+                    <button id="node-D" class="talent-module talent-D locked" type="button" onclick="selectHangarNode('D')">
+                        <span class="upg-scan"></span>
+                        <span class="module-state"></span>
+                        <span class="module-icon"><i class="fa-solid fa-magnet"></i></span>
+                        <span class="module-copy">
+                            <span class="module-title">量子虹吸</span>
+                            <span class="module-sub">SIPHON</span>
+                            <span class="module-dots"><span></span><span></span><span></span></span>
+                        </span>
+                    </button>
+
+                    <button id="node-E" class="talent-module talent-E locked" type="button" onclick="selectHangarNode('E')">
+                        <span class="upg-scan"></span>
+                        <span class="module-state"></span>
+                        <span class="module-icon"><i class="fa-solid fa-angles-up"></i></span>
+                        <span class="module-copy">
+                            <span class="module-title">僚机齐射</span>
+                            <span class="module-sub">VOLLEY</span>
+                            <span class="module-dots"><span></span><span></span></span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-4 p-4 rounded-2xl bg-black/40 border border-white/5 flex flex-col justify-between min-h-[140px]" id="talentDetailCard">
+                <div>
+                    <span class="talent-class-label px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/30 rounded inline-block" id="talentClassLabel">系统核心</span>
+                    <h4 class="text-sm font-black text-white mt-2" id="talentNameText">先驱者核心引擎</h4>
+                    <p class="text-gray-400 mt-2 leading-relaxed" id="talentDescText">
+                        这是飞船的元聚变核心。所有外部天赋节点必须与核心保持导通，才能激活永久属性。
+                    </p>
+                </div>
+                <div class="flex justify-between items-center mt-3 pt-3 border-t border-white/5 gap-3">
+                    <span class="text-gray-500" id="talentLevelText">运行中</span>
+                    <button id="upgradeTalentBtn" type="button" disabled class="px-4 py-2 rounded-lg bg-gray-900 border border-white/10 text-gray-500 text-[11px] font-black">
+                        核心引擎默认激活
+                    </button>
+                </div>
+            </div>
+
+            <div class="reset-row">
+                <div class="reset-confirm" id="resetConfirmBar">
+                    <span>确认重置星盘并返还全部星核？</span>
+                    <div class="flex gap-2 shrink-0">
+                        <button type="button" class="reset-confirm-no" id="resetCancelBtn">取消</button>
+                        <button type="button" class="reset-confirm-yes" id="resetConfirmBtn">确认重置</button>
+                    </div>
+                </div>
+                <button type="button" id="resetTalentBtn" class="w-full py-2.5 border border-white/10 hover:border-rose-500/30 text-xs font-black rounded-xl text-gray-300 hover:text-rose-400 bg-white/5 flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-rotate-left"></i> 重置星盘天赋并返还全部星核
+                </button>
+            </div>
+        </section>
+
     </main>
+
+    <div class="custom-toast" id="customToast" role="status" aria-live="polite">
+        <i class="fa-solid fa-circle-info" id="toastIcon"></i>
+        <span id="toastText">已更新</span>
+    </div>
 
     <!-- Audio and Physics Simulators logic -->
     <script>
@@ -1368,7 +1724,6 @@
         function toggleAudioReactor() {
             initHangarAudio();
             const btn = document.getElementById('reactorBtn');
-            const statusText = document.getElementById('reactorStatus');
 
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
@@ -1381,9 +1736,9 @@
                 } catch(e){}
                 ambientHumNode = null;
                 ambientLfoNode = null;
-                statusText.innerText = '离线';
-                statusText.className = 'text-rose-500';
                 btn.classList.remove('neon-border-cyan');
+                btn.style.color = '';
+                showToast('机库环境音已关闭', 'success');
             } else {
                 ambientHumNode = audioCtx.createOscillator();
                 const filter = audioCtx.createBiquadFilter();
@@ -1393,21 +1748,20 @@
                 const lfoGain = audioCtx.createGain();
 
                 ambientHumNode.type = 'sawtooth';
-                ambientHumNode.frequency.setValueAtTime(55, audioCtx.currentTime); // 55Hz Low A
+                ambientHumNode.frequency.setValueAtTime(55, audioCtx.currentTime);
 
                 filter.type = 'lowpass';
                 filter.Q.setValueAtTime(4, audioCtx.currentTime);
                 filter.frequency.setValueAtTime(110, audioCtx.currentTime);
 
                 lfoGain.gain.setValueAtTime(35, audioCtx.currentTime);
-                ambientLfoNode.frequency.setValueAtTime(0.25, audioCtx.currentTime); // 0.25Hz
+                ambientLfoNode.frequency.setValueAtTime(0.25, audioCtx.currentTime);
 
                 gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
 
-                // Connections
                 ambientLfoNode.connect(lfoGain);
                 lfoGain.connect(filter.frequency);
-                
+
                 ambientHumNode.connect(filter);
                 filter.connect(gain);
                 gain.connect(audioCtx.destination);
@@ -1415,11 +1769,10 @@
                 ambientHumNode.start();
                 ambientLfoNode.start();
 
-                statusText.innerText = '运行中';
-                statusText.className = 'text-emerald-400';
                 btn.classList.add('neon-border-cyan');
-
+                btn.style.color = '#22d3ee';
                 playSynthSound('unlock');
+                showToast('机库环境音已开启', 'success');
             }
         }
 
@@ -1479,22 +1832,58 @@
             }
         }
 
-        function spawnFloatText(x, y, text, tone = 'cyan') {
-            const container = document.getElementById('combatFloatContainer');
-            if (!container) return;
-            const el = document.createElement('div');
-            const toneClass = {
-                cyan: 'text-cyan-300',
-                purple: 'text-purple-300',
-                gold: 'text-amber-300',
-                rose: 'text-rose-300'
-            }[tone] || 'text-cyan-300';
-            el.className = `float-dmg ${toneClass}`;
-            el.style.left = `${x}px`;
-            el.style.top = `${y}px`;
-            el.textContent = text;
-            container.appendChild(el);
-            setTimeout(() => el.remove(), 1050);
+        let toastTimeoutId = null;
+        function showToast(message, type) {
+            const toast = document.getElementById('customToast');
+            const toastText = document.getElementById('toastText');
+            const toastIcon = document.getElementById('toastIcon');
+            if (!toast || !toastText) return;
+            toastText.textContent = message;
+            toast.className = 'custom-toast';
+            toastIcon.className = 'fa-solid';
+            if (type === 'success') {
+                toast.classList.add('success');
+                toastIcon.classList.add('fa-circle-check');
+            } else if (type === 'error') {
+                toast.classList.add('error');
+                toastIcon.classList.add('fa-circle-xmark');
+            } else {
+                toastIcon.classList.add('fa-circle-info');
+            }
+            toast.classList.add('active');
+            clearTimeout(toastTimeoutId);
+            toastTimeoutId = setTimeout(() => toast.classList.remove('active'), 2600);
+        }
+
+        const DEFAULT_SKIN_META = {
+            default: {
+                name: '先驱者默认',
+                desc: '标准量子能盾与折跃推进，适合初次深空巡航。',
+                svg: `<defs><radialGradient id="defaultBayCore" cx="50%" cy="40%"><stop offset="0%" stop-color="#67e8f9"/><stop offset="100%" stop-color="#0891b2"/></radialGradient></defs><path d="M 28 68 L 10 88 L 36 76 Z" fill="#0c4a6e" stroke="#22d3ee" stroke-width="1.7" opacity="0.76"/><path d="M 72 68 L 90 88 L 64 76 Z" fill="#0c4a6e" stroke="#22d3ee" stroke-width="1.7" opacity="0.76"/><path d="M 50 12 L 20 58 L 36 56 L 50 64 L 64 56 L 80 58 Z" fill="#0f172a" stroke="#22d3ee" stroke-width="2.7"/><circle cx="50" cy="38" r="9" fill="url(#defaultBayCore)"/>`
+            },
+            void: { name: '星渊幻影', desc: '紫蓝能流与量子残影外观，偏机动与视觉反馈。' },
+            thunder: { name: '超维雷霆', desc: '蓝黄电弧尾流与雷暴风格装甲。' },
+            imperial: { name: '帝皇余晖', desc: '红金尾焰与重装舰首，偏资源回收。' }
+        };
+
+        const SKIN_SVG_SNIPPETS = {
+            void: `<defs><radialGradient id="voidBayCore" cx="50%" cy="40%"><stop offset="0%" stop-color="#f0abfc"/><stop offset="100%" stop-color="#a21caf"/></radialGradient></defs><path d="M 27 70 L 7 92 L 36 78 Z" fill="#4a044e" stroke="#d946ef" stroke-width="1.7" opacity="0.76"/><path d="M 73 70 L 93 92 L 64 78 Z" fill="#4a044e" stroke="#d946ef" stroke-width="1.7" opacity="0.76"/><path d="M 50 10 L 22 64 L 38 56 L 50 62 L 62 56 L 78 64 Z" fill="#170b24" stroke="#d946ef" stroke-width="2.7"/><circle cx="50" cy="38" r="9" fill="url(#voidBayCore)"/>`,
+            thunder: `<defs><radialGradient id="thunderBayCore" cx="50%" cy="40%"><stop offset="0%" stop-color="#fef9c3"/><stop offset="100%" stop-color="#0891b2"/></radialGradient></defs><path d="M 28 68 L 12 88 L 36 76 Z" fill="#422006" stroke="#facc15" stroke-width="1.7" opacity="0.76"/><path d="M 72 68 L 88 88 L 64 76 Z" fill="#422006" stroke="#facc15" stroke-width="1.7" opacity="0.76"/><path d="M 50 12 L 18 56 L 34 56 L 30 68 L 70 68 L 66 56 L 82 56 Z" fill="#0f172a" stroke="#facc15" stroke-width="2.7"/><circle cx="50" cy="38" r="9" fill="url(#thunderBayCore)"/>`,
+            imperial: `<defs><radialGradient id="imperialBayCore" cx="50%" cy="40%"><stop offset="0%" stop-color="#fde68a"/><stop offset="100%" stop-color="#b91c1c"/></radialGradient></defs><path d="M 28 70 L 8 88 L 36 78 Z" fill="#78350f" stroke="#fbbf24" stroke-width="1.7" opacity="0.78"/><path d="M 72 70 L 92 88 L 64 78 Z" fill="#78350f" stroke="#fbbf24" stroke-width="1.7" opacity="0.78"/><path d="M 50 8 L 22 60 L 26 70 L 50 62 L 74 70 L 78 60 Z" fill="#1a1005" stroke="#fbbf24" stroke-width="2.7"/><circle cx="50" cy="38" r="9" fill="url(#imperialBayCore)"/>`
+        };
+
+        function renderCurrentShipBay() {
+            const meta = DEFAULT_SKIN_META[currentSkin] || DEFAULT_SKIN_META.default;
+            const nameEl = document.getElementById('currentShipName');
+            const descEl = document.getElementById('currentShipDesc');
+            const svgEl = document.getElementById('currentShipSvg');
+            const stageEl = document.getElementById('currentShipStage');
+            if (nameEl) nameEl.textContent = meta.name;
+            if (descEl) descEl.textContent = meta.desc;
+            if (svgEl) svgEl.innerHTML = SKIN_SVG_SNIPPETS[currentSkin] || DEFAULT_SKIN_META.default.svg;
+            if (stageEl) {
+                stageEl.style.setProperty('--skin-accent', currentSkin === 'void' ? '#d946ef' : currentSkin === 'thunder' ? '#facc15' : currentSkin === 'imperial' ? '#fbbf24' : '#22d3ee');
+            }
         }
 
         // ==========================================
@@ -1549,10 +1938,9 @@
         }
 
         function syncHangarInterface(poweredNodeId = null) {
-            const scrapDisplay = document.getElementById('scrapDisplay');
-            if (scrapDisplay) scrapDisplay.innerHTML = `<i class="fa-solid fa-gem"></i> 星核余额 ${scrapBalance}`;
-            const balanceText = document.getElementById('scrapBalanceText');
-            if (balanceText) balanceText.innerText = scrapBalance;
+            const navBalance = document.getElementById('navCoreBalance');
+            if (navBalance) navBalance.textContent = scrapBalance;
+            renderCurrentShipBay();
             renderSkinHangar();
             // Reflect in SVG visual elements
             for (const key in TALENT_NODES) {
@@ -1566,7 +1954,7 @@
                     } else if (node.level > 0) {
                         stateClass = 'unlocked';
                     }
-                    let nodeClass = `talent-module talent-node talent-${key} ${stateClass} lv-${node.level}`;
+                    let nodeClass = `talent-module talent-${key} ${stateClass} lv-${node.level}`;
                     if (activeNodeId === key) nodeClass += ' selected';
                     nodeEl.setAttribute('class', nodeClass);
                     if (lineEl) lineEl.setAttribute('class', `talent-conduit line-${key} ${stateClass}`);
@@ -1591,8 +1979,6 @@
         }
 
         function renderSkinHangar() {
-            const balanceEl = document.getElementById('skinCoreBalanceText');
-            if (balanceEl) balanceEl.innerText = scrapBalance;
             Object.keys(SKIN_DEFINITIONS).forEach(id => {
                 const skin = SKIN_DEFINITIONS[id];
                 const suffix = skinDomId(id);
@@ -1610,13 +1996,13 @@
                 if (stateEl) {
                     if (equipped) {
                         stateEl.className = 'skin-state-pill text-emerald-300';
-                        stateEl.innerHTML = '<i class="fa-solid fa-circle-check"></i> Equipped';
+                        stateEl.innerHTML = '<i class="fa-solid fa-circle-check"></i> 已装配';
                     } else if (owned) {
                         stateEl.className = 'skin-state-pill text-cyan-300';
-                        stateEl.innerHTML = '<i class="fa-solid fa-unlock"></i> Owned';
+                        stateEl.innerHTML = '<i class="fa-solid fa-unlock"></i> 已拥有';
                     } else {
                         stateEl.className = 'skin-state-pill text-gray-400';
-                        stateEl.innerHTML = '<i class="fa-solid fa-lock"></i> Locked';
+                        stateEl.innerHTML = '<i class="fa-solid fa-lock"></i> 未解锁';
                     }
                 }
                 if (primaryBtn) {
@@ -1641,10 +2027,10 @@
                 currentSkin = id;
                 saveSkinState();
                 playSynthSound('click');
-                spawnFloatText(window.innerWidth / 2, window.innerHeight / 2 - 100, `🎨 已装配 ${skin.name}`, 'cyan');
+                showToast(`已装配 ${skin.name}`, 'success');
             } else {
                 if (scrapBalance < skin.cost) {
-                    spawnFloatText(window.innerWidth / 2, window.innerHeight / 2 - 100, '星核不足', 'rose');
+                    showToast('星核不足', 'error');
                     return;
                 }
                 scrapBalance -= skin.cost;
@@ -1652,7 +2038,7 @@
                 currentSkin = id;
                 saveSkinState();
                 playSynthSound('unlock');
-                spawnFloatText(window.innerWidth / 2, window.innerHeight / 2 - 100, `✨ 解锁 ${skin.name}`, 'gold');
+                showToast(`已解锁 ${skin.name}`, 'success');
             }
             syncHangarInterface();
         }
@@ -1665,7 +2051,7 @@
             scrapBalance += skin.cost;
             saveSkinState();
             playSynthSound('reset');
-            spawnFloatText(window.innerWidth / 2, window.innerHeight / 2 - 100, `♻️ 出售 ${skin.name}，返还 ${skin.cost} 星核`, 'cyan');
+            showToast(`出售 ${skin.name}，返还 ${skin.cost} 星核`, 'success');
             syncHangarInterface();
         }
 
@@ -1677,14 +2063,15 @@
 
         function updateTalentDetailsCard() {
             if (activeNodeId === 'CORE') {
-                document.getElementById('talentClassLabel').innerText = 'SYSTEM CORE';
+                document.getElementById('talentClassLabel').innerText = '系统核心';
                 document.getElementById('talentNameText').innerText = '先驱者核心引擎';
-                document.getElementById('talentLevelText').innerText = 'ACTIVE';
-                document.getElementById('talentDescText').innerText = '这是飞船的元聚变核心。所有外部六角天赋节点必须与核心引擎保持高维行矢激光线导通，才能激活永久属性。';
+                document.getElementById('talentLevelText').innerText = '运行中';
+                document.getElementById('talentDescText').innerText = '这是飞船的元聚变核心。所有外部天赋节点必须与核心保持导通，才能激活永久属性。';
                 const btn = document.getElementById('upgradeTalentBtn');
                 btn.disabled = true;
-                btn.className = 'px-4 py-2 rounded-lg bg-gray-900 border border-white/10 text-gray-500 text-[9px] font-black uppercase tracking-wider';
+                btn.className = 'px-4 py-2 rounded-lg bg-gray-900 border border-white/10 text-gray-500 text-[11px] font-black';
                 btn.innerText = '核心引擎默认激活';
+                btn.onclick = null;
                 return;
             }
 
@@ -1693,21 +2080,22 @@
 
             document.getElementById('talentClassLabel').innerText = data.class;
             document.getElementById('talentNameText').innerText = data.name;
-            document.getElementById('talentLevelText').innerText = data.level >= data.maxLevel ? 'MAX LEVEL' : `LV.${data.level} / LV.${data.maxLevel}`;
             document.getElementById('talentDescText').innerText = data.desc;
+            document.getElementById('talentLevelText').innerText = data.level >= data.maxLevel ? '已满级' : `等级 ${data.level} / ${data.maxLevel}`;
 
             const btn = document.getElementById('upgradeTalentBtn');
             if (data.level >= data.maxLevel) {
                 btn.disabled = true;
-                btn.className = 'px-4 py-2 rounded-lg bg-purple-950/80 border border-purple-800 text-purple-400 text-[9px] font-black uppercase';
-                btn.innerText = '已满级 MAX';
+                btn.className = 'px-4 py-2 rounded-lg bg-cyan-950/80 border border-cyan-800 text-cyan-300 text-[11px] font-black';
+                btn.innerText = '已满级';
+                btn.onclick = null;
             } else {
                 btn.disabled = scrapBalance < data.cost;
                 if (scrapBalance >= data.cost) {
-                    btn.className = 'px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-600 via-purple-600 to-rose-500 text-white text-[9px] font-black uppercase tracking-wider active:scale-95 transition shadow-lg shadow-cyan-600/20';
+                    btn.className = 'px-4 py-2 rounded-lg bg-cyan-600 border border-cyan-400 text-white text-[11px] font-black active:scale-95 transition shadow-lg shadow-cyan-600/20';
                     btn.onclick = () => purchaseHangarTalent(activeNodeId);
                 } else {
-                    btn.className = 'px-4 py-2 rounded-lg bg-gray-900 border border-white/10 text-gray-600 text-[9px] font-black uppercase';
+                    btn.className = 'px-4 py-2 rounded-lg bg-gray-900 border border-white/10 text-gray-600 text-[11px] font-black';
                     btn.onclick = null;
                 }
                 btn.innerText = `点亮激活 · ${data.cost} 星核`;
@@ -1722,19 +2110,23 @@
             scrapBalance -= data.cost;
             data.level++;
 
-            // Save to storage
             saveTalentState();
-
-            // Spawn floating text
-            spawnFloatText(window.innerWidth / 2, window.innerHeight / 2 - 100, `🧬 +${data.name.split(' ')[0]} 永久装配！`, 'purple');
-
+            showToast(`${data.name.split(' ')[0]} 已永久装配`, 'success');
             syncHangarInterface(id);
         }
 
+        function requestResetHangarTalents() {
+            document.getElementById('resetConfirmBar').classList.add('active');
+        }
+
+        function cancelResetHangarTalents() {
+            document.getElementById('resetConfirmBar').classList.remove('active');
+        }
+
         function resetHangarTalents() {
+            cancelResetHangarTalents();
             playSynthSound('reset');
-            
-            // Refund
+
             let refund = 0;
             for (const key in TALENT_NODES) {
                 refund += TALENT_NODES[key].level * TALENT_NODES[key].cost;
@@ -1743,7 +2135,7 @@
             scrapBalance += refund;
 
             saveTalentState();
-            spawnFloatText(window.innerWidth / 2, window.innerHeight / 2 - 100, `♻️ 天赋重置！返还 ${refund} 星核！`, 'cyan');
+            showToast(`天赋已重置，返还 ${refund} 星核`, 'success');
             syncHangarInterface();
         }
 
@@ -1765,6 +2157,9 @@
         // INITIALIZER
         // ==========================================
         window.onload = function() {
+            document.getElementById('resetTalentBtn').addEventListener('click', requestResetHangarTalents);
+            document.getElementById('resetConfirmBtn').addEventListener('click', resetHangarTalents);
+            document.getElementById('resetCancelBtn').addEventListener('click', cancelResetHangarTalents);
             loadHangarData();
         };
     </script>

@@ -4,7 +4,7 @@
     const DEFAULT_AVATAR = 'fa-user-astronaut';
     const DEFAULT_BIO = '向着星辰与深渊！';
     const LEADERBOARD_LIMIT = 10;
-    const LEADERBOARD_CACHE_KEY = 'space_leaderboard_cache_v1';
+    const LEADERBOARD_CACHE_KEY = 'space_leaderboard_cache_v3';
     const LEADERBOARD_CACHE_MAX_AGE_MS = 2 * 60 * 1000;
 
     const SHIP_META = {
@@ -60,7 +60,6 @@
         hangarCurrentShip: document.getElementById('hangarCurrentShip'),
         hangarUnlockedCount: document.getElementById('hangarUnlockedCount'),
         hangarTalentTotal: document.getElementById('hangarTalentTotal'),
-        unlockedShipsList: document.getElementById('unlockedShipsList'),
         leaderboardList: document.getElementById('leaderboardList'),
         matchHistoryList: document.getElementById('matchHistoryList'),
         playerRankText: document.getElementById('playerRankText'),
@@ -109,6 +108,54 @@
         el.customToast.timeoutId = setTimeout(() => el.customToast.classList.remove('active'), 2600);
     }
 
+    function uniqueBestEntries(entries) {
+        const bestByUser = new Map();
+        (entries || []).forEach(entry => {
+            if (!entry || !entry.user_id || !(Number(entry.score) > 0)) return;
+            const prev = bestByUser.get(entry.user_id);
+            if (!prev || Number(entry.score) > Number(prev.score)) {
+                bestByUser.set(entry.user_id, entry);
+            }
+        });
+        return [...bestByUser.values()]
+            .sort((a, b) => Number(b.score) - Number(a.score) || String(a.updated_at || '').localeCompare(String(b.updated_at || '')))
+            .slice(0, LEADERBOARD_LIMIT)
+            .map((entry, index) => ({ ...entry, rank: index + 1 }));
+    }
+
+    function setLeaderboardBusy(isBusy) {
+        if (!el.leaderboardList) return;
+        if (isBusy) el.leaderboardList.setAttribute('aria-busy', 'true');
+        else el.leaderboardList.removeAttribute('aria-busy');
+    }
+
+    function renderLeaderboardSkeleton(count) {
+        if (!el.leaderboardList) return;
+        setLeaderboardBusy(true);
+        el.leaderboardList.replaceChildren();
+        const rows = Math.max(1, count || 6);
+        for (let i = 0; i < rows; i++) {
+            const row = document.createElement('div');
+            row.className = 'leaderboard-skeleton';
+            row.setAttribute('aria-hidden', 'true');
+            row.innerHTML = `
+                <div class="sk-block sk-rank"></div>
+                <div class="sk-user">
+                    <div class="sk-block sk-avatar"></div>
+                    <div class="sk-lines">
+                        <div class="sk-block" style="width:72%"></div>
+                        <div class="sk-block" style="width:46%"></div>
+                    </div>
+                </div>
+                <div class="sk-score">
+                    <div class="sk-block" style="width:64px"></div>
+                    <div class="sk-block" style="width:48px"></div>
+                </div>
+            `;
+            el.leaderboardList.appendChild(row);
+        }
+    }
+
     function loadLocalData() {
         state.userId = API ? API.ensureUserId() : state.userId;
         state.bestScore = Math.max(0, parseInt(localStorage.getItem('space_best_score'), 10) || 0);
@@ -136,7 +183,7 @@
         try {
             localStorage.setItem(LEADERBOARD_CACHE_KEY, JSON.stringify({
                 savedAt: Date.now(),
-                entries: Array.isArray(entries) ? entries.slice(0, LEADERBOARD_LIMIT) : []
+                entries: uniqueBestEntries(entries)
             }));
         } catch (_) {}
     }
@@ -144,7 +191,7 @@
     function renderCachedLeaderboard() {
         const cached = readLeaderboardCache();
         if (!cached || !cached.length) return false;
-        state.leaderboard = cached.slice(0, LEADERBOARD_LIMIT);
+        state.leaderboard = uniqueBestEntries(cached);
         renderLeaderboard(state.leaderboard);
         return true;
     }
@@ -182,8 +229,6 @@
             el.boundDetails.style.display = 'none';
         }
 
-        renderShips();
-        renderTalents();
         renderHangarSummary();
         renderMatchHistory();
     }
@@ -195,40 +240,6 @@
             return parts[0].slice(0, 2) + '***@' + parts[1];
         }
         return value.length <= 4 ? value[0] + '***' : value.slice(0, 2) + '***' + value.slice(-1);
-    }
-
-    function renderShips() {
-        let unlocked = ['default'];
-        try {
-            const parsed = JSON.parse(localStorage.getItem('space_unlocked_skins') || '["default"]');
-            if (Array.isArray(parsed)) unlocked = parsed;
-        } catch (_) {}
-        el.unlockedShipsList.replaceChildren();
-        Object.keys(SHIP_META).forEach(id => {
-            const meta = SHIP_META[id];
-            const chip = document.createElement('span');
-            const owned = unlocked.includes(id);
-            chip.className = 'ship-chip' + (state.skin === id ? ' active-ship' : '');
-            chip.style.opacity = owned ? '1' : '0.42';
-            chip.innerHTML = `<i class="fa-solid ${owned ? meta.icon : 'fa-lock'}"></i> ${meta.name}`;
-            el.unlockedShipsList.appendChild(chip);
-        });
-    }
-
-    function renderTalents() {
-        let talents = {};
-        try { talents = JSON.parse(localStorage.getItem('space_v7_talents') || '{}') || {}; } catch (_) {}
-        TALENT_DEFS.forEach(def => {
-            const target = document.getElementById(`talent-${def.id}`);
-            if (!target) return;
-            target.replaceChildren();
-            const level = Math.max(0, Math.min(Number(talents[def.id]) || 0, def.max));
-            for (let i = 0; i < def.max; i++) {
-                const dot = document.createElement('span');
-                dot.className = 'talent-dot' + (i < level ? ` active ${def.color}` : '');
-                target.appendChild(dot);
-            }
-        });
     }
 
     function renderHangarSummary() {
@@ -251,7 +262,8 @@
     }
 
     function renderLeaderboard(entries) {
-        const list = (entries || []).slice(0, LEADERBOARD_LIMIT);
+        const list = uniqueBestEntries(entries);
+        setLeaderboardBusy(false);
         el.leaderboardList.replaceChildren();
         if (!list.length) {
             el.leaderboardList.innerHTML = '<div class="leaderboard-empty"><i class="fa-solid fa-satellite-dish"></i> 暂无可显示的排行榜记录。完成一局游戏后会自动上榜。</div>';
@@ -261,10 +273,7 @@
 
         let ownRank = null;
         list.forEach(entry => {
-            if (entry.user_id === state.userId) {
-                // 同一玩家可能上榜多次（多条 leaderboard_entries），取排名最高（rank 最小）的
-                if (ownRank === null || entry.rank < ownRank) ownRank = entry.rank;
-            }
+            if (entry.user_id === state.userId) ownRank = entry.rank;
             const ship = SHIP_META[entry.ship_type] || SHIP_META.default;
             const avatarIcon = sanitizeAvatar(entry.avatar || ship.icon);
             const item = document.createElement('div');
@@ -359,12 +368,13 @@
 
     async function refreshLeaderboard() {
         setStatus('connecting');
+        if (!state.leaderboard.length) renderLeaderboardSkeleton(6);
         try {
             if (!API || !API.isEnabled()) throw new Error('leaderboard_disabled');
             // 榜单先渲染，个人精确排名后台补齐，避免一个慢请求拖住首屏列表。
             const playerPromise = API.fetchPlayer(state.userId).catch(() => null);
             const data = await API.fetchLeaderboard(LEADERBOARD_LIMIT);
-            state.leaderboard = Array.isArray(data.entries) ? data.entries.slice(0, LEADERBOARD_LIMIT) : [];
+            state.leaderboard = uniqueBestEntries(data.entries);
             writeLeaderboardCache(state.leaderboard);
             renderLeaderboard(state.leaderboard);
             setStatus('online');
@@ -570,6 +580,7 @@
         loadLocalData();
         renderProfile();
         renderCachedLeaderboard();
+        if (!state.leaderboard.length) renderLeaderboardSkeleton(6);
         initEvents();
         refreshProfileAndLeaderboard();
     }

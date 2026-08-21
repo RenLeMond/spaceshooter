@@ -90,7 +90,7 @@ test('ngrok previews use the production same-site API host', async () => {
 });
 
 test('entry pages use the current cache-busting asset version', async () => {
-  const expected = '7.3';
+  const expected = '7.5';
   const files = ['index.html', 'space_shooter.html', 'leaderboard.html', 'v7_hangar.html'];
   for (const file of files) {
     const html = await readFile(new URL('../' + file, import.meta.url), 'utf8');
@@ -270,18 +270,19 @@ test('leaderboard hall of fame is capped to top 10', async () => {
   const html = await readFile(new URL('../leaderboard.html', import.meta.url), 'utf8');
   const pageScript = await readFile(new URL('../js/leaderboard_page.js', import.meta.url), 'utf8');
 
-  assert.match(html, />TOP 10</);
+  assert.match(html, />top 10</i);
   assert.equal(html.includes('TOP 50'), false);
   assert.match(pageScript, /const LEADERBOARD_LIMIT = 10;/);
   assert.match(pageScript, /API\.fetchLeaderboard\(LEADERBOARD_LIMIT\)/);
-  assert.match(pageScript, /\(entries \|\| \[\]\)\.slice\(0,\s*LEADERBOARD_LIMIT\)/);
+  assert.match(pageScript, /function uniqueBestEntries/);
+  assert.match(pageScript, /uniqueBestEntries\(data\.entries\)/);
 });
 
 test('hangar summary link has overflow guards', async () => {
-  const html = await readFile(new URL('../leaderboard.html', import.meta.url), 'utf8');
+  const css = await readFile(new URL('../leaderboard.css', import.meta.url), 'utf8');
 
-  assert.match(html, /\.hangar-link\s*{[^}]*max-width:\s*100%/s);
-  assert.match(html, /\.hangar-link\s*{[^}]*white-space:\s*nowrap/s);
+  assert.match(css, /\.hangar-link\s*{[^}]*max-width:\s*100%/s);
+  assert.match(css, /\.hangar-link\s*{[^}]*white-space:\s*nowrap/s);
 });
 
 test('hangar talent cards use permanent core balance when rendering purchase buttons', async () => {
@@ -353,13 +354,13 @@ test('start screen bottom dock stays inside mobile visual viewport', async () =>
 });
 
 test('leaderboard mobile rows keep the uploaded time visible', async () => {
-  const html = await readFile(new URL('../leaderboard.html', import.meta.url), 'utf8');
+  const css = await readFile(new URL('../leaderboard.css', import.meta.url), 'utf8');
   const pageScript = await readFile(new URL('../js/leaderboard_page.js', import.meta.url), 'utf8');
 
   assert.match(pageScript, /class="score-date">\$\{formatDate\(entry\.updated_at\)\}/);
-  assert.match(html, /\.score-date\s*{[^}]*font-size:\s*9px/s);
-  assert.match(html, /@media \(max-width: 900px\)[\s\S]*\.score-date\s*{[^}]*white-space:\s*normal/s);
-  assert.match(html, /@media \(max-width: 640px\)[\s\S]*\.score-date\s*{[^}]*white-space:\s*normal/s);
+  assert.match(css, /\.score-date\s*{[^}]*font-size:\s*10px/s);
+  assert.match(css, /@media \(max-width: 900px\)[\s\S]*\.score-date\s*{[^}]*white-space:\s*normal/s);
+  assert.match(css, /@media \(max-width: 640px\)[\s\S]*\.score-date\s*{[^}]*white-space:\s*normal/s);
 });
 
 test('frontend leaderboard API authenticates guest score submissions and handles identity migration', async () => {

@@ -134,14 +134,25 @@ class FakeStatement {
     if (sql.includes('COUNT(*) + 1 AS rank')) {
       const [score, updatedAt, userId] = this.args;
       let rank = 1;
+      if (sql.includes('PARTITION BY user_id')) {
+        const bestByUser = new Map();
+        for (const row of this.db.leaderboardEntries) {
+          if (!(row.score > 0)) continue;
+          const prev = bestByUser.get(row.user_id);
+          if (!prev || row.score > prev.score || (row.score === prev.score && (row.updated_at < prev.updated_at || (row.updated_at === prev.updated_at && row.entry_id < prev.entry_id)))) {
+            bestByUser.set(row.user_id, row);
+          }
+        }
+        for (const row of bestByUser.values()) {
+          const tieId = row.entry_id || row.user_id;
+          if (row.score > score || (row.score === score && (row.updated_at < updatedAt || (row.updated_at === updatedAt && tieId < userId)))) {
+            rank++;
+          }
+        }
+        return { rank };
+      }
       for (const [id, row] of this.db.leaderboards) {
         if (row.score > score || (row.score === score && (row.updated_at < updatedAt || (row.updated_at === updatedAt && id < userId)))) {
-          rank++;
-        }
-      }
-      for (const row of this.db.leaderboardEntries) {
-        const tieId = row.entry_id || row.user_id;
-        if (row.score > score || (row.score === score && (row.updated_at < updatedAt || (row.updated_at === updatedAt && tieId < userId)))) {
           rank++;
         }
       }
@@ -173,8 +184,16 @@ class FakeStatement {
   }
 
   async all() {
-    if (this.sql.includes('FROM leaderboard_entries e') && this.sql.includes('ORDER BY')) {
-      const results = this.db.leaderboardEntries
+    if ((this.sql.includes('FROM leaderboard_entries e') || this.sql.includes('PARTITION BY user_id')) && this.sql.includes('ORDER BY e.score') && this.sql.includes('LIMIT')) {
+      const bestByUser = new Map();
+      for (const row of this.db.leaderboardEntries) {
+        if (!(row.score > 0)) continue;
+        const prev = bestByUser.get(row.user_id);
+        if (!prev || row.score > prev.score || (row.score === prev.score && (row.updated_at < prev.updated_at || (row.updated_at === prev.updated_at && row.entry_id < prev.entry_id)))) {
+          bestByUser.set(row.user_id, row);
+        }
+      }
+      const results = [...bestByUser.values()]
         .map(row => ({ username: this.db.users.get(row.user_id)?.username, avatar: this.db.users.get(row.user_id)?.avatar, bio: this.db.users.get(row.user_id)?.bio, ...row }))
         .sort((a, b) => b.score - a.score || a.updated_at.localeCompare(b.updated_at) || a.entry_id.localeCompare(b.entry_id))
         .slice(0, this.args[0]);
@@ -562,7 +581,7 @@ test('Worker player rank uses the same tie-break as leaderboard rows', async () 
   assert.equal(body.rank, 2);
 });
 
-test('Worker leaderboard keeps multiple score entries for the same player', async () => {
+test('Worker leaderboard keeps only the highest score for the same player', async () => {
   const worker = await loadWorker();
   const db = new FakeDb();
   db.now = '2026-06-02 10:00:00';
@@ -590,9 +609,9 @@ test('Worker leaderboard keeps multiple score entries for the same player', asyn
   }), { DB: db, ALLOWED_ORIGINS: 'https://renlimeng.qzz.io' });
   const body = await board.json();
 
-  assert.deepEqual(body.entries.map(entry => entry.score), [1200, 900]);
+  assert.deepEqual(body.entries.map(entry => entry.score), [1200]);
+  assert.equal(body.entries.length, 1);
   assert.equal(body.entries[0].user_id, 'usr_multiscore');
-  assert.equal(body.entries[1].user_id, 'usr_multiscore');
 });
 
 test('Worker profile-only score sync does not add a duplicate leaderboard entry', async () => {

@@ -801,9 +801,22 @@ async function getLeaderboardRows(db, limit) {
       e.score,
       e.ship_type,
       e.updated_at
-    FROM leaderboard_entries e
+    FROM (
+      SELECT
+        entry_id,
+        user_id,
+        score,
+        ship_type,
+        updated_at,
+        ROW_NUMBER() OVER (
+          PARTITION BY user_id
+          ORDER BY score DESC, updated_at ASC, entry_id ASC
+        ) AS rn
+      FROM leaderboard_entries
+      WHERE score > 0
+    ) e
     JOIN users u ON u.id = e.user_id
-    WHERE e.score > 0
+    WHERE e.rn = 1
     ORDER BY e.score DESC, e.updated_at ASC, e.entry_id ASC
     LIMIT ?1
   `).bind(limit).all();
@@ -877,9 +890,24 @@ async function getPlayerRecord(db, userId) {
   const rankRow = usingEntries
     ? await db.prepare(`
       SELECT COUNT(*) + 1 AS rank
-      FROM leaderboard_entries
-      WHERE score > ?1
-         OR (score = ?1 AND (updated_at < ?2 OR (updated_at = ?2 AND entry_id < ?3)))
+      FROM (
+        SELECT
+          user_id,
+          score,
+          updated_at,
+          entry_id,
+          ROW_NUMBER() OVER (
+            PARTITION BY user_id
+            ORDER BY score DESC, updated_at ASC, entry_id ASC
+          ) AS rn
+        FROM leaderboard_entries
+        WHERE score > 0
+      ) best
+      WHERE best.rn = 1
+        AND (
+          best.score > ?1
+          OR (best.score = ?1 AND (best.updated_at < ?2 OR (best.updated_at = ?2 AND best.entry_id < ?3)))
+        )
     `).bind(row.score, row.updated_at, tieId).first()
     : await db.prepare(`
       SELECT COUNT(*) + 1 AS rank
