@@ -2,7 +2,7 @@
 // 资源缓存版本号 — 同步于 space_shooter.html 的所有 ?v= 查询参数。
 // Worker 链 (game_worker.js + importScripts 的 6 个引擎文件) 通过 self.location.search 自动继承该版本，
 // 后续 bump 仅需改本常量 + HTML 的 ?v= 两处即可全量失效旧缓存。
-const ASSET_VERSION = '7.1';
+const ASSET_VERSION = '7.3';
 
 // 开发者作弊（热更新调试：+分/+废料/+HP）默认关闭，避免污染全球排行榜完整性。
 // 仅在 URL 带 ?dev=1 或本地手动设置 localStorage('space_dev_cheats'='1') 时启用。
@@ -65,16 +65,16 @@ function markLocalCloudSaveDirty() {
     } catch (_) {}
 }
 
-function settleLocalGameOver(match) {
+async function settleLocalGameOver(match) {
     const record = recordLocalMatchHistory(match);
     markLocalCloudSaveDirty();
     if (window.StarseaLeaderboard) {
+        const scoreToSync = match.isNewBest ? match.bestScore : match.score;
+        if (typeof window.StarseaLeaderboard.syncScoreToCloud === 'function') {
+            await window.StarseaLeaderboard.syncScoreToCloud(scoreToSync, match.skin, undefined, match.runDurationMs);
+        }
         if (typeof window.StarseaLeaderboard.syncCloudSaveFromLocal === 'function') {
             window.StarseaLeaderboard.syncCloudSaveFromLocal();
-        }
-        if (typeof window.StarseaLeaderboard.syncScoreToCloud === 'function') {
-            const scoreToSync = match.isNewBest ? match.bestScore : match.score;
-            window.StarseaLeaderboard.syncScoreToCloud(scoreToSync, match.skin, undefined, match.runDurationMs);
         }
     }
     return record;
@@ -1596,7 +1596,12 @@ function closeLoadoutPanel() {
     };
     const flushSync = () => {
         const a = api();
-        if (!a || typeof a.syncCloudSaveFromLocal !== 'function') return;
+        if (!a) return;
+        if (typeof a.flushPendingScoreKeepalive === 'function' &&
+            typeof a.hasPendingScoreSubmit === 'function' && a.hasPendingScoreSubmit()) {
+            try { a.flushPendingScoreKeepalive(); } catch (_) {}
+        }
+        if (typeof a.syncCloudSaveFromLocal !== 'function') return;
         if (!isDirty()) return;
         try {
             const base = typeof a.getApiBase === 'function' ? a.getApiBase() : '';

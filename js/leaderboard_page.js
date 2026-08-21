@@ -438,7 +438,7 @@
                     bio: state.bio
                 });
             }
-            if (API.getSessionToken && API.getSessionToken() && API.saveCloudSave && API.collectLocalCloudSave) {
+            if (!options.skipCloudSave && API.getSessionToken && API.getSessionToken() && API.saveCloudSave && API.collectLocalCloudSave) {
                 await API.saveCloudSave(API.collectLocalCloudSave());
             }
             await refreshProfileAndLeaderboard();
@@ -493,16 +493,16 @@
             localStorage.setItem('space_user_is_bound', 'true');
             localStorage.setItem('space_user_bound_email', account);
             loadLocalData();
-            if (state.nickname === DEFAULT_NICKNAME) {
-                state.nickname = sanitizeNickname(account.split('@')[0]);
-                localStorage.setItem('space_user_nickname', state.nickname);
-                if (API.saveCloudSave && API.collectLocalCloudSave) {
-                    await API.saveCloudSave(API.collectLocalCloudSave());
-                }
-            }
-            await syncProfileAndScore();
+            renderProfile();
             showToast(result.mode === 'registered' ? '账号已注册并同步云存档' : '账号已登录，云存档已同步', 'success');
-            await refreshLeaderboard();
+            void (async () => {
+                if (state.nickname === DEFAULT_NICKNAME) {
+                    state.nickname = sanitizeNickname(account.split('@')[0]);
+                    localStorage.setItem('space_user_nickname', state.nickname);
+                    renderProfile();
+                }
+                await syncProfileAndScore({ skipCloudSave: true });
+            })().catch(() => setStatus('offline'));
         } catch (err) {
             showToast(err && err.data && err.data.error === 'invalid_credentials' ? '密码不正确' : '绑定失败，请稍后重试', 'error');
             setStatus('offline');

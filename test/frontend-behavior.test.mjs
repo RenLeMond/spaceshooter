@@ -90,7 +90,7 @@ test('ngrok previews use the production same-site API host', async () => {
 });
 
 test('entry pages use the current cache-busting asset version', async () => {
-  const expected = '7.1';
+  const expected = '7.3';
   const files = ['index.html', 'space_shooter.html', 'leaderboard.html', 'v7_hangar.html'];
   for (const file of files) {
     const html = await readFile(new URL('../' + file, import.meta.url), 'utf8');
@@ -500,4 +500,6 @@ test('main thread registers a pagehide/visibilitychange sync guard for dirty clo
   assert.match(mainSource, /navigator\.sendBeacon/);
   assert.match(mainSource, /syncCloudSaveFromLocal/);
   assert.match(mainSource, /hasLocalCloudSaveChanges/);
+  assert.match(mainSource, /hasPendingScoreSubmit/);
+  assert.match(mainSource, /flushPendingScoreKeepalive/);
 });

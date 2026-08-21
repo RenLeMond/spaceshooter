@@ -6,7 +6,10 @@
     const GUEST_KEY_KEY = 'space_guest_key';
     const CLOUD_REVISION_KEY = 'space_cloud_save_revision';
     const CLOUD_DIRTY_KEY = 'space_cloud_save_dirty_at';
+    const PENDING_SCORE_KEY = 'space_pending_score_submit';
     const MATCH_HISTORY_LIMIT = 50;
+    const KEEPALIVE_SCORE_THROTTLE_MS = 10000;
+    let lastPendingScoreKeepaliveAt = 0;
 
     function getConfig() {
         return global.STARSEA_LEADERBOARD || {};
@@ -245,27 +248,102 @@
         return apiFetch('/api/player?user_id=' + encodeURIComponent(userId));
     }
 
+    function setPendingScoreSubmit(payload) {
+        if (!payload || Math.floor(Number(payload.score) || 0) <= 0) return;
+        lastPendingScoreKeepaliveAt = 0;
+        try {
+            localStorage.setItem(PENDING_SCORE_KEY, JSON.stringify(payload));
+        } catch (_) {}
+    }
+
+    function getPendingScoreSubmit() {
+        try {
+            const parsed = JSON.parse(localStorage.getItem(PENDING_SCORE_KEY) || '');
+            if (!parsed || typeof parsed !== 'object') return null;
+            if (Math.floor(Number(parsed.score) || 0) <= 0) return null;
+            return parsed;
+        } catch (_) {
+            return null;
+        }
+    }
+
+    function clearPendingScoreSubmit() {
+        lastPendingScoreKeepaliveAt = 0;
+        try {
+            localStorage.removeItem(PENDING_SCORE_KEY);
+        } catch (_) {}
+    }
+
     async function submitScore(score, shipType, username, profile, runDurationMs) {
         if (!isEnabled()) return { skipped: true, reason: 'disabled' };
-        const token = getSessionToken();
-        if (!token) await ensureGuestSession();
-        const localProfile = Object.assign(getProfile(), profile || {});
 
-        const payload = {
-            user_id: ensureUserId(),
-            guest_key: ensureGuestKey(),
-            username: sanitizeNickname(username, localProfile.nickname),
-            avatar: sanitizeAvatar(localProfile.avatar),
-            bio: sanitizeBio(localProfile.bio),
-            score: Math.max(0, Math.floor(Number(score) || 0)),
-            ship_type: ALLOWED_SHIPS.has(shipType) ? shipType : 'default',
-            run_duration_ms: Math.max(0, Math.floor(Number(runDurationMs) || 0))
-        };
-        return apiFetch('/api/submit-score', {
-            method: 'POST',
-            headers: token ? { Authorization: 'Bearer ' + token } : {},
-            body: JSON.stringify(payload)
-        });
+        function buildPayload() {
+            const localProfile = Object.assign(getProfile(), profile || {});
+            return {
+                user_id: ensureUserId(),
+                guest_key: ensureGuestKey(),
+                username: sanitizeNickname(username, localProfile.nickname),
+                avatar: sanitizeAvatar(localProfile.avatar),
+                bio: sanitizeBio(localProfile.bio),
+                score: Math.max(0, Math.floor(Number(score) || 0)),
+                ship_type: ALLOWED_SHIPS.has(shipType) ? shipType : 'default',
+                run_duration_ms: Math.max(0, Math.floor(Number(runDurationMs) || 0))
+            };
+        }
+
+        async function postOnce() {
+            const token = getSessionToken();
+            if (!token) await ensureGuestSession();
+            const payload = buildPayload();
+            setPendingScoreSubmit(payload);
+            return apiFetch('/api/submit-score', {
+                method: 'POST',
+                headers: getSessionToken() ? { Authorization: 'Bearer ' + getSessionToken() } : {},
+                body: JSON.stringify(payload)
+            });
+        }
+
+        try {
+            const result = await postOnce();
+            if (Math.floor(Number(score) || 0) > 0) clearPendingScoreSubmit();
+            return result;
+        } catch (err) {
+            if (!err || !err.data || err.data.error !== 'identity_required') throw err;
+            await ensureGuestSession();
+            const result = await postOnce();
+            if (Math.floor(Number(score) || 0) > 0) clearPendingScoreSubmit();
+            return result;
+        }
+    }
+
+    function flushPendingScoreKeepalive() {
+        if (!isEnabled() || !canUseSameOriginApi()) return false;
+        const payload = getPendingScoreSubmit();
+        if (!payload) return false;
+        const now = Date.now();
+        if (lastPendingScoreKeepaliveAt && now - lastPendingScoreKeepaliveAt < KEEPALIVE_SCORE_THROTTLE_MS) {
+            return false;
+        }
+
+        const token = getSessionToken();
+        const url = buildUrl('/api/submit-score');
+        const body = JSON.stringify(payload);
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers.Authorization = 'Bearer ' + token;
+
+        let sent = false;
+        if (typeof fetch === 'function') {
+            try {
+                fetch(url, { method: 'POST', headers: headers, body: body, keepalive: true }).catch(() => {});
+                sent = true;
+            } catch (_) {}
+        }
+        if (!sent && typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+            const blob = new Blob([body], { type: 'application/json' });
+            try { sent = !!navigator.sendBeacon(url, blob); } catch (_) {}
+        }
+        if (sent) lastPendingScoreKeepaliveAt = now;
+        return sent;
     }
 
     async function bindAccount(account, password, save) {
@@ -436,6 +514,8 @@
         fetchLeaderboard: fetchLeaderboard,
         fetchPlayer: fetchPlayer,
         submitScore: submitScore,
+        flushPendingScoreKeepalive: flushPendingScoreKeepalive,
+        hasPendingScoreSubmit: function () { return !!getPendingScoreSubmit(); },
         bindAccount: bindAccount,
         logoutAccount: logoutAccount,
         fetchCloudSave: fetchCloudSave,

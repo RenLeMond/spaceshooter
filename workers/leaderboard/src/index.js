@@ -125,22 +125,28 @@ export default {
 
       if (url.pathname === '/api/submit-score' && request.method === 'POST') {
         const payload = await readJson(request, bodyLimit);
-        const userId = String(payload.user_id || '');
+        const requestedUserId = String(payload.user_id || '');
         const username = sanitizeUsername(payload.username);
         const avatar = sanitizeAvatar(payload.avatar);
         const bio = sanitizeBio(payload.bio);
         const score = clampInt(payload.score, 0, 9999999, 0);
         const shipType = ALLOWED_SHIPS.has(payload.ship_type) ? payload.ship_type : 'default';
 
-        if (!USER_ID_RE.test(userId)) {
+        if (!USER_ID_RE.test(requestedUserId)) {
           return jsonResponse({ error: 'invalid user_id' }, corsHeaders, 400);
         }
         if (!username) {
           return jsonResponse({ error: 'invalid username' }, corsHeaders, 400);
         }
-        const identity = await authorizeUserWrite(env.DB, request, userId, payload.guest_key);
-        if (!identity) {
-          return jsonResponse({ error: 'identity_required' }, corsHeaders, 401);
+        const session = await requireSession(env.DB, request);
+        let userId = requestedUserId;
+        if (session) {
+          userId = session.user_id;
+        } else {
+          const identity = await authorizeGuestWrite(env.DB, requestedUserId, payload.guest_key);
+          if (!identity) {
+            return jsonResponse({ error: 'identity_required' }, corsHeaders, 401);
+          }
         }
 
         const result = await upsertScore(env.DB, userId, username, score, shipType, avatar, bio);
@@ -278,36 +284,35 @@ async function checkRateLimit(db, request, pathname, config) {
 }
 
 // 运行时兼容性迁移：只保留无法在 schema.sql 中幂等处理的 ALTER TABLE
-// 所有 CREATE TABLE / CREATE INDEX 均已移入 schema.sql，通过 wrangler d1 migrations apply 部署
+// 串行执行并在非幂等失败时抛错，避免 profileColumnsChecked 提前置位后永久跳过真实迁移。
 async function ensureRuntimeCompat(db) {
   if (profileColumnsChecked) return;
-  // 兼容旧数据库；正式部署仍应先执行 schema.sql / migration。
-  // 仅静默「列/表已存在」这类幂等错误；其它异常记录日志以免真实迁移失败被隐藏。
-  await Promise.all([
-    db.prepare("ALTER TABLE users ADD COLUMN avatar TEXT NOT NULL DEFAULT 'fa-user-astronaut'").run().catch(ignoreIdempotentMigrationError),
-    db.prepare("ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''").run().catch(ignoreIdempotentMigrationError),
-    db.prepare("ALTER TABLE accounts ADD COLUMN password_algorithm TEXT NOT NULL DEFAULT 'sha256'").run().catch(ignoreIdempotentMigrationError),
-    db.prepare("ALTER TABLE accounts ADD COLUMN password_iterations INTEGER NOT NULL DEFAULT 1").run().catch(ignoreIdempotentMigrationError),
-    db.prepare("ALTER TABLE account_sessions ADD COLUMN expires_at INTEGER NOT NULL DEFAULT 0").run().catch(ignoreIdempotentMigrationError),
-    db.prepare("ALTER TABLE player_cloud_saves ADD COLUMN revision INTEGER NOT NULL DEFAULT 0").run().catch(ignoreIdempotentMigrationError),
-    db.prepare(`
-      CREATE TABLE IF NOT EXISTS guest_identities (
-        user_id TEXT PRIMARY KEY,
-        key_hash TEXT NOT NULL,
-        created_at TEXT NOT NULL DEFAULT (datetime('now'))
-      )
-    `).run().catch(ignoreIdempotentMigrationError)
-  ]);
+  const statements = [
+    "ALTER TABLE users ADD COLUMN avatar TEXT NOT NULL DEFAULT 'fa-user-astronaut'",
+    "ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''",
+    "ALTER TABLE accounts ADD COLUMN password_algorithm TEXT NOT NULL DEFAULT 'sha256'",
+    "ALTER TABLE accounts ADD COLUMN password_iterations INTEGER NOT NULL DEFAULT 1",
+    "ALTER TABLE account_sessions ADD COLUMN expires_at INTEGER NOT NULL DEFAULT 0",
+    "ALTER TABLE player_cloud_saves ADD COLUMN revision INTEGER NOT NULL DEFAULT 0",
+    `CREATE TABLE IF NOT EXISTS guest_identities (
+      user_id TEXT PRIMARY KEY,
+      key_hash TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )`
+  ];
+  for (const sql of statements) {
+    try {
+      await db.prepare(sql).run();
+    } catch (err) {
+      if (!isIdempotentMigrationError(err)) throw err;
+    }
+  }
   profileColumnsChecked = true;
 }
 
-function ignoreIdempotentMigrationError(err) {
+function isIdempotentMigrationError(err) {
   const message = String((err && err.message) || err).toLowerCase();
-  const idempotent = message.includes('duplicate column')
-    || message.includes('already exists');
-  if (!idempotent) {
-    console.error('[runtime-compat] unexpected migration error:', message);
-  }
+  return message.includes('duplicate column') || message.includes('already exists');
 }
 
 function getClientIp(request) {
@@ -440,6 +445,10 @@ async function claimGuestIdentity(db, requestedUserId, guestKey) {
 async function authorizeUserWrite(db, request, userId, guestKey) {
   const session = await requireSession(db, request);
   if (session) return session.user_id === userId ? session : null;
+  return authorizeGuestWrite(db, userId, guestKey);
+}
+
+async function authorizeGuestWrite(db, userId, guestKey) {
   if (!GUEST_KEY_RE.test(String(guestKey || ''))) return null;
   const identity = await db.prepare(`
     SELECT user_id, key_hash FROM guest_identities WHERE user_id = ?1
@@ -472,17 +481,6 @@ async function bindAccount(db, payload, request) {
       : await hashPassword(password, existing.password_salt);
     if (!constantTimeEqual(hash, existing.password_hash)) {
       return { error: 'invalid_credentials' };
-    }
-    if (algorithm !== 'pbkdf2-sha256') {
-      const upgradedSalt = createId('salt');
-      const upgradedHash = await hashPbkdf2Password(password, upgradedSalt);
-      await db.prepare(`
-        UPDATE accounts
-        SET password_salt = ?1, password_hash = ?2,
-            password_algorithm = 'pbkdf2-sha256', password_iterations = ?3,
-            updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
-        WHERE account_id = ?4
-      `).bind(upgradedSalt, upgradedHash, PBKDF2_ITERATIONS, existing.account_id).run();
     }
     const save = await loadCloudSave(db, existing.user_id);
     const token = await createSession(db, existing.account_id);
@@ -735,21 +733,26 @@ async function loadMatchHistory(db, userId) {
 }
 
 async function upsertMatchHistory(db, userId, history) {
-  for (const match of normalizeMatchHistory(history)) {
-    await db.prepare(`
-      INSERT INTO match_history (
-        match_id, user_id, score, wave, skin, is_new_best, permanent_cores_earned, played_at
-      )
-      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
-      ON CONFLICT(match_id) DO UPDATE SET
-        score = excluded.score,
-        wave = excluded.wave,
-        skin = excluded.skin,
-        is_new_best = excluded.is_new_best,
-        permanent_cores_earned = excluded.permanent_cores_earned,
-        played_at = excluded.played_at
-      WHERE match_history.user_id = excluded.user_id
-    `).bind(
+  const matches = normalizeMatchHistory(history);
+  if (!matches.length) return;
+
+  const upsertSql = `
+    INSERT INTO match_history (
+      match_id, user_id, score, wave, skin, is_new_best, permanent_cores_earned, played_at
+    )
+    VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+    ON CONFLICT(match_id) DO UPDATE SET
+      score = excluded.score,
+      wave = excluded.wave,
+      skin = excluded.skin,
+      is_new_best = excluded.is_new_best,
+      permanent_cores_earned = excluded.permanent_cores_earned,
+      played_at = excluded.played_at
+    WHERE match_history.user_id = excluded.user_id
+  `;
+
+  if (typeof db.batch === 'function') {
+    const statements = matches.map(match => db.prepare(upsertSql).bind(
       match.id,
       userId,
       match.score,
@@ -758,8 +761,23 @@ async function upsertMatchHistory(db, userId, history) {
       match.isNewBest ? 1 : 0,
       match.permanentCoresEarned,
       match.playedAt
-    ).run();
+    ));
+    await db.batch(statements);
+  } else {
+    for (const match of matches) {
+      await db.prepare(upsertSql).bind(
+        match.id,
+        userId,
+        match.score,
+        match.wave,
+        match.skin,
+        match.isNewBest ? 1 : 0,
+        match.permanentCoresEarned,
+        match.playedAt
+      ).run();
+    }
   }
+
   await db.prepare(`
     DELETE FROM match_history
     WHERE user_id = ?1

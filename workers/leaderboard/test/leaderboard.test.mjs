@@ -29,6 +29,7 @@ function makeFrontendApi(storage = new Map(), config = {}) {
             return arr;
           }
         },
+        Date,
         fetch: async () => new Response(JSON.stringify({ ok: true }), {
           headers: { 'Content-Type': 'application/json' }
         }),
@@ -41,6 +42,7 @@ function makeFrontendApi(storage = new Map(), config = {}) {
     sandbox.localStorage = sandbox.window.localStorage;
     sandbox.crypto = sandbox.window.crypto;
     sandbox.fetch = sandbox.window.fetch;
+    sandbox.Date = Date;
     vm.createContext(sandbox);
     vm.runInContext(source, sandbox);
     return { api: sandbox.window.StarseaLeaderboard, storage, sandbox };
@@ -75,6 +77,12 @@ class FakeDb {
 
   prepare(sql) {
     return new FakeStatement(this, sql);
+  }
+
+  async batch(statements) {
+    for (const statement of statements) {
+      await statement.run();
+    }
   }
 }
 
@@ -185,6 +193,7 @@ class FakeStatement {
 
   async run() {
     const sql = this.sql;
+    if (sql.includes('ALTER TABLE')) return {};
     if (sql.includes('CREATE TABLE IF NOT EXISTS request_rate_limits')) return {};
     if (sql.includes('CREATE TABLE IF NOT EXISTS accounts')) return {};
     if (sql.includes('CREATE TABLE IF NOT EXISTS account_sessions')) return {};
@@ -350,6 +359,41 @@ test('frontend bound score submissions do not rotate legacy account ids through 
   assert.deepEqual(paths.map(call => call.url), ['/api/submit-score']);
   assert.equal(JSON.parse(paths[0].options.body).user_id, 'usr_legacyacct');
   assert.equal(paths[0].options.headers.Authorization, 'Bearer sess_legacyacct');
+});
+
+test('keepalive score flush only retries an unsynced game-over submit', async () => {
+  const storage = new Map([
+    ['space_user_id', 'usr_pending01'],
+    ['space_best_score', '88000'],
+    ['space_match_history', JSON.stringify([{ id: 'match_old', score: 88000, skin: 'void' }])]
+  ]);
+  const { api, sandbox } = await makeFrontendApi(storage);
+  const paths = [];
+  sandbox.fetch = async (url, options) => {
+    paths.push({ url, options });
+    if (url === '/api/guest-session') {
+      return new Response(JSON.stringify({ success: true, user_id: 'usr_pending01' }), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    return new Response(JSON.stringify({ error: 'internal_error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  };
+
+  assert.equal(api.hasPendingScoreSubmit(), false);
+  assert.equal(api.flushPendingScoreKeepalive(), false);
+
+  await assert.rejects(() => api.submitScore(1234, 'void', 'Pending'));
+  assert.equal(api.hasPendingScoreSubmit(), true);
+  assert.equal(paths.filter(call => call.url === '/api/submit-score').length, 1);
+
+  assert.equal(api.flushPendingScoreKeepalive(), true);
+  assert.equal(api.flushPendingScoreKeepalive(), false);
+  const scorePosts = paths.filter(call => call.url === '/api/submit-score');
+  assert.equal(scorePosts.length, 2);
+  assert.equal(JSON.parse(scorePosts[1].options.body).score, 1234);
 });
 
 test('frontend account bind only claims a guest identity after identity_required', async () => {
