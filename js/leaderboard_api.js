@@ -274,6 +274,28 @@
         } catch (_) {}
     }
 
+    function isLocallyBound() {
+        try {
+            return localStorage.getItem('space_user_is_bound') === 'true';
+        } catch (_) {
+            return false;
+        }
+    }
+
+    function isNonRetryableSubmitError(err) {
+        if (!err || !err.data || !err.data.error) return false;
+        const code = err.data.error;
+        return code === 'score_rejected'
+            || code === 'invalid user_id'
+            || code === 'invalid username';
+    }
+
+    function clearPendingOnPermanentFailure(score, err) {
+        if (Math.floor(Number(score) || 0) > 0 && isNonRetryableSubmitError(err)) {
+            clearPendingScoreSubmit();
+        }
+    }
+
     async function submitScore(score, shipType, username, profile, runDurationMs) {
         if (!isEnabled()) return { skipped: true, reason: 'disabled' };
 
@@ -291,9 +313,9 @@
             };
         }
 
-        async function postOnce() {
+        async function postOnce(skipGuestEnsure) {
             const token = getSessionToken();
-            if (!token) await ensureGuestSession();
+            if (!token && !skipGuestEnsure) await ensureGuestSession();
             const payload = buildPayload();
             setPendingScoreSubmit(payload);
             return apiFetch('/api/submit-score', {
@@ -304,20 +326,34 @@
         }
 
         try {
-            const result = await postOnce();
+            const result = await postOnce(false);
             if (Math.floor(Number(score) || 0) > 0) clearPendingScoreSubmit();
             return result;
         } catch (err) {
-            if (!err || !err.data || err.data.error !== 'identity_required') throw err;
-            await ensureGuestSession();
-            const result = await postOnce();
-            if (Math.floor(Number(score) || 0) > 0) clearPendingScoreSubmit();
-            return result;
+            if (!err || !err.data || err.data.error !== 'identity_required') {
+                clearPendingOnPermanentFailure(score, err);
+                throw err;
+            }
+            if (isLocallyBound()) {
+                clearSessionToken();
+                throw err;
+            }
+            if (getSessionToken()) clearSessionToken();
+            try {
+                await ensureGuestSession();
+                const result = await postOnce(true);
+                if (Math.floor(Number(score) || 0) > 0) clearPendingScoreSubmit();
+                return result;
+            } catch (retryErr) {
+                clearPendingOnPermanentFailure(score, retryErr);
+                throw retryErr;
+            }
         }
     }
 
     function flushPendingScoreKeepalive() {
         if (!isEnabled() || !canUseSameOriginApi()) return false;
+        if (isLocallyBound() && !getSessionToken()) return false;
         const payload = getPendingScoreSubmit();
         if (!payload) return false;
         const now = Date.now();

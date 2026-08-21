@@ -21,6 +21,9 @@ function makeFrontendApi(storage = new Map(), config = {}) {
           },
           setItem(key, value) {
             storage.set(key, String(value));
+          },
+          removeItem(key) {
+            storage.delete(key);
           }
         },
         crypto: {
@@ -394,6 +397,92 @@ test('keepalive score flush only retries an unsynced game-over submit', async ()
   const scorePosts = paths.filter(call => call.url === '/api/submit-score');
   assert.equal(scorePosts.length, 2);
   assert.equal(JSON.parse(scorePosts[1].options.body).score, 1234);
+});
+
+test('submit score clears pending on permanent score_rejected errors', async () => {
+  const storage = new Map([
+    ['space_user_id', 'usr_reject01'],
+    ['space_guest_key', 'gst_testkey123456789012345678901234567890123456789012']
+  ]);
+  const { api, sandbox } = await makeFrontendApi(storage);
+  sandbox.fetch = async (url) => {
+    if (url === '/api/guest-session') {
+      return new Response(JSON.stringify({ success: true, user_id: 'usr_reject01' }), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    return new Response(JSON.stringify({ error: 'score_rejected', reason: 'implausible_delta' }), {
+      status: 422,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  };
+
+  await assert.rejects(() => api.submitScore(9999999, 'void', 'Reject'));
+  assert.equal(api.hasPendingScoreSubmit(), false);
+  assert.equal(api.flushPendingScoreKeepalive(), false);
+});
+
+test('bound submit with expired session does not rotate user_id via guest-session', async () => {
+  const storage = new Map([
+    ['space_user_id', 'usr_boundacct01'],
+    ['space_user_is_bound', 'true'],
+    ['space_account_token', 'sess_expired01'],
+    ['space_guest_key', 'gst_testkey123456789012345678901234567890123456789012']
+  ]);
+  const { api, sandbox } = await makeFrontendApi(storage);
+  const paths = [];
+  sandbox.fetch = async (url) => {
+    paths.push(url);
+    return new Response(JSON.stringify({ error: 'identity_required' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  };
+
+  await assert.rejects(() => api.submitScore(5000, 'void', 'Bound'));
+  assert.deepEqual(paths, ['/api/submit-score']);
+  assert.equal(storage.get('space_user_id'), 'usr_boundacct01');
+  assert.equal(storage.has('space_account_token'), false);
+  assert.equal(api.hasPendingScoreSubmit(), true);
+  assert.equal(api.flushPendingScoreKeepalive(), false);
+});
+
+test('guest identity_required retry clears stale bearer before guest-session', async () => {
+  const storage = new Map([
+    ['space_user_id', 'usr_staleguest01'],
+    ['space_account_token', 'sess_staleguest'],
+    ['space_guest_key', 'gst_testkey123456789012345678901234567890123456789012']
+  ]);
+  const { api, sandbox } = await makeFrontendApi(storage);
+  const paths = [];
+  let submitAttempts = 0;
+  sandbox.fetch = async (url, options) => {
+    paths.push({ url, options });
+    if (url === '/api/guest-session') {
+      return new Response(JSON.stringify({ success: true, user_id: 'usr_staleguest01' }), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    submitAttempts += 1;
+    if (submitAttempts === 1) {
+      return new Response(JSON.stringify({ error: 'identity_required' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    return new Response(JSON.stringify({ success: true, updated: true }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  };
+
+  await api.submitScore(4321, 'void', 'Guest');
+  assert.equal(paths.filter(call => call.url === '/api/guest-session').length, 1);
+  assert.equal(storage.has('space_account_token'), false);
+  assert.equal(storage.get('space_user_id'), 'usr_staleguest01');
+  assert.equal(api.hasPendingScoreSubmit(), false);
+  const scorePosts = paths.filter(call => call.url === '/api/submit-score');
+  assert.equal(scorePosts.length, 2);
+  assert.equal(scorePosts[1].options.headers.Authorization, undefined);
 });
 
 test('frontend account bind only claims a guest identity after identity_required', async () => {
