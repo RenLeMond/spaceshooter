@@ -1,0 +1,116 @@
+/* StarSea V7 — Shared Design Tokens (Phase 1: glass/neon/grid only)
+ * TODO Phase2: 删除 v7_hangar.html <style> 中的 :root/.glass-panel/.space-bg/.dust-layer
+ *             及 leaderboard.css 中的 :root/.glass-panel 重复定义，改由本文件单一真源。
+ */
+:root {
+  --bg-space: #02040a;
+  --color-bg: #02040a;
+  --color-panel: rgba(6, 13, 31, 0.78);
+  --card-bg: rgba(6, 13, 31, 0.82);
+  --border-color: rgba(34, 211, 238, 0.14);
+  --color-border: rgba(34, 211, 238, 0.12);
+  --neon-cyan: #22d3ee;
+  --neon-cyan-glow: rgba(34, 211, 238, 0.35);
+  --neon-amber: #e0b15a;
+  --neon-amber-glow: rgba(224, 177, 90, 0.35);
+  --neon-rose: #e11d48;
+  --neon-emerald: #10b981;
+  --neon-violet: #a855f7;
+  --neon-gold: #e0b15a;
+  --text-primary: #eef6ff;
+  --text-muted: #94a3b8;
+  --ui-bg-deep: rgba(3, 7, 18, 0.82);
+  --ui-bg-panel: rgba(6, 13, 31, 0.74);
+  --ui-line-cyan: rgba(34, 211, 238, 0.22);
+  --ui-line-soft: rgba(148, 163, 184, 0.14);
+  --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html { scroll-behavior: smooth; }
+
+/* Shared glass primitives — canonical source, page inline overrides remain for now */
+.glass-panel {
+  background: rgba(6, 13, 31, 0.78);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.neon-text-cyan { text-shadow: 0 0 10px rgba(6, 182, 212, 0.6), 0 0 20px rgba(6, 182, 212, 0.2); }
+.neon-text-amber { text-shadow: 0 0 10px rgba(245, 158, 11, 0.6), 0 0 20px rgba(245, 158, 11, 0.2); }
+.neon-text-gold { text-shadow: 0 0 10px rgba(245, 158, 11, 0.6), 0 0 20px rgba(245, 158, 11, 0.2); }
+.neon-text-rose { text-shadow: 0 0 10px rgba(244, 63, 94, 0.6), 0 0 20px rgba(244, 63, 94, 0.2); }
+.neon-text-emerald { text-shadow: 0 0 10px rgba(16, 185, 129, 0.6), 0 0 20px rgba(16, 185, 129, 0.2); }
+.neon-border-cyan { border-color: rgba(34, 211, 238, 0.28); box-shadow: 0 0 24px rgba(34, 211, 238, 0.06); }
+.neon-border-gold { border-color: rgba(224, 177, 90, 0.28); box-shadow: 0 0 24px rgba(224, 177, 90, 0.06); }
+
+/* Shared ambient layers — .space-bg/.dust-layer used across hangar/leaderboard/manual */
+.space-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -4;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 42% at 50% 6%, rgba(34, 211, 238, 0.12), transparent 58%),
+    var(--bg-space);
+}
+.dust-layer {
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+  z-index: -3;
+  background-image:
+    radial-gradient(1px 1px at 40px 80px, rgba(255,255,255,0.85), transparent),
+    radial-gradient(1.5px 1.5px at 180px 240px, rgba(34, 211, 238, 0.45), transparent);
+  background-repeat: repeat;
+  background-size: 600px 600px;
+  animation: dustDrift 220s linear infinite;
+  opacity: 0.24;
+}
+.hex-grid {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  opacity: 0.28;
+  mask-image: linear-gradient(to bottom, black 0%, transparent 78%);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'%3E%3Cpath d='M28 0 L56 16 L56 50 L28 66 L0 50 L0 16 Z' fill='none' stroke='rgba(34,211,238,0.04)' stroke-width='0.6'/%3E%3C/svg%3E");
+  background-size: 56px 100px;
+}
+.scanline-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.18;
+  background: repeating-linear-gradient(0deg, transparent 0px, transparent 3px, rgba(34,211,238,0.015) 3px, rgba(34,211,238,0.015) 4px);
+}
+
+/* Shared a11y */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 200;
+  padding: 10px 16px;
+  background: var(--neon-cyan);
+  color: var(--bg-space);
+  font-weight: 800;
+  text-decoration: none;
+  border-radius: 0 0 10px 0;
+}
+.skip-link:focus { left: 0; }
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.55);
+}
+.stat-num { font-family: 'Orbitron', monospace; font-variant-numeric: tabular-nums; }
+
+/* Shared keyframes */
+@keyframes dustDrift { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes blink { 0%,100%{opacity:0.4} 50%{opacity:1} }
+@keyframes skeletonPulse { 0%,100%{opacity:0.45} 50%{opacity:0.85} }

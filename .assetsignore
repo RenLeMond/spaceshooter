@@ -1,3 +1,4 @@
+# LEGACY: dist 模式下由 Vite outDir 替代，仅保留作 wrangler 本地回滚参考
 .git
 .wrangler
 .claude
