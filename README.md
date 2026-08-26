@@ -124,7 +124,10 @@ spaceshooter/
 │   ├── engine_renderer.js  # Canvas 超维涂装渐变与高清图层绘制
 │   ├── engine_hangar.js    # 改装整备舱本地存储数据持久化与升级逻辑
 │   ├── game_worker.js      # Web Worker 子线程 Mock 代理及数据序列化桥梁
+│   ├── persistence_local.js # 本地比赛历史与云存档脏标记辅助
+│   ├── ui_loadout.js       # Roguelike 升级卡 / 构装总览 / 武器属性面板 UI
 │   └── main.js             # 主线程 Loader、Worker 消息调度与 fallback 挂载
+├── workers/web/index.js    # 一体化 Cloudflare Worker (静态资源 ASSETS + /api/* 排行榜)
 ├── space_shooter.html      # V7 极客风格战术 HUD 主游戏入口
 ├── v7_hangar.html          # 先驱者核心矩阵天赋星盘机库 (局外改装、永久天赋星盘、物理沙盒)
 ├── v7_roadmap.html         # V7 无尽深空指南与星盘天赋设计路线图
@@ -134,6 +137,8 @@ spaceshooter/
 ├── style.css               # 磨砂拟物玻璃面板与霓虹光晕专用样式
 └── start.bat               # Windows 原生免配置自适应服务器启动器
 ```
+
+> **构建提示**：引擎源码唯一存放于 `js/`；`npm run dev` 时 Vite 直接服务根目录源码，`npm run build` 后由 `tools/sync-dist-js.mjs` 复制进 `dist/js` 供部署。
 
 ---
 

@@ -1,14 +1,31 @@
 {
+  // 一体化 Worker：静态资源 + 排行榜 API 同源部署。
+  // 迁移步骤：
+  //   1) npm run build && npx wrangler deploy
+  //   2) 在 Cloudflare Dashboard 将自定义域 game.renlimeng.qzz.io 绑定到本 Worker
+  //   3) 确认 /api/* 正常后，删除旧的独立 API Worker（workers/leaderboard/wrangler.toml）
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "spaceshooter",
+  "main": "workers/web/index.js",
   "compatibility_date": "2026-06-02",
   "observability": {
     "enabled": true
   },
   "assets": {
-    "directory": "dist"
+    "directory": "dist",
+    "binding": "ASSETS"
   },
   "compatibility_flags": [
     "nodejs_compat"
-  ]
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "e92c11bf-8429-471d-93ea-9fe086c3b3f5",
+      "database_id": "e92c11bf-8429-471d-93ea-9fe086c3b3f5"
+    }
+  ],
+  "vars": {
+    "ALLOWED_ORIGINS": "https://renlimeng.qzz.io,https://game.renlimeng.qzz.io,https://spaceshooter.842695824.workers.dev,http://localhost:5173,http://127.0.0.1:5173,http://localhost:8787,http://127.0.0.1:8787,http://localhost:8080,http://127.0.0.1:8080,http://localhost:9999,http://127.0.0.1:9999"
+  }
 }

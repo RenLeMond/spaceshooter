@@ -12,10 +12,13 @@ async function runConfigForHost(hostname) {
 }
 
 async function loadMainWeaponHelpers() {
-  const source = await readFile(new URL('../js/main.js', import.meta.url), 'utf8');
-  const start = source.indexOf('let loadoutState =');
-  const end = source.indexOf('function renderLoadoutStrip()');
-  const snippet = source.slice(start, end);
+  const source = await readFile(new URL('../js/ui_loadout.js', import.meta.url), 'utf8');
+  const start = source.indexOf('TEST_ANCHOR: WEAPON_HELPERS_START');
+  const end = source.indexOf('TEST_ANCHOR: WEAPON_HELPERS_END');
+  const snippet = source.slice(
+    start !== -1 ? source.indexOf('let loadoutState =', start) : source.indexOf('let loadoutState ='),
+    end !== -1 ? end : source.indexOf('function renderLoadoutStrip()')
+  );
   const sandbox = {
     window: {},
     document: {
@@ -207,11 +210,11 @@ test('drone rogue mod does not push turret level beyond wingman capacity', async
 
 test('main and engine rogue card rendering share the same selectable mod pool helper', async () => {
   const entitiesSource = await readFile(new URL('../js/engine_entities.js', import.meta.url), 'utf8');
-  const mainSource = await readFile(new URL('../js/main.js', import.meta.url), 'utf8');
+  const loadoutSource = await readFile(new URL('../js/ui_loadout.js', import.meta.url), 'utf8');
 
   assert.match(entitiesSource, /function getAvailableRogueModPool\(/);
   assert.match(entitiesSource, /function selectRogueUpgradeMods\(/);
-  assert.match(mainSource, /selectRogueUpgradeMods\(elementSlots,\s*comboKey,\s*equipped\)/);
+  assert.match(loadoutSource, /selectRogueUpgradeMods\(elementSlots,\s*comboKey,\s*equipped\)/);
   assert.match(entitiesSource, /selectRogueUpgradeMods\(slots,\s*this\.player\.comboKey,\s*equipped\)/);
 });
 
@@ -452,9 +455,9 @@ test('frontend cloud save dirty local changes retry after revision conflict with
 
 test('main thread game over uses the shared local match settlement helper', async () => {
   const engineSource = await readFile(new URL('../js/engine_base.js', import.meta.url), 'utf8');
-  const mainSource = await readFile(new URL('../js/main.js', import.meta.url), 'utf8');
+  const persistenceSource = await readFile(new URL('../js/persistence_local.js', import.meta.url), 'utf8');
 
-  assert.match(mainSource, /function settleLocalGameOver\(/);
+  assert.match(persistenceSource, /function settleLocalGameOver\(/);
   assert.match(engineSource, /settleLocalGameOver/);
 });
 

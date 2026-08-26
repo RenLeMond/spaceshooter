@@ -1,4 +1,4 @@
-name = "e92c11bf-8429-471d-93ea-9fe086c3b3f5"
+name = "spaceshooter-leaderboard-api"
 main = "src/index.js"
 compatibility_date = "2026-06-02"
 routes = [
@@ -6,13 +6,13 @@ routes = [
 ]
 
 # 首次部署前在 Cloudflare Dashboard 创建 D1 数据库，将 database_id 填入下方
+# 注意：database_name / database_id 是账号中真实存在的资源标识，勿随意改动
 [[d1_databases]]
 binding = "DB"
 database_name = "e92c11bf-8429-471d-93ea-9fe086c3b3f5"
 database_id = "e92c11bf-8429-471d-93ea-9fe086c3b3f5"
 
 [vars]
-# 逗号分隔的允许跨域来源；部署后请改为你的实际域名
-ALLOWED_ORIGINS = "https://renlimeng.qzz.io,https://game.renlimeng.qzz.io,https://spaceshooter.842695824.workers.dev,http://localhost:5173,http://127.0.0.1:5173,http://localhost:8787,http://127.0.0.1:8787,http://localhost:8080,http://127.0.0.1:8080,http://localhost:9999,http://127.0.0.1:9999,https://finalize-sacrament-bagginess.ngrok-free.dev"
-
-# ALLOWED_ORIGINS = "https://renlimeng.qzz.io,https://game.renlimeng.qzz.io,http://localhost:8787,http://127.0.0.1:8787,http://localhost:8080,http://127.0.0.1:8080"
+# 逗号分隔的允许跨域来源（仅独立部署本 API Worker 时需要；
+# 若已迁移到根目录 wrangler.jsonc 的一体化 Worker（同源部署），CORS 名单可留空）
+ALLOWED_ORIGINS = "https://renlimeng.qzz.io,https://game.renlimeng.qzz.io,https://spaceshooter.842695824.workers.dev,http://localhost:5173,http://127.0.0.1:5173,http://localhost:8787,http://127.0.0.1:8787,http://localhost:8080,http://127.0.0.1:8080,http://localhost:9999,http://127.0.0.1:9999"
